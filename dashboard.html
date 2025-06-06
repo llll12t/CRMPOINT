@@ -65,12 +65,12 @@
       lineId = profile.userId;
 
       // ดึงข้อมูลแต้ม
-      const user = await fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=getUserInfo&lineId=${lineId}`);
+      const user = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`);
       const userData = await user.json();
       document.getElementById("point").textContent = userData.point || 0;
 
       // เช็คสถานะเช็คอิน
-      const check = await fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=checkinStatus&lineId=${lineId}`);
+      const check = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=checkinStatus&lineId=${lineId}`);
       const c = await check.json();
       if (!c.checkedInToday) {
         document.getElementById("checkinBox").classList.remove("hidden");
@@ -81,7 +81,7 @@
       document.getElementById("todayDate").textContent = today;
 
       // ประวัติ
-      const hist = await fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=getHistory&lineId=${lineId}`);
+      const hist = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getHistory&lineId=${lineId}`);
       const list = await hist.json();
       const html = list.map(item => `
         <li class="bg-white p-3 rounded-lg shadow flex justify-between items-center">
@@ -100,7 +100,7 @@
     }
 
     async function checkin() {
-      const res = await fetch("https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec", {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec", {
         method: "POST",
         body: JSON.stringify({
           action: "dailyCheckin",
