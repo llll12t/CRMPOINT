@@ -3,84 +3,112 @@
 <head>
   <meta charset="UTF-8" />
   <title>Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-50 p-4 font-sans">
+<body class="bg-white font-sans p-4">
 
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-2">
-    <div class="text-lg font-bold" id="username">สวัสดี</div>
-    <div class="text-sm">
-      พ้อยสะสม: <span id="point" class="text-purple-700 font-bold">0</span>
+  <!-- แต้ม -->
+  <div class="flex justify-between items-center mb-4">
+    <div>
+      <div class="text-sm text-gray-600">อัพเกรด member</div>
+      <div class="text-xs text-gray-400">ปลดล็อกสิทธิประโยชน์</div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <div class="w-4 h-4 bg-yellow-400 rounded-full"></div>
+      <div class="font-bold text-gray-800 text-sm"><span id="point">0</span>+</div>
+      <div class="w-6 h-6 bg-purple-900 rounded-full"></div>
     </div>
   </div>
 
-  <!-- QR Code Box -->
-  <div class="bg-white p-4 rounded-xl shadow-md mb-4 text-center">
-    <div class="font-semibold mb-2">QR Code ของคุณ</div>
-    <canvas id="qrcode" class="mx-auto"></canvas>
+  <!-- เมนู -->
+  <div class="grid grid-cols-3 gap-3 bg-gradient-to-br from-purple-800 to-purple-600 rounded-xl p-4 text-center text-white mb-4 text-sm font-medium">
+    <a href="activity.html" class="bg-white text-purple-800 py-2 rounded">กิจกรรม</a>
+    <a href="#" class="bg-white text-purple-800 py-2 rounded">คลัง</a>
+    <a href="redeem.html" class="bg-white text-purple-800 py-2 rounded">ร้านค้า</a>
+    <a href="transfer.html" class="bg-white text-purple-800 py-2 rounded">โอนพ้อย</a>
+    <a href="redeem.html" class="bg-white text-purple-800 py-2 rounded">แลกพ้อย</a>
+    <a href="profile.html" class="bg-white text-purple-800 py-2 rounded">ข้อมูลส่วนตัว</a>
+  </div>
+
+  <!-- เช็คอิน -->
+  <div id="checkinBox" class="flex items-center justify-between p-3 bg-gray-100 rounded-lg mb-4 hidden">
+    <div class="text-sm text-gray-700">วันที่ <span id="todayDate"></span></div>
+    <div class="flex items-center space-x-2">
+      <div class="bg-yellow-400 rounded-full w-6 h-6 text-center text-xs font-bold text-white">+1</div>
+      <button onclick="checkin()" class="bg-purple-700 text-white px-4 py-1 rounded text-sm">เช็คอิน</button>
+    </div>
   </div>
 
   <!-- ประวัติ -->
   <div>
-    <h2 class="text-md font-bold mb-2">รายการล่าสุด</h2>
-    <ul id="historyList" class="space-y-2"></ul>
-  </div>
-
-  <!-- เมนู -->
-  <div class="grid grid-cols-3 gap-4 mt-6 text-center">
-    <a href="redeem.html" class="bg-purple-700 text-white py-2 rounded">แลกของ</a>
-    <a href="transfer.html" class="bg-purple-700 text-white py-2 rounded">โอนพ้อย</a>
-    <a href="profile.html" class="bg-purple-700 text-white py-2 rounded">โปรไฟล์</a>
+    <div class="flex justify-between items-center mb-2">
+      <div class="font-bold">รายการล่าสุด</div>
+      <div class="text-xs text-gray-400">POINT</div>
+    </div>
+    <ul id="historyList" class="space-y-2 text-sm"></ul>
   </div>
 
   <!-- SCRIPT -->
   <script>
-    let userId = "";
+    let lineId = "";
 
     async function init() {
-      await liff.init({ liffId: "2007514355-N7ZqG4BK" }); // <--- ใส่ LIFF ID ของคุณ
-
-      if (!liff.isLoggedIn()) liff.login();
+      await liff.init({ liffId: "2007514355-N7ZqG4BK" });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
 
       const profile = await liff.getProfile();
-      userId = profile.userId;
-      document.getElementById("username").textContent = "สวัสดี, " + profile.displayName;
+      lineId = profile.userId;
 
-      // Generate QR
-      QRCode.toCanvas(document.getElementById("qrcode"), userId);
+      // ดึงข้อมูลแต้ม
+      const user = await fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=getUserInfo&lineId=${lineId}`);
+      const userData = await user.json();
+      document.getElementById("point").textContent = userData.point || 0;
 
-      // ดึงข้อมูลผู้ใช้
-      fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${userId}`)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("point").textContent = data.point || 0;
-        });
+      // เช็คสถานะเช็คอิน
+      const check = await fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=checkinStatus&lineId=${lineId}`);
+      const c = await check.json();
+      if (!c.checkedInToday) {
+        document.getElementById("checkinBox").classList.remove("hidden");
+      }
 
-      // ดึงประวัติ
-      fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getHistory&lineId=${userId}`)
-        .then(res => res.json())
-        .then(items => {
-          const list = document.getElementById("historyList");
-          if (!items.length) {
-            list.innerHTML = `<li class="text-gray-400 text-sm">ไม่มีรายการ</li>`;
-            return;
-          }
-          list.innerHTML = items.map(i => `
-            <li class="bg-white p-3 rounded-lg shadow text-sm">
-              <div class="flex justify-between">
-                <div class="font-medium">${i.detail}</div>
-                <div class="${i.type === 'add' ? 'text-green-600' : 'text-red-500'} font-bold">
-                  ${i.type === 'add' ? '+' : '-'}${i.amount}
-                </div>
-              </div>
-              <div class="text-xs text-gray-400">${i.date}</div>
-            </li>
-          `).join('');
-        });
+      // แสดงวันที่
+      const today = new Date().getDate().toString().padStart(2, "0");
+      document.getElementById("todayDate").textContent = today;
+
+      // ประวัติ
+      const hist = await fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=getHistory&lineId=${lineId}`);
+      const list = await hist.json();
+      const html = list.map(item => `
+        <li class="bg-white p-3 rounded-lg shadow flex justify-between items-center">
+          <div>
+            <div class="text-xs ${item.type === 'redeem' || item.type === 'transfer_out' ? 'text-red-500' : 'text-green-600'} font-bold">
+              ${item.detail}
+            </div>
+            <div class="text-xs text-gray-400">${item.date}</div>
+          </div>
+          <div class="text-sm font-bold ${item.type === 'redeem' || item.type === 'transfer_out' ? 'text-red-400' : 'text-green-600'}">
+            ${item.type === 'redeem' || item.type === 'transfer_out' ? '-' : '+'}${item.amount}
+          </div>
+        </li>
+      `).join('');
+      document.getElementById("historyList").innerHTML = html;
+    }
+
+    async function checkin() {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "dailyCheckin",
+          lineId
+        })
+      });
+      alert(await res.text());
+      location.reload();
     }
 
     init();
