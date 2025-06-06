@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>กิจกรรม</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-4 font-sans bg-white">
+  <h2 class="text-xl font-bold mb-4">กิจกรรม</h2>
+  <div id="eventList" class="space-y-3"></div>
+
+  <script>
+    async function load() {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getEvents");
+      const events = await res.json();
+
+      const html = events.map(e => `
+        <div class="bg-gray-100 rounded-lg p-3 flex justify-between items-center">
+          <div>
+            <div class="font-semibold text-sm">${e.title}</div>
+            <div class="text-xs text-gray-500">รายละเอียดกิจกรรม</div>
+          </div>
+          <a href="event-detail.html?id=${e.id}" class="text-sm text-gray-600 underline">อ่าน ..</a>
+        </div>
+      `).join('');
+
+      document.getElementById("eventList").innerHTML = html;
+    }
+
+    liff.init({ liffId: "2007514355-N7ZqG4BK" }).then(load);
+  </script>
+</body>
+</html>
