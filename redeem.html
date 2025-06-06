@@ -36,7 +36,7 @@
       alert(await res.text());
     }
 
-    liff.init({ liffId: '2007514355-N7ZqG4BK }).then(() => {
+    liff.init({ liffId: '2007514355-N7ZqG4BK' }).then(() => {
       liff.getProfile().then(p => {
         lineId = p.userId;
         fetchItems();
