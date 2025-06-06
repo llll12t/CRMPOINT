@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans p-6">
+  <h1 class="text-2xl font-bold mb-4">🛠 Admin Dashboard</h1>
+
+  <!-- MENU -->
+  <div class="grid grid-cols-2 gap-3 mb-6 text-sm">
+    <button onclick="showTab('event')" class="bg-blue-600 text-white py-2 rounded">กิจกรรม</button>
+    <button onclick="showTab('item')" class="bg-green-600 text-white py-2 rounded">ของแลก</button>
+    <button onclick="showTab('point')" class="bg-purple-600 text-white py-2 rounded">แต้ม</button>
+    <button onclick="showTab('user')" class="bg-yellow-600 text-white py-2 rounded">สมาชิก</button>
+  </div>
+
+  <!-- EVENT -->
+  <div id="tab-event" class="hidden">
+    <h2 class="font-bold text-lg mb-2">📢 จัดการกิจกรรม</h2>
+    <input id="eventTitle" placeholder="ชื่อกิจกรรม" class="w-full p-2 border mb-2 rounded">
+    <input id="eventPoint" type="number" placeholder="แต้ม" class="w-full p-2 border mb-2 rounded">
+    <textarea id="eventDesc" placeholder="รายละเอียด" class="w-full p-2 border mb-2 rounded"></textarea>
+    <input id="eventImage" placeholder="URL รูปภาพ (ไม่บังคับ)" class="w-full p-2 border mb-2 rounded">
+    <button onclick="addEvent()" class="bg-blue-700 text-white py-2 px-4 rounded">➕ เพิ่มกิจกรรม</button>
+  </div>
+
+  <!-- ITEM -->
+  <div id="tab-item" class="hidden">
+    <h2 class="font-bold text-lg mb-2">🎁 จัดการของแลก</h2>
+    <input id="itemName" placeholder="ชื่อของ" class="w-full p-2 border mb-2 rounded">
+    <input id="itemPoint" type="number" placeholder="แต้มที่ใช้แลก" class="w-full p-2 border mb-2 rounded">
+    <input id="itemImage" placeholder="URL รูปภาพ (ไม่บังคับ)" class="w-full p-2 border mb-2 rounded">
+    <button onclick="addItem()" class="bg-green-700 text-white py-2 px-4 rounded">➕ เพิ่มของแลก</button>
+  </div>
+
+  <!-- POINT -->
+  <div id="tab-point" class="hidden">
+    <h2 class="font-bold text-lg mb-2">🎯 จัดการแต้ม</h2>
+    <input id="targetLineId" placeholder="LINE ID ผู้ใช้" class="w-full p-2 border mb-2 rounded">
+    <input id="pointAmount" type="number" placeholder="จำนวนแต้ม" class="w-full p-2 border mb-2 rounded">
+    <input id="pointNote" placeholder="หมายเหตุ" class="w-full p-2 border mb-2 rounded">
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="adjustPoint('add')" class="bg-purple-700 text-white py-2 rounded">➕ แจกแต้ม</button>
+      <button onclick="adjustPoint('subtract')" class="bg-red-600 text-white py-2 rounded">➖ หักแต้ม</button>
+    </div>
+  </div>
+
+  <!-- USER -->
+  <div id="tab-user" class="hidden">
+    <h2 class="font-bold text-lg mb-2">👤 สมาชิก (ดูอย่างเดียว)</h2>
+    <button onclick="loadUsers()" class="bg-yellow-700 text-white py-2 px-4 rounded mb-2">🔄 โหลดสมาชิก</button>
+    <div id="userList" class="text-sm bg-white p-3 rounded shadow"></div>
+  </div>
+
+  <script>
+    const url = 'https://script.google.com/macros/s/AKfycbz-i__HSZ02gYgSP_3bqIi_sURADUEWCa6UW1ajYiuPdVF_2QW8ZU9oDSCPBfLgRsGK/exec'; // <== เปลี่ยนเป็นของคุณ
+
+    function showTab(tab) {
+      ['event', 'item', 'point', 'user'].forEach(id =>
+        document.getElementById('tab-' + id).classList.add('hidden')
+      );
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+    }
+
+    async function addEvent() {
+      const body = {
+        action: 'addEvent',
+        title: eventTitle.value,
+        point: eventPoint.value,
+        desc: eventDesc.value,
+        image: eventImage.value
+      };
+      const res = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      Swal.fire("ผลลัพธ์", await res.text(), "success");
+    }
+
+    async function addItem() {
+      const body = {
+        action: 'addItem',
+        name: itemName.value,
+        point: itemPoint.value,
+        image: itemImage.value
+      };
+      const res = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      Swal.fire("ผลลัพธ์", await res.text(), "success");
+    }
+
+    async function adjustPoint(mode) {
+      const body = {
+        action: 'adjustPoint',
+        lineId: targetLineId.value,
+        amount: pointAmount.value,
+        note: pointNote.value,
+        mode
+      };
+      const res = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      Swal.fire("ผลลัพธ์", await res.text(), "success");
+    }
+
+    async function loadUsers() {
+      const res = await fetch(url + '?action=getUsers');
+      const users = await res.json();
+      const html = users.map(u =>
+        `<div class="border-b py-2"><b>${u.name}</b> (${u.phone}) - ${u.point} แต้ม</div>`
+      ).join('');
+      document.getElementById("userList").innerHTML = html;
+    }
+  </script>
+</body>
+</html>
