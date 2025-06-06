@@ -1,0 +1,47 @@
+<!-- redeem.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>แลกของรางวัล</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-4 bg-gray-100 font-sans">
+  <h2 class="text-lg font-bold mb-4">แลกของรางวัล</h2>
+  <div id="itemList" class="grid grid-cols-2 gap-4"></div>
+
+  <script>
+    let lineId = "";
+
+    async function fetchItems() {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=getItems');
+      const items = await res.json();
+      itemList.innerHTML = items.map(item => `
+        <div class="bg-white p-3 rounded shadow text-center">
+          <img src="${item.image}" class="h-20 mx-auto mb-2">
+          <div class="font-bold">${item.name}</div>
+          <div class="text-yellow-600">${item.point} พ้อย</div>
+          <button onclick="redeem('${item.id}', ${item.point})" class="bg-purple-700 text-white px-4 py-1 mt-2 rounded">แลก</button>
+        </div>
+      `).join('');
+    }
+
+    async function redeem(id, point) {
+      const body = { action: 'redeemItem', lineId, itemId: id };
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      alert(await res.text());
+    }
+
+    liff.init({ liffId: 'YOUR_LIFF_ID' }).then(() => {
+      liff.getProfile().then(p => {
+        lineId = p.userId;
+        fetchItems();
+      });
+    });
+  </script>
+</body>
+</html>

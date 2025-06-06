@@ -1,0 +1,50 @@
+<!-- register.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ลงทะเบียน</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6 bg-gray-50 font-sans">
+  <h2 class="text-xl font-bold mb-4">ลงทะเบียนสมาชิก</h2>
+  <div class="space-y-3">
+    <input id="name" placeholder="ชื่อ-สกุล" class="w-full p-2 border rounded">
+    <input id="phone" placeholder="เบอร์โทร" class="w-full p-2 border rounded">
+    <input id="email" placeholder="อีเมล" class="w-full p-2 border rounded">
+    <input id="address" placeholder="ที่อยู่" class="w-full p-2 border rounded">
+    <input id="note" placeholder="หมายเหตุ" class="w-full p-2 border rounded">
+    <button onclick="submit()" class="w-full bg-yellow-400 py-2 rounded font-bold">สมัคร</button>
+  </div>
+
+  <script>
+    let lineId = "";
+
+    async function submit() {
+      const body = {
+        action: 'register',
+        lineId,
+        name: name.value,
+        phone: phone.value,
+        email: email.value,
+        address: address.value,
+        note: note.value
+      };
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      alert(await res.text());
+    }
+
+    liff.init({ liffId: 'YOUR_LIFF_ID' }).then(() => {
+      liff.getProfile().then(profile => {
+        lineId = profile.userId;
+        name.value = profile.displayName;
+        email.value = liff.getDecodedIDToken().email || '';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-50 p-4 font-sans">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-2">
+    <div class="text-lg font-bold" id="username">สวัสดี</div>
+    <div class="text-sm">
+      พ้อยสะสม: <span id="point" class="text-purple-700 font-bold">0</span>
+    </div>
+  </div>
+
+  <!-- QR Code Box -->
+  <div class="bg-white p-4 rounded-xl shadow-md mb-4 text-center">
+    <div class="font-semibold mb-2">QR Code ของคุณ</div>
+    <canvas id="qrcode" class="mx-auto"></canvas>
+  </div>
+
+  <!-- ประวัติ -->
+  <div>
+    <h2 class="text-md font-bold mb-2">รายการล่าสุด</h2>
+    <ul id="historyList" class="space-y-2"></ul>
+  </div>
+
+  <!-- เมนู -->
+  <div class="grid grid-cols-3 gap-4 mt-6 text-center">
+    <a href="redeem.html" class="bg-purple-700 text-white py-2 rounded">แลกของ</a>
+    <a href="transfer.html" class="bg-purple-700 text-white py-2 rounded">โอนพ้อย</a>
+    <a href="profile.html" class="bg-purple-700 text-white py-2 rounded">โปรไฟล์</a>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    let userId = "";
+
+    async function init() {
+      await liff.init({ liffId: "YOUR_LIFF_ID" }); // <--- ใส่ LIFF ID ของคุณ
+
+      if (!liff.isLoggedIn()) liff.login();
+
+      const profile = await liff.getProfile();
+      userId = profile.userId;
+      document.getElementById("username").textContent = "สวัสดี, " + profile.displayName;
+
+      // Generate QR
+      QRCode.toCanvas(document.getElementById("qrcode"), userId);
+
+      // ดึงข้อมูลผู้ใช้
+      fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=getUserInfo&lineId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("point").textContent = data.point || 0;
+        });
+
+      // ดึงประวัติ
+      fetch(`https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec?action=getHistory&lineId=${userId}`)
+        .then(res => res.json())
+        .then(items => {
+          const list = document.getElementById("historyList");
+          if (!items.length) {
+            list.innerHTML = `<li class="text-gray-400 text-sm">ไม่มีรายการ</li>`;
+            return;
+          }
+          list.innerHTML = items.map(i => `
+            <li class="bg-white p-3 rounded-lg shadow text-sm">
+              <div class="flex justify-between">
+                <div class="font-medium">${i.detail}</div>
+                <div class="${i.type === 'add' ? 'text-green-600' : 'text-red-500'} font-bold">
+                  ${i.type === 'add' ? '+' : '-'}${i.amount}
+                </div>
+              </div>
+              <div class="text-xs text-gray-400">${i.date}</div>
+            </li>
+          `).join('');
+        });
+    }
+
+    init();
+  </script>
+</body>
+</html>

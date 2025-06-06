@@ -1,0 +1,40 @@
+<!-- transfer.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>โอนพ้อย</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6 bg-white font-sans">
+  <h2 class="text-lg font-bold mb-4">โอนพ้อยให้เพื่อน</h2>
+  <input id="to" placeholder="เบอร์ปลายทาง" class="w-full p-2 border rounded mb-2">
+  <input id="amount" placeholder="จำนวนพ้อย" type="number" class="w-full p-2 border rounded mb-2">
+  <button onclick="transfer()" class="w-full bg-purple-700 text-white py-2 rounded font-bold">โอน</button>
+
+  <script>
+    let lineId = "";
+
+    async function transfer() {
+      const body = {
+        action: 'transferPoints',
+        from: lineId,
+        to: to.value,
+        amount: amount.value
+      };
+      const res = await fetch('https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec', {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+      alert(await res.text());
+    }
+
+    liff.init({ liffId: 'YOUR_LIFF_ID' }).then(() => {
+      liff.getProfile().then(p => {
+        lineId = p.userId;
+      });
+    });
+  </script>
+</body>
+</html>
