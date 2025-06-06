@@ -1,0 +1,49 @@
+<!-- activity.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>เช็คอินรับพ้อย</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="p-6 bg-white font-sans">
+  <h2 class="text-xl font-bold mb-4">เช็คอินรายวัน</h2>
+  <div id="status" class="text-center text-gray-600 mb-4">กำลังโหลด...</div>
+  <button id="btn" onclick="checkin()" class="w-full bg-purple-700 text-white py-2 rounded hidden">เช็คอินวันนี้</button>
+
+  <script>
+    let lineId = "";
+
+    async function checkin() {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "dailyCheckin",
+          lineId
+        })
+      });
+      alert(await res.text());
+      location.reload();
+    }
+
+    async function init() {
+      await liff.init({ liffId: "2007514355-N7ZqG4BK" });
+      if (!liff.isLoggedIn()) return liff.login();
+      const profile = await liff.getProfile();
+      lineId = profile.userId;
+
+      const res = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=checkinStatus&lineId=${lineId}`);
+      const data = await res.json();
+      if (data.checkedInToday) {
+        status.innerText = "✅ คุณเช็คอินแล้ววันนี้";
+      } else {
+        status.innerText = "ยังไม่ได้เช็คอินวันนี้";
+        btn.classList.remove("hidden");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
