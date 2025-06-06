@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-sm font-sans">
+
+  <!-- HEADER -->
+  <div class="bg-purple-800 text-white p-4 text-xl font-bold">📋 Admin Dashboard</div>
+
+  <!-- CONTENT -->
+  <div class="flex">
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-white shadow p-4">
+      <ul class="space-y-2">
+        <li><button onclick="showTab('events')" class="w-full text-left hover:bg-purple-100 p-2 rounded">📢 กิจกรรม</button></li>
+        <li><button onclick="showTab('items')" class="w-full text-left hover:bg-green-100 p-2 rounded">🎁 ของแลก</button></li>
+        <li><button onclick="showTab('users')" class="w-full text-left hover:bg-yellow-100 p-2 rounded">👤 สมาชิก</button></li>
+        <li><button onclick="showTab('points')" class="w-full text-left hover:bg-red-100 p-2 rounded">🎯 แต้ม</button></li>
+      </ul>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 p-6 space-y-6 overflow-x-auto">
+      <!-- TAB: EVENTS -->
+      <section id="tab-events" class="hidden">
+        <h2 class="text-xl font-bold mb-2">📢 รายการกิจกรรม</h2>
+        <table class="table-auto w-full bg-white rounded shadow">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">ID</th>
+              <th class="p-2 text-left">ชื่อ</th>
+              <th class="p-2 text-left">แต้ม</th>
+              <th class="p-2 text-left">แก้ไข</th>
+              <th class="p-2 text-left">ลบ</th>
+            </tr>
+          </thead>
+          <tbody id="eventTable"></tbody>
+        </table>
+
+        <!-- เพิ่มกิจกรรม -->
+        <div class="mt-4 bg-gray-50 p-4 rounded shadow space-y-2">
+          <h3 class="font-bold">➕ เพิ่มกิจกรรม</h3>
+          <input id="newEventTitle" placeholder="ชื่อกิจกรรม" class="w-full p-2 border rounded">
+          <input id="newEventPoint" type="number" placeholder="แต้ม" class="w-full p-2 border rounded">
+          <textarea id="newEventDesc" placeholder="รายละเอียด" class="w-full p-2 border rounded"></textarea>
+          <button onclick="createEvent()" class="bg-purple-700 text-white px-4 py-2 rounded">บันทึก</button>
+        </div>
+      </section>
+
+      <!-- TAB: ITEMS -->
+      <section id="tab-items" class="hidden">
+        <h2 class="text-xl font-bold mb-2">🎁 รายการของแลก</h2>
+        <table class="table-auto w-full bg-white rounded shadow">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">ID</th>
+              <th class="p-2 text-left">ชื่อ</th>
+              <th class="p-2 text-left">แต้ม</th>
+              <th class="p-2 text-left">แก้ไข</th>
+              <th class="p-2 text-left">ลบ</th>
+            </tr>
+          </thead>
+          <tbody id="itemTable"></tbody>
+        </table>
+
+        <!-- เพิ่มของ -->
+        <div class="mt-4 bg-gray-50 p-4 rounded shadow space-y-2">
+          <h3 class="font-bold">➕ เพิ่มของแลก</h3>
+          <input id="newItemName" placeholder="ชื่อของ" class="w-full p-2 border rounded">
+          <input id="newItemPoint" type="number" placeholder="แต้ม" class="w-full p-2 border rounded">
+          <button onclick="createItem()" class="bg-green-700 text-white px-4 py-2 rounded">บันทึก</button>
+        </div>
+      </section>
+
+      <!-- TAB: USERS -->
+      <section id="tab-users" class="hidden">
+        <h2 class="text-xl font-bold mb-2">👤 รายชื่อสมาชิก</h2>
+        <table class="table-auto w-full bg-white rounded shadow">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2">ชื่อ</th>
+              <th class="p-2">เบอร์</th>
+              <th class="p-2">พ้อย</th>
+              <th class="p-2">อีเมล</th>
+            </tr>
+          </thead>
+          <tbody id="userTable"></tbody>
+        </table>
+      </section>
+
+      <!-- TAB: POINTS -->
+      <section id="tab-points" class="hidden">
+        <h2 class="text-xl font-bold mb-2">🎯 แจก/หักแต้ม</h2>
+        <input id="targetLineId" placeholder="Line ID" class="w-full p-2 border mb-2 rounded">
+        <input id="pointAmount" type="number" placeholder="แต้ม" class="w-full p-2 border mb-2 rounded">
+        <input id="pointNote" placeholder="หมายเหตุ" class="w-full p-2 border mb-2 rounded">
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="adjustPoint('add')" class="bg-purple-700 text-white py-2 rounded">แจกแต้ม</button>
+          <button onclick="adjustPoint('subtract')" class="bg-red-700 text-white py-2 rounded">หักแต้ม</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+  const url = 'https://script.google.com/macros/s/AKfycbz-i__HSZ02gYgSP_3bqIi_sURADUEWCa6UW1ajYiuPdVF_2QW8ZU9oDSCPBfLgRsGK/exec';
+
+  function showTab(id) {
+    ['events', 'items', 'users', 'points'].forEach(t =>
+      document.getElementById('tab-' + t).classList.add('hidden')
+    );
+    document.getElementById('tab-' + id).classList.remove('hidden');
+  }
+
+  window.onload = () => {
+    loadEvents();
+    loadItems();
+    loadUsers();
+  }
+
+  async function loadEvents() {
+    const res = await fetch(url + '?action=getEvents');
+    const data = await res.json();
+    eventTable.innerHTML = data.map(e => `
+      <tr>
+        <td class="p-2">${e.id}</td>
+        <td class="p-2">${e.title}</td>
+        <td class="p-2">${e.point}</td>
+        <td class="p-2"><button onclick="editEventPrompt('${e.id}', '${e.title}', ${e.point})" class="text-blue-600">แก้ไข</button></td>
+        <td class="p-2"><button onclick="deleteEvent('${e.id}')" class="text-red-600">ลบ</button></td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadItems() {
+    const res = await fetch(url + '?action=getItems');
+    const data = await res.json();
+    itemTable.innerHTML = data.map(e => `
+      <tr>
+        <td class="p-2">${e.id}</td>
+        <td class="p-2">${e.name}</td>
+        <td class="p-2">${e.point}</td>
+        <td class="p-2"><button onclick="editItemPrompt('${e.id}', '${e.name}', ${e.point})" class="text-blue-600">แก้ไข</button></td>
+        <td class="p-2"><button onclick="deleteItem('${e.id}')" class="text-red-600">ลบ</button></td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadUsers() {
+    const res = await fetch(url + '?action=getUsers');
+    const data = await res.json();
+    userTable.innerHTML = data.map(u => `
+      <tr>
+        <td class="p-2">${u.name}</td>
+        <td class="p-2">${u.phone}</td>
+        <td class="p-2">${u.point}</td>
+        <td class="p-2">${u.email}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function createEvent() {
+    const body = {
+      action: 'addEvent',
+      title: newEventTitle.value,
+      point: newEventPoint.value,
+      desc: newEventDesc.value,
+    };
+    const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
+    Swal.fire("เพิ่มกิจกรรม", await res.text(), "success").then(loadEvents);
+  }
+
+  async function createItem() {
+    const body = {
+      action: 'addItem',
+      name: newItemName.value,
+      point: newItemPoint.value,
+    };
+    const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
+    Swal.fire("เพิ่มของ", await res.text(), "success").then(loadItems);
+  }
+
+  async function adjustPoint(mode) {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'adjustPoint',
+        lineId: targetLineId.value,
+        amount: pointAmount.value,
+        note: pointNote.value,
+        mode
+      })
+    });
+    Swal.fire("แต้ม", await res.text(), "success");
+  }
+
+  async function deleteEvent(id) {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'deleteEvent', id })
+    });
+    Swal.fire("ลบกิจกรรม", await res.text(), "success").then(loadEvents);
+  }
+
+  async function deleteItem(id) {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'deleteItem', id })
+    });
+    Swal.fire("ลบของ", await res.text(), "success").then(loadItems);
+  }
+
+  function editEventPrompt(id, title, point) {
+    Swal.fire({
+      title: "แก้ไขกิจกรรม",
+      html: `
+        <input id="title" class="swal2-input" value="${title}">
+        <input id="point" class="swal2-input" value="${point}">
+      `,
+      preConfirm: async () => {
+        const body = {
+          action: 'editEvent',
+          id,
+          title: document.getElementById("title").value,
+          point: document.getElementById("point").value
+        };
+        const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
+        Swal.fire("อัปเดต", await res.text(), "success").then(loadEvents);
+      }
+    });
+  }
+
+  function editItemPrompt(id, name, point) {
+    Swal.fire({
+      title: "แก้ไขของ",
+      html: `
+        <input id="name" class="swal2-input" value="${name}">
+        <input id="point" class="swal2-input" value="${point}">
+      `,
+      preConfirm: async () => {
+        const body = {
+          action: 'editItem',
+          id,
+          name: document.getElementById("name").value,
+          point: document.getElementById("point").value
+        };
+        const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
+        Swal.fire("อัปเดต", await res.text(), "success").then(loadItems);
+      }
+    });
+  }
+</script>
+</body>
+</html>
