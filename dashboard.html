@@ -33,7 +33,7 @@
     </div>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 rounded-full pulse"></div>
-      <div class="font-bold text-gray-800 text-lg px-2 blink"><span id="point">0</span>+</div>
+      <div class="font-bold text-gray-800 text-lg px-2 blink"><span id="point">0</span></div>
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
            alt="LINE DP"
@@ -152,7 +152,7 @@
         histEl.innerHTML = latest10.map(item=>{
           const isDebit = ['redeem','transfer_out'].includes(item.type);
           const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-          const sign  = isDebit ? '0';
+          const sign  = isDebit ? '-' : '+';
           return `
             <li class="flex justify-between items-center">
               <div>
