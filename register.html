@@ -2,11 +2,11 @@
 <html lang="th">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ลงทะเบียน</title>
-  
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ลงทะเบียนสมาชิก</title>
+
   <!-- 1) โหลด config.js ก่อน -->
   <script src="config.js"></script>
   <!-- 2) LIFF SDK -->
@@ -17,43 +17,80 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+    @keyframes pulseCustom {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.02); opacity: 0.6; }
+    }
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0; transform: translateY(10px);
+    }
   </style>
 </head>
-<body class="p-6 bg-gray-50">
 
-  <h2 class="text-xl font-bold mb-4">ลงทะเบียนสมาชิก</h2>
-  <div class="space-y-3">
-    <input id="name"    placeholder="ชื่อ-สกุล"      class="w-full p-2 border rounded">
-    <input id="phone"   placeholder="เบอร์โทร"        class="w-full p-2 border rounded">
-    <input id="email"   placeholder="อีเมล"          class="w-full p-2 border rounded">
-    <input id="address" placeholder="ที่อยู่"          class="w-full p-2 border rounded">
-    <input id="note"    placeholder="หมายเหตุ"        class="w-full p-2 border rounded">
-    <button id="submitBtn"
-            class="w-full bg-yellow-400 py-2 rounded font-bold">
-      สมัคร
-    </button>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center bg-white p-4 shadow">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">ลงทะเบียนสมาชิก</h2>
+
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 rounded-full pulse-custom"></div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg">0+</div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/1/18/Line-icon.svg"
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-4">
+    <div class="bg-white p-6 rounded-xl shadow space-y-4">
+      <input id="name"    placeholder="ชื่อ-สกุล"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="phone"   placeholder="เบอร์โทร"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="email"   placeholder="อีเมล"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="address" placeholder="ที่อยู่"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="note"    placeholder="หมายเหตุ"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <button id="submitBtn"
+              class="w-full bg-purple-900 text-white py-3 rounded-full font-bold hover:scale-105 transform transition-transform">
+        สมัครสมาชิก
+      </button>
+    </div>
   </div>
 
   <script>
     let lineId = "";
 
     async function init() {
-      // init LIFF ด้วย CONFIG.LIFF_ID
+      // 1) init LIFF
       await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) {
         liff.login();
         return;
       }
 
-      // ดึง profile และ decoded ID token พร้อมกัน
-      const [ profile ] = await Promise.all([
-        liff.getProfile()
-        // (ถ้าต้องการ fetch ข้อมูลอื่นพร้อมกัน ให้ใส่ที่นี่)
-      ]);
+      // 2) get profile + userInfo
+      const profileRes = await liff.getProfile();
+      lineId = profileRes.userId;
+      if (profileRes.pictureUrl) {
+        document.getElementById('lineDisplayPicture').src = profileRes.pictureUrl;
+      }
+      // fetch current points
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+      const uData = await uRes.json();
+      document.getElementById('pointVal').textContent = (uData.point || 0) + '+';
 
-      lineId = profile.userId;
-      document.getElementById('name').value  = profile.displayName || '';
-
+      // fill default name & email
+      document.getElementById('name').value = profileRes.displayName || '';
       const idToken = liff.getDecodedIDToken();
       document.getElementById('email').value = idToken.email || '';
     }
@@ -62,18 +99,17 @@
       const body = {
         action:  'register',
         lineId,
-        name:    document.getElementById('name').value,
-        phone:   document.getElementById('phone').value,
-        email:   document.getElementById('email').value,
-        address: document.getElementById('address').value,
-        note:    document.getElementById('note').value
+        name:    document.getElementById('name').value.trim(),
+        phone:   document.getElementById('phone').value.trim(),
+        email:   document.getElementById('email').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        note:    document.getElementById('note').value.trim()
       };
-
       const res = await fetch(CONFIG.GAS_URL, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json;charset=UTF-8' },
         body:   JSON.stringify(body)
       });
-
       const text = await res.text();
       alert(text);
     }
