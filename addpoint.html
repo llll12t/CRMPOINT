@@ -15,16 +15,12 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
-
-    /* pulse animation */
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
     @keyframes pulseCustom {
       0%   { transform: scale(1); opacity: 1; }
       50%  { transform: scale(1.02); opacity: 0.6; }
       100% { transform: scale(1); opacity: 1; }
     }
-    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
-
-    /* alert transition */
     .alert-fade-enter-active, .alert-fade-leave-active {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
@@ -32,7 +28,6 @@
       opacity: 0;
       transform: translateY(10px);
     }
-
     .disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
@@ -84,6 +79,7 @@
     const scanBtn     = document.getElementById('scanBtn');
     const enterBtn    = document.getElementById('enterBtn');
     const manualInput = document.getElementById('manualCode');
+    const scanContainer = document.getElementById('scanContainer');
     const pointEl     = document.getElementById('pointVal');
     const dpEl        = document.getElementById('lineDisplayPicture');
     const alertOvl    = document.getElementById('customAlertOverlay');
@@ -107,17 +103,17 @@
       alertOvl.addEventListener('click', hide);
     }
 
-    // ตรวจสอบจาก history ก่อนแสดงรายละเอียดหรือรับพ้อยต์
+    // คืน true ถ้ารับพ้อยต์กิจกรรมนี้แล้ว
     async function hasReceived(code) {
-      const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`);
-      const historyList = await hRes.json();
-      return historyList.some(item =>
+      const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`);
+      const history = await res.json();
+      return history.some(item =>
         item.type === 'event' && item.eventId === code
       );
     }
 
     async function processCode(code) {
-      // ถ้ารับไปแล้ว หยุดที่นี่
+      // ตรวจสอบก่อนว่าเคยรับหรือยัง
       if (await hasReceived(code)) {
         showAlert('คุณรับพ้อยต์แล้ว', 'คุณไม่สามารถรับซ้ำสำหรับกิจกรรมนี้');
         return;
@@ -142,6 +138,7 @@
             รับพ้อยต์
           </button>
         </div>`;
+
       document.getElementById('acceptBtn').addEventListener('click', async () => {
         // บันทึกผ่าน POST
         await fetch(CONFIG.GAS_URL, {
@@ -154,10 +151,12 @@
             point:   eData.point
           })
         });
-        // รีโหลดคะแนนจากเซิร์ฟเวอร์
+
+        // รีโหลดคะแนน
         const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
         const uData = await uRes.json();
-        // แจ้งผลและอัปเดต UI
+
+        // แสดงผลและอัปเดต UI
         showAlert(
           'ยินดีด้วย!',
           `คุณได้รับ ${eData.point} พ้อยต์`,
@@ -183,14 +182,16 @@
     async function init() {
       await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
+
       const profile = await liff.getProfile();
       lineId = profile.userId;
       if (profile.pictureUrl) {
         dpEl.src = profile.pictureUrl;
         dpEl.alt = profile.displayName;
       }
+
       // โหลดคะแนนปัจจุบัน
-      const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
       const uData = await uRes.json();
       pointEl.textContent = uData.point || 0;
 
