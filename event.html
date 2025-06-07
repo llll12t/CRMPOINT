@@ -14,13 +14,37 @@
     }
   </style>
 </head>
-<body class="bg-gray-50 p-4"> <!-- เปลี่ยนพื้นหลังเป็น bg-gray-50 และเพิ่ม padding -->
+<body class="bg-gray-50 p-4">
 
-  <h2 class="text-xl font-bold mb-4 text-gray-800">กิจกรรม</h2> <!-- เพิ่มสีข้อความให้เป็นสีเข้มตามธีม -->
+  <!-- แถบ Header ใหม่: ปุ่มกลับ (ซ้าย) และ แต้ม/Display (ขวา) -->
+  <div class="flex justify-between items-center mb-6">
+    <!-- ปุ่มกลับ -->
+    <a href="#" onclick="history.back(); return false;" class="text-gray-600 hover:text-purple-900 p-2 rounded-full transform hover:scale-110 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+
+    <!-- แต้ม และ LINE display picture -->
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
+      <div class="font-bold text-gray-800 text-lg px-2"><span id="pointVal">0</span>+</div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE display picture"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+  <!-- หัวข้อหลักของหน้านี้ -->
+  <h2 class="text-xl font-bold mb-4 text-gray-800">กิจกรรม</h2> 
+
   <div id="eventList" class="space-y-3"></div>
 
   <script>
-    async function load() {
+    let lineId = ""; // กำหนด lineId ให้เป็นตัวแปร global
+
+    async function loadEvents() { // เปลี่ยนชื่อ function จาก load() เป็น loadEvents() เพื่อความชัดเจน
       const res = await fetch("https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getEvents");
       const events = await res.json();
 
@@ -28,10 +52,8 @@
         <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
           <div>
             <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
-            <!-- สมมติว่า e.detail มีข้อมูลรายละเอียด หรือสามารถใช้ placeholder ได้ -->
             <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
           </div>
-          <!-- ปรับสไตล์ลิงก์ให้เข้ากับธีม -->
           <a href="event-detail.html?id=${e.id}" class="text-sm font-medium text-purple-700 hover:text-purple-900">ดูรายละเอียด</a>
         </div>
       `).join('');
@@ -39,7 +61,38 @@
       document.getElementById("eventList").innerHTML = html;
     }
 
-    liff.init({ liffId: "2007514355-N7ZqG4BK" }).then(load);
+    async function init() {
+      await liff.init({ liffId: "2007514355-N7ZqG4BK" });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      const profile = await liff.getProfile();
+      lineId = profile.userId;
+
+      // ดึงรูปโปรไฟล์ LINE และนำมาแสดง (เหมือนใน event-detail.html)
+      const profilePictureUrl = profile.pictureUrl;
+      const displayImageElement = document.getElementById('lineDisplayPicture');
+      if (displayImageElement && profilePictureUrl) {
+        displayImageElement.src = profilePictureUrl;
+        displayImageElement.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
+        displayImageElement.title = `รูปโปรไฟล์ของ ${profile.displayName}`;
+      } else {
+        console.log("Could not load LINE profile picture or element not found.");
+      }
+
+      // ดึงข้อมูลแต้มของผู้ใช้ (สำหรับแสดงที่มุมขวาบน) (เหมือนใน event-detail.html)
+      const user = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`);
+      const userData = await user.json();
+      document.getElementById("pointVal").textContent = userData.point || 0;
+
+      // โหลดรายการกิจกรรมหลังจาก LIFF และข้อมูลผู้ใช้พร้อม
+      loadEvents();
+    }
+
+    // เริ่มต้นการทำงานของ LIFF และโหลดข้อมูล
+    init();
   </script>
 </body>
 </html>
