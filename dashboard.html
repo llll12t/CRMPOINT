@@ -25,10 +25,13 @@
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
       <div class="font-bold text-gray-800 text-lg px-2"><span id="point">0</span>+</div>
-      <!-- เปลี่ยนจากวงกลมสีม่วงเป็นรูป LINE icon -->
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png" 
-           alt="LINE display" 
-           class="w-10 h-10 rounded-lg object-contain">
+      <!-- เปลี่ยนจากวงกลมสีม่วงเป็นรูป LINE display picture -->
+      <!-- เพิ่ม id="lineDisplayPicture" เพื่อให้ JavaScript อ้างถึงได้ -->
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE display picture"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+           <!-- เพิ่ม border-2 border-purple-900 เพื่อให้ดูเด่นขึ้น คล้ายกับธีม -->
     </div>
   </div>
 
@@ -96,6 +99,20 @@
 
       const profile = await liff.getProfile();
       lineId = profile.userId;
+
+      // ดึงรูปโปรไฟล์ LINE และนำมาแสดง
+      const profilePictureUrl = profile.pictureUrl;
+      const displayImageElement = document.getElementById('lineDisplayPicture');
+      if (displayImageElement && profilePictureUrl) {
+        displayImageElement.src = profilePictureUrl;
+        displayImageElement.alt = `รูปโปรไฟล์ของ ${profile.displayName}`; // เพิ่ม alt text เพื่อการเข้าถึง
+        displayImageElement.title = `รูปโปรไฟล์ของ ${profile.displayName}`; // เพิ่ม title สำหรับ tooltip
+      } else {
+        // หากไม่มีรูปโปรไฟล์ (เช่น ผู้ใช้ไม่ได้ตั้งค่า) หรือเกิดข้อผิดพลาด
+        console.log("Could not load LINE profile picture or element not found.");
+        // รูป default ที่ตั้งไว้ใน HTML จะยังคงอยู่
+      }
+
 
       // ดึงข้อมูลแต้ม
       const user = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`);
