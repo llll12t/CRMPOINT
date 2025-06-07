@@ -4,27 +4,37 @@
   <meta charset="UTF-8">
   <title>กิจกรรม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- LIFF SDK -->
+
+  <!-- 1) โหลด config ก่อน -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
+  <!-- 3) Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
   <style>
-    /* ฟอนต์ Kanit ตามธีมเดิม */
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
 
-    /* custom pulse animation (ถ้าอยากปรับแต่งเอง) */
     @keyframes pulseCustom {
       0%   { transform: scale(1); opacity: 1; }
       50%  { transform: scale(1.02); opacity: 0.6; }
       100% { transform: scale(1); opacity: 1; }
     }
     .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
 
-  <!-- แถบ Header ใหม่ -->
+  <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <a href="#" onclick="history.back(); return false;"
        class="text-gray-600 hover:text-purple-900 p-2 rounded-full transform hover:scale-110 transition-transform">
@@ -46,12 +56,12 @@
     </div>
   </div>
 
-  <!-- หัวข้อหลักของหน้านี้ -->
+  <!-- Title -->
   <h2 class="text-xl font-bold mb-4 text-gray-800">กิจกรรม</h2>
 
-  <!-- รายการกิจกรรม -->
+  <!-- Event List -->
   <div id="eventList" class="space-y-3">
-    <!-- Skeleton loaders ก่อน fetch จริง -->
+    <!-- skeleton loaders -->
     <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
       <div class="space-y-2 w-3/4">
         <div class="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -66,19 +76,11 @@
       </div>
       <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
     </div>
-    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
-      <div class="space-y-2 w-3/4">
-        <div class="h-4 bg-gray-200 rounded w-3/5"></div>
-        <div class="h-3 bg-gray-200 rounded w-1/3"></div>
-      </div>
-      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
-    </div>
   </div>
 
   <script>
     let lineId = "";
 
-    // สร้าง skeleton จำนวน count ชิ้น
     function generateSkeleton(count) {
       let html = '';
       for (let i = 0; i < count; i++) {
@@ -94,67 +96,56 @@
       return html;
     }
 
-    async function loadEvents() {
-      const container = document.getElementById('eventList');
-      // แสดง skeleton ขณะรอ
-      container.innerHTML = generateSkeleton(5);
-
-      // ดึงข้อมูลกิจกรรมจริง
-      const res = await fetch(
-        "https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getEvents"
-      );
-      const events = await res.json();
-
-      // ถ้าไม่มีกิจกรรม
-      if (!events.length) {
-        container.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
-        return;
-      }
-
-      // สร้าง HTML แสดงกิจกรรม
-      const html = events.map(e => `
-        <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
-          <div>
-            <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
-            <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
-          </div>
-          <a href="event-detail.html?id=${e.id}"
-             class="text-sm font-medium text-purple-700 hover:text-purple-900">
-            ดูรายละเอียด
-          </a>
-        </div>
-      `).join('');
-
-      container.innerHTML = html;
-    }
-
     async function init() {
-      await liff.init({ liffId: "2007514355-N7ZqG4BK" });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
+      // 1) เรียก LIFF จาก CONFIG.LIFF_ID
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
 
+      // 2) ดึง profile
       const profile = await liff.getProfile();
       lineId = profile.userId;
-
-      // อัพเดตรูปโปรไฟล์
-      const dp = document.getElementById('lineDisplayPicture');
       if (profile.pictureUrl) {
+        const dp = document.getElementById('lineDisplayPicture');
         dp.src = profile.pictureUrl;
         dp.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
-        dp.title = `รูปโปรไฟล์ของ ${profile.displayName}`;
       }
 
-      // ดึงแต้ม
-      const u = await fetch(
-        `https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`
-      );
-      const userData = await u.json();
-      document.getElementById('pointVal').textContent = userData.point || 0;
+      // 3) แสดง skeleton ขณะรอ fetch
+      document.getElementById('pointVal').textContent = '…';
+      document.getElementById('eventList').innerHTML = generateSkeleton(5);
 
-      // โหลดกิจกรรม
-      loadEvents();
+      // 4) ใช้ Promise.all ดึง getUserInfo + getEvents พร้อมกัน
+      const [ userRes, eventsRes ] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getEvents`)
+      ]);
+
+      const [ userData, events ] = await Promise.all([
+        userRes.json(),
+        eventsRes.json()
+      ]);
+
+      // 5) อัปเดตแต้ม
+      document.getElementById('pointVal').textContent = (userData.point || 0);
+
+      // 6) แสดงกิจกรรม
+      const container = document.getElementById('eventList');
+      if (!events.length) {
+        container.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
+      } else {
+        container.innerHTML = events.map(e => `
+          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
+              <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
+            </div>
+            <a href="event-detail.html?id=${e.id}"
+               class="text-sm font-medium text-purple-700 hover:text-purple-900">
+              ดูรายละเอียด
+            </a>
+          </div>
+        `).join('');
+      }
     }
 
     init();
