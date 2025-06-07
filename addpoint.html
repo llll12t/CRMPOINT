@@ -4,35 +4,23 @@
   <meta charset="UTF-8">
   <title>สแกน/กรอกโค้ดเพื่อรับรางวัล</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- config.js -->
   <script src="config.js"></script>
-  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
-
-    /* pulse animation */
-    @keyframes pulseCustom {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.02); opacity: 0.6; }
-      100% { transform: scale(1); opacity: 1; }
-    }
     .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
-
-    /* alert transition */
+    @keyframes pulseCustom {
+      0%,100%{transform:scale(1);opacity:1;}
+      50%{transform:scale(1.02);opacity:0.6;}
+    }
     .alert-fade-enter-active, .alert-fade-leave-active {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
     .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
+      opacity: 0; transform: translateY(10px);
     }
-
     .disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
@@ -81,7 +69,7 @@
 
   <script>
     let lineId = "";
-    // ** ประกาศ scanContainer ให้ถูกต้อง **
+    let eventTitle = "", eventRewardPoint = 0;
     const scanContainer = document.getElementById('scanContainer');
     const scanBtn       = document.getElementById('scanBtn');
     const enterBtn      = document.getElementById('enterBtn');
@@ -102,76 +90,71 @@
         setTimeout(() => {
           alertOvl.classList.add('hidden');
           alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
-          alertOvl.removeEventListener('click', hide);
           cb && cb();
+          alertOvl.removeEventListener('click', hide);
         }, 300);
       }
       alertOvl.addEventListener('click', hide);
     }
 
-    // เช็คว่าเคยรับพ้อยต์จาก code นี้แล้วหรือยัง
     async function hasReceived(code) {
-      const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`);
-      const historyList = await hRes.json();
-      return historyList.some(item =>
+      const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`);
+      const hist = await res.json();
+      return hist.some(item =>
         item.type === 'event' && item.eventId === code
       );
     }
 
     async function processCode(code) {
-      // ถ้ารับไปแล้ว ให้เตือนและ return
       if (await hasReceived(code)) {
-        showAlert('คุณรับพ้อยต์แล้ว', 'คุณไม่สามารถรับซ้ำสำหรับกิจกรรมนี้');
+        showAlert('คุณรับพ้อยต์แล้ว', 'ไม่สามารถรับซ้ำได้');
         return;
       }
-
       // ดึงข้อมูลกิจกรรม
-      const eRes  = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${code}`);
+      const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${code}`);
       const eData = await eRes.json();
       if (eData.error) {
         showAlert('ไม่พบกิจกรรม', eData.error);
         return;
       }
-
-      // แสดงรายละเอียดกิจกรรม ก่อนปุ่มรับพ้อยต์
+      eventTitle = eData.title;
+      eventRewardPoint = eData.point;
+      // แสดงรายละเอียด + ปุ่มรับ
       scanContainer.innerHTML = `
         <div class="bg-white p-6 rounded-xl shadow mb-4">
-          <div class="font-bold text-lg mb-2">${eData.title}</div>
+          <div class="font-bold text-lg mb-2">${eventTitle}</div>
           <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
-          <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${eData.point}</div>
+          <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${eventRewardPoint}</div>
           <button id="acceptBtn"
                   class="bg-green-500 text-white py-2 px-6 rounded-full font-bold hover:scale-105 transform transition-transform">
             รับพ้อยต์
           </button>
         </div>`;
+      document.getElementById('acceptBtn').addEventListener('click', join);
+    }
 
-      // ผูก event ให้ปุ่มรับพ้อยต์
-      document.getElementById('acceptBtn').addEventListener('click', async () => {
-        // บันทึกผ่าน POST แบบ joinEvent
-        await fetch(CONFIG.GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action:  'joinEvent',
-            lineId,
-            eventId: code,
-            title:   eData.title,
-            point:   eData.point
-          })
-        });
-        // โหลดคะแนนใหม่
-        const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-        const uData = await uRes.json();
-        // แจ้งผลและอัปเดต UI
-        showAlert(
-          'ยินดีด้วย!',
-          `คุณได้รับ ${eData.point} พ้อยต์`,
-          () => {
-            pointEl.textContent = uData.point || 0;
-            const btn = document.getElementById('acceptBtn');
-            btn.disabled = true;
-            btn.classList.add('disabled');
-          }
-        );
+    async function join() {
+      if (!confirm(`เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`)) return;
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action:     "joinEvent",
+          lineId,
+          eventId:    new URLSearchParams(location.search).get("id") || manualInput.value.trim(),
+          title:      eventTitle,
+          point:      eventRewardPoint
+        })
+      });
+      const text = await res.text();
+      showAlert("สถานะ", text, async () => {
+        if (text.includes("สำเร็จ")) {
+          // อัปเดตคะแนนใหม่
+          const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+          const uData = await uRes.json();
+          pointEl.textContent = uData.point || 0;
+          document.getElementById("acceptBtn").disabled = true;
+          document.getElementById("acceptBtn").classList.add("disabled");
+        }
       });
     }
 
@@ -187,18 +170,18 @@
     async function init() {
       await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
-      const profile = await liff.getProfile();
-      lineId = profile.userId;
-      if (profile.pictureUrl) {
-        dpEl.src = profile.pictureUrl;
-        dpEl.alt = profile.displayName;
+      const p = await liff.getProfile();
+      lineId = p.userId;
+      if (p.pictureUrl) {
+        dpEl.src = p.pictureUrl;
+        dpEl.alt = p.displayName;
       }
-      // โหลดคะแนนปัจจุบัน
-      const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+      // โหลดคะแนน
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
       const uData = await uRes.json();
       pointEl.textContent = uData.point || 0;
 
-      scanBtn.addEventListener('click', scan);
+      scanBtn .addEventListener('click', scan);
       enterBtn.addEventListener('click', () => {
         const code = manualInput.value.trim();
         if (!code) {
@@ -208,7 +191,6 @@
         processCode(code);
       });
     }
-
     init();
   </script>
 </body>
