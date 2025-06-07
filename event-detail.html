@@ -4,31 +4,31 @@
   <meta charset="UTF-8">
   <title>รายละเอียดกิจกรรม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 1) โหลด config ก่อนเสมอ -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 3) Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    /* เพิ่มฟอนต์ที่ดูทันสมัยมากขึ้น (ตามธีมเดิม) */
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body {
-      font-family: 'Kanit', sans-serif;
-    }
+    body { font-family: 'Kanit', sans-serif; }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
 
-  <!-- แถบ Header ใหม่: ปุ่มกลับ (ซ้าย) และ แต้ม/Display (ขวา) -->
+  <!-- Header -->
   <div class="flex justify-between items-center mb-6">
-    <!-- ปุ่มกลับ -->
-    <a href="#" onclick="history.back(); return false;" class="text-gray-600 hover:text-purple-900 p-2 rounded-full transform hover:scale-110 transition-transform">
+    <a href="#" onclick="history.back(); return false;"
+       class="text-gray-600 hover:text-purple-900 p-2 rounded-full transform hover:scale-110 transition-transform">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
     </a>
-
-    <!-- แต้ม และ LINE display picture -->
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
-      <div class="font-bold text-gray-800 text-lg px-2"><span id="pointVal">0</span>+</div> <!-- เปลี่ยน id เพื่อไม่ให้ซ้ำกับ point ใน card -->
+      <div class="font-bold text-gray-800 text-lg px-2"><span id="pointVal">0</span>+</div>
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
            alt="LINE display picture"
@@ -36,93 +36,104 @@
     </div>
   </div>
 
-  <!-- หัวข้อรายละเอียดกิจกรรม (อยู่ใต้แถบ Header) -->
-  <h2 class="text-xl font-bold mb-4 text-gray-800">รายละเอียดกิจกรรม</h2> 
+  <!-- Title -->
+  <h2 class="text-xl font-bold mb-4 text-gray-800">รายละเอียดกิจกรรม</h2>
 
-  <!-- การ์ดรายละเอียดกิจกรรม -->
+  <!-- Card -->
   <div id="card" class="bg-white p-6 rounded-xl shadow-md text-gray-800">
     <div class="flex justify-between items-start mb-3">
-      <div class="font-bold text-lg" id="title">-</div>
-      <!-- แต้มสำหรับกิจกรรมนี้ (ยังคงอยู่ใน card แต่เปลี่ยน id เพื่อไม่ให้ซ้ำ) -->
+      <div class="font-bold text-lg" id="title">–</div>
       <div class="bg-yellow-400 text-gray-800 font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
     </div>
     <div class="text-sm text-gray-700 mb-6 leading-relaxed" id="desc">...</div>
-    
-    <button onclick="join()" class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">เข้าร่วม</button>
+    <button id="joinBtn"
+            class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
+      เข้าร่วม
+    </button>
   </div>
 
   <script>
-    const params = new URLSearchParams(location.search);
-    const eventId = params.get("id");
-    let lineId = "", eventRewardPoint = 0, eventTitle = ""; // เปลี่ยนชื่อตัวแปร point, title เพื่อไม่ให้ชนกับ global element id
+    const params           = new URLSearchParams(location.search);
+    const eventId          = params.get("id");
+    let   lineId           = "";
+    let   eventRewardPoint = 0;
+    let   eventTitle       = "";
 
-    async function load() {
-      const res = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getEventById&id=${eventId}`);
-      const data = await res.json();
-      if (data.error) {
-        document.getElementById("title").textContent = "ไม่พบกิจกรรม";
-        document.getElementById("desc").textContent = data.error;
-        document.getElementById("eventPoint").textContent = ""; // ปรับ id
-        document.querySelector("button").disabled = true;
+    // โหลดข้อมูล user + event พร้อมกัน
+    async function loadData() {
+      const [ userRes, eventRes ] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`)
+      ]);
+
+      const [ userData, eventData ] = await Promise.all([
+        userRes.json(),
+        eventRes.json()
+      ]);
+
+      // อัปเดตแต้ม
+      document.getElementById("pointVal").textContent    = userData.point || 0;
+      // ถ้าเกิด error จาก API
+      if (eventData.error) {
+        document.getElementById("title").textContent     = "ไม่พบกิจกรรม";
+        document.getElementById("desc").textContent      = eventData.error;
+        document.getElementById("eventPoint").textContent= "";
+        document.getElementById("joinBtn").disabled       = true;
         return;
       }
 
-      eventTitle = data.title;
-      eventRewardPoint = data.point; // ค่า point ที่ได้จาก API
+      // เก็บค่าไว้ใช้ตอน join
+      eventTitle       = eventData.title;
+      eventRewardPoint = eventData.point;
 
-      document.getElementById("title").textContent = data.title;
-      document.getElementById("eventPoint").textContent = `${data.point}+`; // ปรับ id
-      document.getElementById("desc").textContent = data.desc;
+      // แทรกข้อมูลลงหน้า
+      document.getElementById("title").textContent      = eventData.title;
+      document.getElementById("eventPoint").textContent = `${eventData.point}+`;
+      document.getElementById("desc").textContent       = eventData.desc;
     }
 
+    // ทำรายการ join
     async function join() {
-      if (!confirm(`คุณต้องการเข้าร่วมกิจกรรม "${eventTitle}" และรับ ${eventRewardPoint} แต้มใช่หรือไม่?`)) {
-          return;
+      if (!confirm(`คุณต้องการเข้าร่วมกิจกรรม "${eventTitle}" และรับ ${eventRewardPoint} แต้ม ใช่หรือไม่?`)) {
+        return;
       }
-
-      const res = await fetch("https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec", {
+      const res = await fetch(CONFIG.GAS_URL, {
         method: "POST",
         body: JSON.stringify({
           action: "joinEvent",
           lineId,
           eventId,
-          title: eventTitle, // ใช้ eventTitle
-          point: eventRewardPoint // ใช้ eventRewardPoint
+          title: eventTitle,
+          point: eventRewardPoint
         })
       });
-      const resultText = await res.text();
-      alert(resultText);
-      if (resultText.includes("สำเร็จ")) {
-          liff.closeWindow();
+      const text = await res.text();
+      alert(text);
+      if (text.includes("สำเร็จ")) {
+        liff.closeWindow();
       }
     }
 
+    // เริ่มต้น LIFF + โหลด data
     async function init() {
-      await liff.init({ liffId: "2007514355-N7ZqG4BK" });
+      await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
+        liff.login(); return;
       }
+
       const profile = await liff.getProfile();
       lineId = profile.userId;
-
-      // ดึงรูปโปรไฟล์ LINE และนำมาแสดง
-      const profilePictureUrl = profile.pictureUrl;
-      const displayImageElement = document.getElementById('lineDisplayPicture');
-      if (displayImageElement && profilePictureUrl) {
-        displayImageElement.src = profilePictureUrl;
-        displayImageElement.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
-        displayImageElement.title = `รูปโปรไฟล์ของ ${profile.displayName}`;
-      } else {
-        console.log("Could not load LINE profile picture or element not found.");
+      if (profile.pictureUrl) {
+        const dp = document.getElementById('lineDisplayPicture');
+        dp.src   = profile.pictureUrl;
+        dp.alt   = `รูปโปรไฟล์ของ ${profile.displayName}`;
       }
 
-      // ดึงข้อมูลแต้มของผู้ใช้ (สำหรับแสดงที่มุมขวาบน)
-      const user = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`);
-      const userData = await user.json();
-      document.getElementById("pointVal").textContent = userData.point || 0; // ปรับ id
+      // bind join button
+      document.getElementById("joinBtn").addEventListener("click", join);
 
-      load(); // โหลดข้อมูลกิจกรรม
+      // โหลดข้อมูล
+      await loadData();
     }
 
     init();
