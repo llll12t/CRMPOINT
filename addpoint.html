@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>สแกน/กรอกโค้ดเพื่อรับรางวัล</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <!-- config.js -->
   <script src="config.js"></script>
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
@@ -57,7 +56,7 @@
     </button>
     <div class="flex space-x-2">
       <input id="manualCode" type="text" placeholder="กรอกโค้ดที่นี่"
-             class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+             class="flex-1 p-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-purple-500">
       <button id="enterBtn"
               class="bg-green-500 text-white py-3 px-6 rounded-full font-bold hover:scale-105 transform transition-transform">
         รับโค้ด
