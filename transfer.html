@@ -4,26 +4,26 @@
   <meta charset="UTF-8">
   <title>โอนพ้อย</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- LIFF SDK -->
+
+  <!-- 1) โหลด config.js ก่อนเสมอ -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
+  <!-- 3) Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
   <style>
-    /* ฟอนต์ Kanit ตามธีมเดิม */
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
-
-    /* Card กระพริบ ขณะโหลด */
     .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
-    @keyframes pulse-opacity {
-      0%   { opacity: 0.5; }
-      50%  { opacity: 1; }
-      100% { opacity: 0.5; }
+    @keyframes pulse-opacity { 0%,100%{opacity:0.5;}50%{opacity:1;} }
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
-
-    /* Alert/Confirm Transition */
-    .alert-fade-enter-active, .alert-fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
-    .alert-fade-enter, .alert-fade-leave-to { opacity: 0; transform: translateY(10px); }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
@@ -52,21 +52,21 @@
   <h2 class="text-xl font-bold mb-6 text-gray-800">โอนพ้อยให้เพื่อน</h2>
 
   <!-- Form -->
-  <div class="space-y-4">
-    <input id="to" placeholder="LINE ID เพื่อน / เบอร์โทรศัพท์ปลายทาง"
-           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 shadow-sm">
+  <div class="space-y-4 mb-6">
+    <input id="to" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง"
+           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
     <input id="amount" placeholder="จำนวนพ้อยที่ต้องการโอน" type="number"
-           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 shadow-sm">
-    <button onclick="transfer()"
+           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
+    <button id="transferBtn"
             class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
       โอนพ้อย
     </button>
   </div>
 
-  <!-- Custom Alert Overlay -->
+  <!-- Alert -->
   <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
+      <div id="customAlertTitle" class="font-bold text-lg mb-3"></div>
       <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
       <button id="customAlertButton"
               class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
@@ -75,10 +75,10 @@
     </div>
   </div>
 
-  <!-- Custom Confirm Overlay -->
+  <!-- Confirm -->
   <div id="customConfirmOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customConfirmTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
+      <div id="customConfirmTitle" class="font-bold text-lg mb-3"></div>
       <div id="customConfirmMessage" class="text-gray-700 mb-6"></div>
       <div class="flex justify-around space-x-4">
         <button id="customConfirmCancelButton"
@@ -93,148 +93,111 @@
     </div>
   </div>
 
-
   <script>
     let lineId = "";
 
-    // Alert & Confirm elements
-    const customAlertOverlay      = document.getElementById('customAlertOverlay');
-    const customAlertTitle        = document.getElementById('customAlertTitle');
-    const customAlertMessage      = document.getElementById('customAlertMessage');
-    const customAlertButton       = document.getElementById('customAlertButton');
-    const customConfirmOverlay    = document.getElementById('customConfirmOverlay');
-    const customConfirmTitle      = document.getElementById('customConfirmTitle');
-    const customConfirmMessage    = document.getElementById('customConfirmMessage');
-    const customConfirmConfirmBtn = document.getElementById('customConfirmConfirmButton');
-    const customConfirmCancelBtn  = document.getElementById('customConfirmCancelButton');
+    // Alert & Confirm refs
+    const alertOvl = document.getElementById('customAlertOverlay');
+    const alertT   = document.getElementById('customAlertTitle');
+    const alertM   = document.getElementById('customAlertMessage');
+    const alertBtn = document.getElementById('customAlertButton');
+    const confOvl  = document.getElementById('customConfirmOverlay');
+    const confT    = document.getElementById('customConfirmTitle');
+    const confM    = document.getElementById('customConfirmMessage');
+    const okBtn    = document.getElementById('customConfirmConfirmButton');
+    const noBtn    = document.getElementById('customConfirmCancelButton');
 
-    function showAlert(title, message, callback) {
-      customAlertTitle.textContent   = title;
-      customAlertMessage.textContent = message;
-      customAlertOverlay.classList.remove('hidden');
-      requestAnimationFrame(() => {
-        customAlertOverlay.querySelector('div').classList.remove('alert-fade-enter');
-      });
-      const dismiss = () => {
-        customAlertOverlay.querySelector('div').classList.add('alert-fade-leave-to');
+    function showAlert(title, message, cb) {
+      alertT.textContent = title;
+      alertM.textContent = message;
+      alertOvl.classList.remove('hidden');
+      requestAnimationFrame(() => alertOvl.querySelector('div').classList.remove('alert-fade-enter'));
+      const hide = () => {
+        alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
         setTimeout(() => {
-          customAlertOverlay.classList.add('hidden');
-          customAlertOverlay.querySelector('div').classList.remove('alert-fade-leave-to');
-          if (callback) callback();
+          alertOvl.classList.add('hidden');
+          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
+          cb && cb();
         }, 300);
-        customAlertButton.removeEventListener('click', dismiss);
+        alertBtn.removeEventListener('click', hide);
       };
-      customAlertButton.addEventListener('click', dismiss);
+      alertBtn.addEventListener('click', hide);
     }
 
     function showConfirm(title, message) {
-      return new Promise(resolve => {
-        customConfirmTitle.textContent   = title;
-        customConfirmMessage.textContent = message;
-        customConfirmOverlay.classList.remove('hidden');
-        requestAnimationFrame(() => {
-          customConfirmOverlay.querySelector('div').classList.remove('alert-fade-enter');
-        });
-        const onConfirm = () => {
-          cleanup();
-          resolve(true);
-        };
-        const onCancel = () => {
-          cleanup();
-          resolve(false);
-        };
+      return new Promise(res => {
+        confT.textContent = title;
+        confM.textContent = message;
+        confOvl.classList.remove('hidden');
+        requestAnimationFrame(() => confOvl.querySelector('div').classList.remove('alert-fade-enter'));
+        const onOk = () => { cleanup(); res(true); };
+        const onNo = () => { cleanup(); res(false); };
         function cleanup() {
-          customConfirmOverlay.querySelector('div').classList.add('alert-fade-leave-to');
+          confOvl.querySelector('div').classList.add('alert-fade-leave-to');
           setTimeout(() => {
-            customConfirmOverlay.classList.add('hidden');
-            customConfirmOverlay.querySelector('div').classList.remove('alert-fade-leave-to');
+            confOvl.classList.add('hidden');
+            confOvl.querySelector('div').classList.remove('alert-fade-leave-to');
           }, 300);
-          customConfirmConfirmBtn.removeEventListener('click', onConfirm);
-          customConfirmCancelBtn.removeEventListener('click', onCancel);
+          okBtn.removeEventListener('click', onOk);
+          noBtn.removeEventListener('click', onNo);
         }
-        customConfirmConfirmBtn.addEventListener('click', onConfirm);
-        customConfirmCancelBtn.addEventListener('click', onCancel);
+        okBtn.addEventListener('click', onOk);
+        noBtn.addEventListener('click', onNo);
       });
     }
 
-
     async function transfer() {
       const toId   = document.getElementById('to').value.trim();
-      const amount = parseInt(document.getElementById('amount').value);
+      const amt    = parseInt(document.getElementById('amount').value);
+      if (!toId) { showAlert("ข้อผิดพลาด","กรุณากรอกปลายทาง"); return; }
+      if (isNaN(amt)||amt<=0) { showAlert("ข้อผิดพลาด","กรุณากรอกจำนวนให้ถูกต้อง"); return; }
+      if (toId===lineId) { showAlert("ข้อผิดพลาด","ไม่สามารถโอนให้ตัวเอง"); return; }
 
-      if (!toId) {
-        showAlert("ข้อผิดพลาด", "กรุณากรอก LINE ID หรือเบอร์ปลายทาง");
-        return;
-      }
-      if (isNaN(amount) || amount <= 0) {
-        showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนพ้อยต์ที่ถูกต้อง");
-        return;
-      }
-      if (toId === lineId) {
-        showAlert("ข้อผิดพลาด", "ไม่สามารถโอนพ้อยต์ให้ตัวเองได้");
-        return;
-      }
-
-      const ok = await showConfirm(
-        "ยืนยันการโอนพ้อยต์",
-        `คุณต้องการโอน ${amount} พ้อยต์ ให้กับ "${toId}" หรือไม่?`
-      );
+      const ok = await showConfirm("ยืนยันโอน",`โอน ${amt} พ้อยต์ ให้ ${toId}?`);
       if (!ok) return;
+
       try {
-        const res = await fetch(
-          'https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec',
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              action: 'transferPoints',
-              from: lineId,
-              to:   toId,
-              amount
-            })
-          }
-        );
-        const text = await res.text();
-        showAlert("สถานะการโอน", text, () => {
-          if (text.includes("สำเร็จ") || text.includes("เรียบร้อย")) {
-            location.reload();
-          }
+        const res = await fetch(CONFIG.GAS_URL, {
+          method: 'POST',
+          body:   JSON.stringify({ action:'transferPoints', from:lineId, to:toId, amount:amt })
         });
-      } catch (e) {
+        const txt = await res.text();
+        showAlert("สถานะการโอน", txt, ()=> { if (/สำเร็จ|เรียบร้อย/.test(txt)) location.reload(); });
+      } catch(e) {
         console.error(e);
-        showAlert("ข้อผิดพลาด", "ไม่สามารถโอนพ้อยต์ได้ กรุณาลองใหม่");
-      } finally {
+        showAlert("ข้อผิดพลาด","ไม่สามารถโอนได้ ลองอีกครั้ง");
       }
     }
 
     async function init() {
-      try {
-        await liff.init({ liffId: '2007514355-N7ZqG4BK' });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
-        const profile = await liff.getProfile();
-        lineId = profile.userId;
+      // init LIFF & getProfile + getUserInfo พร้อมกัน
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
 
-        // แสดงรูปโปรไฟล์
+      const [profile, userRes] = await Promise.all([
+        liff.getProfile(),
+        (async()=>{
+          // placeholder until lineId set
+          await new Promise(r=>{});
+          return null;
+        })()
+      ]).catch(()=>{});
+      // Actually fetch userInfo after lineId known
+      lineId = profile.userId;
+      const [ , userInfo ] = await Promise.all([
+        Promise.resolve(profile),
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`).then(r=>r.json())
+      ]);
+
+      // show profile pic + points
+      if (profile.pictureUrl) {
         const dp = document.getElementById('lineDisplayPicture');
-        if (profile.pictureUrl) {
-          dp.src   = profile.pictureUrl;
-          dp.alt   = `รูปของ ${profile.displayName}`;
-          dp.title = profile.displayName;
-        }
-
-        // ดึงแต้ม
-        const u = await fetch(
-          `https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`
-        );
-        const data = await u.json();
-        document.getElementById('pointVal').textContent = (data.point || 0) + '+';
-      } catch (e) {
-        console.error(e);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเริ่มระบบได้ กรุณาลองใหม่");
-      } finally {
+        dp.src = profile.pictureUrl;
+        dp.alt = profile.displayName;
       }
+      document.getElementById('pointVal').textContent = (userInfo.point||0)+'+';
+
+      document.getElementById('transferBtn').addEventListener('click', transfer);
     }
 
     init();
