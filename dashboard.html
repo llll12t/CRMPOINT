@@ -19,31 +19,19 @@
     .blink { animation: blink 1.2s ease-in-out infinite; }
     @keyframes pulseCustom { 0%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:0.6;}100%{transform:scale(1);opacity:1;} }
     .pulse { animation: pulseCustom 1.2s ease-in-out infinite; }
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0; transform: translateY(10px);
-    }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
 
-
   <!-- แต้ม -->
   <div class="flex justify-between items-center mb-6">
     <div>
-      <p class="text-md font-semibold text-gray-800">อัพเกรด Member</p>
+      <p class="text-md font-semibold text-gray-800">อัพเกรด member</p>
       <p class="text-sm text-gray-500">ปลดล็อกสิทธิประโยชน์</p>
     </div>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div class="font-bold text-gray-800 text-lg px-2 blink"><span id="point">0</span></div>
+      <div class="w-8 h-8 bg-yellow-400 rounded-full "></div>
+      <div class="font-bold text-gray-800 text-lg px-2 "><span id="point">0</span></div>
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
            alt="LINE DP"
@@ -51,8 +39,7 @@
     </div>
   </div>
 
-
- <!-- เมนู -->
+  <!-- เมนู -->
   <div class="bg-purple-900 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6">
     <a href="event.html" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
@@ -84,7 +71,6 @@
     </a>
   </div>
 
-
   <!-- เช็คอิน -->
   <div id="checkinBox" class="flex items-center justify-between mb-8 hidden">
     <div class="bg-gray-100 rounded-full px-4 py-2 flex items-center space-x-2 text-gray-700">
@@ -107,80 +93,64 @@
       <div class="text-xs text-gray-400 font-medium">POINT</div>
     </div>
     <ul id="historyList" class="space-y-4">
-      <!-- Skeleton loader เริ่มต้น -->
-      <li class="flex justify-between items-center animate-pulse">
-        <div class="space-y-2 flex-1">
-          <div class="h-4 bg-gray-200 rounded w-3/5"></div>
-          <div class="h-3 bg-gray-200 rounded w-2/5"></div>
-        </div>
-        <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
-      </li>
-      <li class="flex justify-between items-center animate-pulse">
-        <div class="space-y-2 flex-1">
-          <div class="h-4 bg-gray-200 rounded w-2/3"></div>
-          <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-        </div>
-        <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
-      </li>
-      <!-- สามารถเพิ่ม skeleton ได้ตามต้องการ -->
+      <!-- skeleton loader -->
     </ul>
   </div>
 
   <script>
-    async function init() {
-      // 1) init LIFF
-      await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
+    function generateSkeleton(count) {
+      return Array.from({length: count}).map(_=>`
+        <li class="flex justify-between items-center animate-pulse">
+          <div class="space-y-2 flex-1">
+            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
+            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*30)}%"></div>
+          </div>
+          <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
+        </li>`).join("");
+    }
 
-      // 2) ดึง profile และ userInfo
+    async function init() {
+      // init LIFF
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+
       const profile = await liff.getProfile();
       const lineId = profile.userId;
+      document.getElementById('lineDisplayPicture').src = profile.pictureUrl || '';
+      document.getElementById('lineDisplayPicture').alt = profile.displayName;
 
-      // 3) ตรวจสอบว่าลงทะเบียนแล้วหรือยัง
-      const resp = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-      const userData = await resp.json();
-      if (userData.error) {
-        // ถ้ายังไม่ลงทะเบียน ให้ไปหน้าลงทะเบียนก่อน
-        window.location.href = 'register.html';
-        return;
-      }
+      // แสดง skeleton ก่อน
+      const histEl = document.getElementById("historyList");
+      histEl.innerHTML = generateSkeleton(6);
 
-      // 4) แสดงรูปโปรไฟล์ และแต้ม
-      if (profile.pictureUrl) {
-        const dp = document.getElementById('lineDisplayPicture');
-        dp.src = profile.pictureUrl;
-        dp.alt = profile.displayName;
-      }
-      document.getElementById('point').textContent = userData.point || 0;
-
-      // 5) โหลดสถานะเช็คอิน + ประวัติ (parallel)
-      const [ checkRes, histRes ] = await Promise.all([
+      // parallel fetch
+      const [userRes, checkRes, histRes] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
         fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${lineId}`),
         fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
       ]);
-      const checkData   = await checkRes.json();
-      const historyList = await histRes.json();
+      const [userData, checkData, historyList] = await Promise.all([
+        userRes.json(),
+        checkRes.json(),
+        histRes.json()
+      ]);
 
+      // แต้ม
+      document.getElementById("point").textContent = userData.point || 0;
       // เช็คอิน
       if (!checkData.checkedInToday) {
         document.getElementById("checkinBox").classList.remove("hidden");
-        document.getElementById("todayDate").textContent =
-          new Date().getDate().toString().padStart(2, "0");
+        document.getElementById("todayDate").textContent = new Date().getDate().toString().padStart(2,"0");
       }
-
       // ประวัติ
-      const histEl = document.getElementById("historyList");
       if (historyList.length === 0) {
         histEl.innerHTML = `<li class="text-center text-gray-500 py-4">ไม่มีประวัติการทำรายการ</li>`;
       } else {
-        const latest10 = historyList.reverse().slice(0,6);
-        histEl.innerHTML = latest10.map(item => {
+        const latest10 = historyList.reverse().slice(0,10);
+        histEl.innerHTML = latest10.map(item=>{
           const isDebit = ['redeem','transfer_out'].includes(item.type);
-          const badge   = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-          const sign    = isDebit ? '-' : '+';
+          const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+          const sign  = isDebit ? '-' : '+';
           return `
             <li class="flex justify-between items-center">
               <div>
@@ -196,11 +166,9 @@
     }
 
     async function checkin() {
-      const profile = await liff.getProfile();
       await fetch(CONFIG.GAS_URL, {
         method: "POST",
-        headers: { "Content-Type":"application/json;charset=UTF-8" },
-        body: JSON.stringify({ action: "dailyCheckin", lineId: profile.userId })
+        body: JSON.stringify({ action: "dailyCheckin", lineId: (await liff.getProfile()).userId })
       });
       location.reload();
     }
