@@ -98,13 +98,6 @@
     </div>
   </div>
 
-  <!-- Loading Overlay (ไม่มีข้อความ "กำลังโหลด") -->
-  <div id="loadingOverlay" class="hidden fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-40">
-    <div class="bg-white p-6 rounded-xl shadow-md text-center max-w-xs w-full loading-card-animation">
-      <!-- ใช้เฉพาะ spinner -->
-      <div class="h-8 w-8 border-4 border-purple-900 border-t-transparent rounded-full animate-spin mx-auto"></div>
-    </div>
-  </div>
 
   <script>
     let lineId = "";
@@ -119,7 +112,6 @@
     const customConfirmMessage    = document.getElementById('customConfirmMessage');
     const customConfirmConfirmBtn = document.getElementById('customConfirmConfirmButton');
     const customConfirmCancelBtn  = document.getElementById('customConfirmCancelButton');
-    const loadingOverlay          = document.getElementById('loadingOverlay');
     const itemList                = document.getElementById('itemList');
 
     // Show custom alert
@@ -167,9 +159,7 @@
       });
     }
 
-    function showLoading() { loadingOverlay.classList.remove('hidden'); }
-    function hideLoading() { loadingOverlay.classList.add('hidden'); }
-
+ 
     // สร้าง skeleton cards
     function generateSkeleton(count) {
       let html = '';
@@ -221,7 +211,6 @@
     async function redeem(id, name, point) {
       const ok = await showConfirm("ยืนยันการแลก", `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
       if (!ok) return;
-      showLoading();
       try {
         const res = await fetch(
           'https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec',
@@ -238,13 +227,11 @@
         console.error(e);
         showAlert("ข้อผิดพลาด", "ไม่สามารถทำรายการได้ กรุณาลองใหม่");
       } finally {
-        hideLoading();
       }
     }
 
     // เริ่มต้น LIFF + โหลดข้อมูล
     async function init() {
-      showLoading();
       try {
         await liff.init({ liffId:'2007514355-N7ZqG4BK' });
         if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -265,7 +252,6 @@
         console.error(e);
         showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเริ่มระบบได้ กรุณาลองใหม่");
       } finally {
-        hideLoading();
       }
     }
     init();
