@@ -43,7 +43,7 @@
     <h2 class="text-md font-bold text-gray-800">สแกน/กรอกโค้ดเพื่อรับรางวัล</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 pulse-custom">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0</div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0</div>+
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/1/18/Line-icon.svg"
            alt="LINE DP"
@@ -107,7 +107,22 @@
       alertOvl.addEventListener('click', hide);
     }
 
+    // ตรวจสอบจาก history ก่อนแสดงรายละเอียดหรือรับพ้อยต์
+    async function hasReceived(code) {
+      const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`);
+      const historyList = await hRes.json();
+      return historyList.some(item =>
+        item.type === 'event' && item.eventId === code
+      );
+    }
+
     async function processCode(code) {
+      // ถ้ารับไปแล้ว หยุดที่นี่
+      if (await hasReceived(code)) {
+        showAlert('คุณรับพ้อยต์แล้ว', 'คุณไม่สามารถรับซ้ำสำหรับกิจกรรมนี้');
+        return;
+      }
+
       // ดึงข้อมูลกิจกรรม
       const eRes  = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${code}`);
       const eData = await eRes.json();
@@ -115,6 +130,7 @@
         showAlert('ไม่พบกิจกรรม', eData.error);
         return;
       }
+
       // แสดงรายละเอียดกิจกรรมก่อนรับ
       scanContainer.innerHTML = `
         <div class="bg-white p-6 rounded-xl shadow mb-4">
@@ -147,8 +163,9 @@
           `คุณได้รับ ${eData.point} พ้อยต์`,
           () => {
             pointEl.textContent = uData.point || 0;
-            document.getElementById('acceptBtn').disabled = true;
-            document.getElementById('acceptBtn').classList.add('disabled');
+            const btn = document.getElementById('acceptBtn');
+            btn.disabled = true;
+            btn.classList.add('disabled');
           }
         );
       });
