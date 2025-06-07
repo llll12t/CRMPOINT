@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>สแกนเพื่อรับพ้อยต์</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- โหลด config.js -->
+  <script src="config.js"></script>
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <a href="#" onclick="history.back(); return false;"
+       class="text-gray-600 hover:text-purple-900 p-2 rounded-full transform hover:scale-110 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE display picture"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+  <!-- Title -->
+  <h2 class="text-xl font-bold mb-6 text-gray-800 text-center">สแกนเพื่อรับพ้อยต์</h2>
+
+  <!-- Scan Button -->
+  <div class="flex justify-center">
+    <button id="scanBtn"
+            class="bg-purple-900 text-white py-4 px-8 rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-6 w-6 mr-2" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m4-4h.01M7 8h.01M17 8h.01M7 12h.01M17 12h.01M7 16h.01M17 16h.01" />
+      </svg>
+      สแกน QR Code
+    </button>
+  </div>
+
+  <!-- Alert Overlay -->
+  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+      <div id="customAlertTitle" class="font-bold text-lg mb-3 text-gray-800"></div>
+      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+      <button id="customAlertButton"
+              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let lineId = "";
+
+    // refs
+    const pointEl = document.getElementById('pointVal');
+    const dpEl    = document.getElementById('lineDisplayPicture');
+    const scanBtn = document.getElementById('scanBtn');
+    const alertO  = document.getElementById('customAlertOverlay');
+    const alertT  = document.getElementById('customAlertTitle');
+    const alertM  = document.getElementById('customAlertMessage');
+    const alertB  = document.getElementById('customAlertButton');
+
+    function showAlert(title, msg, cb) {
+      alertT.textContent   = title;
+      alertM.textContent   = msg;
+      alertO.classList.remove('hidden');
+      requestAnimationFrame(()=> alertO.querySelector('div').classList.remove('alert-fade-enter'));
+      const hide = ()=>{
+        alertO.querySelector('div').classList.add('alert-fade-leave-to');
+        setTimeout(()=>{
+          alertO.classList.add('hidden');
+          alertO.querySelector('div').classList.remove('alert-fade-leave-to');
+          if(cb) cb();
+        },300);
+        alertB.removeEventListener('click', hide);
+      };
+      alertB.addEventListener('click', hide);
+    }
+
+    async function scan() {
+      try {
+        const { value } = await liff.scanCodeV2();
+        // ส่งโค้ดไป backend เพื่อรับพ้อยต์
+        const res = await fetch(CONFIG.GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'scanReceivePoints',
+            lineId,
+            code: value
+          })
+        });
+        const text = await res.text();
+        showAlert('ผลการสแกน', text, ()=> window.location.reload());
+      } catch (e) {
+        console.error(e);
+        showAlert('ข้อผิดพลาด', 'ไม่สามารถสแกนได้ กรุณาลองใหม่');
+      }
+    }
+
+    async function init() {
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const profile = await liff.getProfile();
+      lineId = profile.userId;
+      if (profile.pictureUrl) {
+        dpEl.src = profile.pictureUrl;
+        dpEl.alt = profile.displayName;
+      }
+      // ดึงแต้ม
+      const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+      const ud = await u.json();
+      pointEl.textContent = (ud.point||0) + '+';
+      scanBtn.addEventListener('click', scan);
+    }
+
+    init();
+  </script>
+</body>
+</html>
