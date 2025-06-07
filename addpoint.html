@@ -15,6 +15,16 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
+
+    /* pulse animation */
+    @keyframes pulseCustom {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.02); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    /* alert transition */
     .alert-fade-enter-active, .alert-fade-leave-active {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
@@ -22,6 +32,7 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     .disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
@@ -60,7 +71,7 @@
   <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
       <div id="customAlertTitle" class="font-bold text-lg mb-3 text-gray-800"></div>
-      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+      <div id="customAlertMessage" class="text-gray-700 mb-6 whitespace-pre-line"></div>
       <button id="customAlertButton"
               class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold hover:scale-105 transform transition-transform">
         ตกลง
@@ -78,9 +89,9 @@
     const alertOvl    = document.getElementById('customAlertOverlay');
     const alertBtn    = document.getElementById('customAlertButton');
 
-    function showAlert(title, msg, cb) {
+    function showAlert(title, message, cb) {
       document.getElementById('customAlertTitle').textContent   = title;
-      document.getElementById('customAlertMessage').textContent = msg;
+      document.getElementById('customAlertMessage').textContent = message;
       alertOvl.classList.remove('hidden');
       alertOvl.querySelector('div').classList.remove('alert-fade-enter');
       function hide(e) {
@@ -97,21 +108,21 @@
     }
 
     async function processCode(code) {
-      // fetch event details
+      // ดึงข้อมูลกิจกรรม (GET)
       const eRes  = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${code}`);
       const eData = await eRes.json();
       if (eData.error) {
         showAlert('ไม่พบกิจกรรม', eData.error);
         return;
       }
-      // confirm awarding
+      // ยืนยันรับรางวัล
       showAlert(
         'ยืนยันรับรางวัล',
         `กิจกรรม: ${eData.title}\nพ้อยต์ที่จะได้รับ: ${eData.point}`,
         async () => {
+          // POST ผ่าน doPost
           const jRes = await fetch(CONFIG.GAS_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action:  'joinEvent',
               lineId,
@@ -125,7 +136,7 @@
             'ยินดีด้วย!',
             `คุณได้รับ ${eData.point} พ้อยต์`,
             () => {
-              // update UI and disable inputs
+              // update UI
               pointEl.textContent = (parseInt(pointEl.textContent)||0) + eData.point;
               scanBtn.disabled = true;
               enterBtn.disabled = true;
