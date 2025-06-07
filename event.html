@@ -6,9 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    /* เพิ่มฟอนต์ที่ดูทันสมัยมากขึ้น (ตามธีมเดิม) */
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Kanit', sans-serif;
+    }
+  </style>
 </head>
-<body class="p-4 font-sans bg-white">
-  <h2 class="text-xl font-bold mb-4">กิจกรรม</h2>
+<body class="bg-gray-50 p-4"> <!-- เปลี่ยนพื้นหลังเป็น bg-gray-50 และเพิ่ม padding -->
+
+  <h2 class="text-xl font-bold mb-4 text-gray-800">กิจกรรม</h2> <!-- เพิ่มสีข้อความให้เป็นสีเข้มตามธีม -->
   <div id="eventList" class="space-y-3"></div>
 
   <script>
@@ -17,12 +25,14 @@
       const events = await res.json();
 
       const html = events.map(e => `
-        <div class="bg-gray-100 rounded-lg p-3 flex justify-between items-center">
+        <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
           <div>
-            <div class="font-semibold text-sm">${e.title}</div>
-            <div class="text-xs text-gray-500">รายละเอียดกิจกรรม</div>
+            <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
+            <!-- สมมติว่า e.detail มีข้อมูลรายละเอียด หรือสามารถใช้ placeholder ได้ -->
+            <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
           </div>
-          <a href="event-detail.html?id=${e.id}" class="text-sm text-gray-600 underline">อ่าน ..</a>
+          <!-- ปรับสไตล์ลิงก์ให้เข้ากับธีม -->
+          <a href="event-detail.html?id=${e.id}" class="text-sm font-medium text-purple-700 hover:text-purple-900">ดูรายละเอียด</a>
         </div>
       `).join('');
 
