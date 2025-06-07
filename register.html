@@ -1,50 +1,85 @@
-<!-- register.html -->
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
   <meta charset="UTF-8">
   <title>ลงทะเบียน</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- 1) โหลด config.js ก่อน -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 3) Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+  </style>
 </head>
-<body class="p-6 bg-gray-50 font-sans">
+<body class="p-6 bg-gray-50">
+
   <h2 class="text-xl font-bold mb-4">ลงทะเบียนสมาชิก</h2>
   <div class="space-y-3">
-    <input id="name" placeholder="ชื่อ-สกุล" class="w-full p-2 border rounded">
-    <input id="phone" placeholder="เบอร์โทร" class="w-full p-2 border rounded">
-    <input id="email" placeholder="อีเมล" class="w-full p-2 border rounded">
-    <input id="address" placeholder="ที่อยู่" class="w-full p-2 border rounded">
-    <input id="note" placeholder="หมายเหตุ" class="w-full p-2 border rounded">
-    <button onclick="submit()" class="w-full bg-yellow-400 py-2 rounded font-bold">สมัคร</button>
+    <input id="name"    placeholder="ชื่อ-สกุล"      class="w-full p-2 border rounded">
+    <input id="phone"   placeholder="เบอร์โทร"        class="w-full p-2 border rounded">
+    <input id="email"   placeholder="อีเมล"          class="w-full p-2 border rounded">
+    <input id="address" placeholder="ที่อยู่"          class="w-full p-2 border rounded">
+    <input id="note"    placeholder="หมายเหตุ"        class="w-full p-2 border rounded">
+    <button id="submitBtn"
+            class="w-full bg-yellow-400 py-2 rounded font-bold">
+      สมัคร
+    </button>
   </div>
 
   <script>
     let lineId = "";
 
-    async function submit() {
-      const body = {
-        action: 'register',
-        lineId,
-        name: name.value,
-        phone: phone.value,
-        email: email.value,
-        address: address.value,
-        note: note.value
-      };
-      const res = await fetch('https://script.google.com/macros/s/AKfycbyXOJa5IFdvC9nGUQ1vUFNLNEZbg5Ub0c0Bo0nAULwHICV7HOW4e7NLVCEe8B9bRMaJEA/exec', {
-        method: 'POST',
-        body: JSON.stringify(body)
-      });
-      alert(await res.text());
+    async function init() {
+      // init LIFF ด้วย CONFIG.LIFF_ID
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      // ดึง profile และ decoded ID token พร้อมกัน
+      const [ profile ] = await Promise.all([
+        liff.getProfile()
+        // (ถ้าต้องการ fetch ข้อมูลอื่นพร้อมกัน ให้ใส่ที่นี่)
+      ]);
+
+      lineId = profile.userId;
+      document.getElementById('name').value  = profile.displayName || '';
+
+      const idToken = liff.getDecodedIDToken();
+      document.getElementById('email').value = idToken.email || '';
     }
 
-    liff.init({ liffId: '2007514355-N7ZqG4BK' }).then(() => {
-      liff.getProfile().then(profile => {
-        lineId = profile.userId;
-        name.value = profile.displayName;
-        email.value = liff.getDecodedIDToken().email || '';
+    async function submitRegistration() {
+      const body = {
+        action:  'register',
+        lineId,
+        name:    document.getElementById('name').value,
+        phone:   document.getElementById('phone').value,
+        email:   document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        note:    document.getElementById('note').value
+      };
+
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: 'POST',
+        body:   JSON.stringify(body)
       });
-    });
+
+      const text = await res.text();
+      alert(text);
+    }
+
+    document.getElementById('submitBtn')
+            .addEventListener('click', submitRegistration);
+
+    init();
   </script>
 </body>
 </html>
