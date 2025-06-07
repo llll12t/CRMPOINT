@@ -22,6 +22,10 @@
       opacity: 0;
       transform: translateY(10px);
     }
+    .disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
@@ -29,7 +33,7 @@
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
   <!-- Title -->
-  <h2 class="text-xl font-bold p-6 text-gray-800">สแกนเพื่อรับพ้อยต์</h2>
+  <h2 class="text-xl font-bold p-6 text-gray-800 ">สแกนเพื่อรับพ้อยต์</h2>
 
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
@@ -43,14 +47,9 @@
 
 
   <!-- Scan Button -->
-  <div class="flex justify-center">
+  <div class="flex justify-center mb-6">
     <button id="scanBtn"
             class="bg-purple-900 text-white py-4 px-8 rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
-      <svg xmlns="http://www.w3.org/2000/svg" class="inline-block h-6 w-6 mr-2" fill="none"
-           viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M13 16h-1v-4h-1m4-4h.01M7 8h.01M17 8h.01M7 12h.01M17 12h.01M7 16h.01M17 16h.01" />
-      </svg>
       สแกน QR Code
     </button>
   </div>
@@ -69,47 +68,55 @@
 
   <script>
     let lineId = "";
-
-    // refs
-    const pointEl = document.getElementById('pointVal');
-    const dpEl    = document.getElementById('lineDisplayPicture');
-    const scanBtn = document.getElementById('scanBtn');
-    const alertO  = document.getElementById('customAlertOverlay');
-    const alertT  = document.getElementById('customAlertTitle');
-    const alertM  = document.getElementById('customAlertMessage');
-    const alertB  = document.getElementById('customAlertButton');
+    const pointEl    = document.getElementById('pointVal');
+    const dpEl       = document.getElementById('lineDisplayPicture');
+    const scanBtn    = document.getElementById('scanBtn');
+    const alertOvl   = document.getElementById('customAlertOverlay');
+    const alertTitle = document.getElementById('customAlertTitle');
+    const alertMsg   = document.getElementById('customAlertMessage');
+    const alertBtn   = document.getElementById('customAlertButton');
 
     function showAlert(title, msg, cb) {
-      alertT.textContent   = title;
-      alertM.textContent   = msg;
-      alertO.classList.remove('hidden');
-      requestAnimationFrame(()=> alertO.querySelector('div').classList.remove('alert-fade-enter'));
-      const hide = ()=>{
-        alertO.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(()=>{
-          alertO.classList.add('hidden');
-          alertO.querySelector('div').classList.remove('alert-fade-leave-to');
-          if(cb) cb();
-        },300);
-        alertB.removeEventListener('click', hide);
+      alertTitle.textContent = title;
+      alertMsg.textContent   = msg;
+      alertOvl.classList.remove('hidden');
+      alertOvl.querySelector('div').classList.remove('alert-fade-enter');
+      const hide = () => {
+        alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
+        setTimeout(() => {
+          alertOvl.classList.add('hidden');
+          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
+          cb && cb();
+        }, 300);
+        alertBtn.removeEventListener('click', hide);
       };
-      alertB.addEventListener('click', hide);
+      alertBtn.addEventListener('click', hide);
     }
 
     async function scan() {
       try {
         const { value } = await liff.scanCodeV2();
-        // ส่งโค้ดไป backend เพื่อรับพ้อยต์
+
         const res = await fetch(CONFIG.GAS_URL, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'scanReceivePoints',
             lineId,
             code: value
           })
         });
-        const text = await res.text();
-        showAlert('ผลการสแกน', text, ()=> window.location.reload());
+        const result = await res.json();
+        // result = { success: boolean, message: string }
+        showAlert(
+          result.success ? 'รับพ้อยต์สำเร็จ' : 'ไม่สามารถรับพ้อยต์ได้',
+          result.message,
+          () => {
+            // ปิดปุ่มสแกนหลังการสแกนครั้งแรก ไม่ว่าผลลัพธ์เป็นอย่างไร
+            scanBtn.disabled = true;
+            scanBtn.classList.add('disabled');
+          }
+        );
       } catch (e) {
         console.error(e);
         showAlert('ข้อผิดพลาด', 'ไม่สามารถสแกนได้ กรุณาลองใหม่');
@@ -119,6 +126,7 @@
     async function init() {
       await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
+
       const profile = await liff.getProfile();
       lineId = profile.userId;
       if (profile.pictureUrl) {
@@ -126,9 +134,16 @@
         dpEl.alt = profile.displayName;
       }
       // ดึงแต้ม
-      const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+      const u  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
       const ud = await u.json();
       pointEl.textContent = (ud.point||0) + '+';
+
+      // ถ้าเคยสแกนแล้ว ให้ disable ปุ่มด้วย (backend ต้องคืน {alreadyScanned: true})
+      if (ud.alreadyScanned) {
+        scanBtn.disabled = true;
+        scanBtn.classList.add('disabled');
+      }
+
       scanBtn.addEventListener('click', scan);
     }
 
