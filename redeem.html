@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>ร้านค้า</title> <!-- เปลี่ยน title ให้สอดคล้องกับเมนู -->
+  <title>ร้านค้า</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -11,6 +11,26 @@
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body {
       font-family: 'Kanit', sans-serif;
+    }
+
+    /* Custom Loading Animation (Card กระพริบ) */
+    .loading-card-animation {
+      animation: pulse-opacity 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-opacity {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+
+    /* Custom Alert Transition */
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to /* .alert-fade-leave-active in <2.1.8 */ {
+      opacity: 0;
+      transform: translateY(10px);
     }
   </style>
 </head>
@@ -37,80 +57,168 @@
   </div>
 
   <!-- หัวข้อหลักของหน้านี้ -->
-  <h2 class="text-xl font-bold mb-4 text-gray-800">ร้านค้าแลกของรางวัล</h2> <!-- เปลี่ยนข้อความเป็น "ร้านค้า" -->
+  <h2 class="text-xl font-bold mb-4 text-gray-800">ร้านค้าแลกของรางวัล</h2>
   
   <div id="itemList" class="grid grid-cols-2 gap-4"></div>
 
+  <!-- Custom Alert Overlay -->
+  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+      <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
+      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+      <button id="customAlertButton" class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">ตกลง</button>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-40">
+    <div class="bg-white p-6 rounded-xl shadow-md text-center max-w-xs w-full loading-card-animation">
+      <p class="font-bold text-lg text-gray-800 mb-2">กำลังโหลด...</p>
+      <div class="h-4 w-4 rounded-full bg-yellow-400 animate-bounce mx-auto"></div>
+    </div>
+  </div>
+
   <script>
     let lineId = "";
+    const customAlertOverlay = document.getElementById('customAlertOverlay');
+    const customAlertTitle = document.getElementById('customAlertTitle');
+    const customAlertMessage = document.getElementById('customAlertMessage');
+    const customAlertButton = document.getElementById('customAlertButton');
+    const loadingOverlay = document.getElementById('loadingOverlay');
 
-    async function fetchItems() {
-      const res = await fetch('https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getItems');
-      const items = await res.json();
-      
-      if (items.length === 0) {
-        document.getElementById('itemList').innerHTML = '<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลก</p>';
-        return;
-      }
+    // Function to show custom alert
+    function showAlert(title, message, callback) {
+      customAlertTitle.textContent = title;
+      customAlertMessage.textContent = message;
+      customAlertOverlay.classList.remove('hidden');
 
-      document.getElementById('itemList').innerHTML = items.map(item => `
-        <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
-          <img src="${item.image}" alt="${item.name}" class="h-24 object-contain mx-auto mb-3 rounded-md">
-          <div class="font-bold text-gray-800 text-md mb-1">${item.name}</div>
-          <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">${item.point} พ้อยต์</div>
-          <button onclick="redeem('${item.id}', '${item.name}', ${item.point})" class="bg-purple-900 text-white px-4 py-1.5 mt-2 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">แลก</button>
-        </div>
-      `).join('');
+      // Add fade-in effect
+      requestAnimationFrame(() => {
+        customAlertOverlay.querySelector('div').classList.remove('alert-fade-enter');
+      });
+
+      const dismissHandler = () => {
+        // Add fade-out effect
+        customAlertOverlay.querySelector('div').classList.add('alert-fade-leave-to');
+        setTimeout(() => {
+          customAlertOverlay.classList.add('hidden');
+          customAlertOverlay.querySelector('div').classList.remove('alert-fade-leave-to'); // Reset for next time
+          if (callback) callback();
+        }, 300); // Match CSS transition duration
+
+        customAlertButton.removeEventListener('click', dismissHandler);
+        customAlertOverlay.removeEventListener('click', dismissHandler); // Dismiss on overlay click
+      };
+
+      customAlertButton.addEventListener('click', dismissHandler);
+      customAlertOverlay.addEventListener('click', (event) => {
+          if (event.target === customAlertOverlay) { // Only if clicked on the overlay itself, not the card
+              dismissHandler();
+          }
+      });
     }
 
-    async function redeem(itemId, itemName, itemPoint) { // รับ itemName และ itemPoint เข้ามาด้วย
-      // เพิ่มการยืนยันการแลก
+    // Function to show loading animation
+    function showLoading() {
+      loadingOverlay.classList.remove('hidden');
+    }
+
+    // Function to hide loading animation
+    function hideLoading() {
+      loadingOverlay.classList.add('hidden');
+    }
+
+    async function fetchItems() {
+      showLoading(); // Show loading before fetch
+      try {
+        const res = await fetch('https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getItems');
+        const items = await res.json();
+        
+        if (!items || items.length === 0) {
+          document.getElementById('itemList').innerHTML = '<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลกในขณะนี้</p>';
+          return;
+        }
+
+        document.getElementById('itemList').innerHTML = items.map(item => `
+          <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
+            <img src="${item.image}" alt="${item.name}" class="h-24 object-contain mx-auto mb-3 rounded-md">
+            <div class="font-bold text-gray-800 text-md mb-1">${item.name}</div>
+            <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">${item.point} พ้อยต์</div>
+            <button onclick="redeem('${item.id}', '${item.name}', ${item.point})" class="bg-purple-900 text-white px-4 py-1.5 mt-2 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">แลก</button>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error("Error fetching items:", error);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดรายการของรางวัลได้ กรุณาลองใหม่อีกครั้ง");
+      } finally {
+        hideLoading(); // Hide loading after fetch completes (success or error)
+      }
+    }
+
+    async function redeem(itemId, itemName, itemPoint) {
+      // เพิ่มการยืนยันการแลกด้วย confirm() ของเบราว์เซอร์
       if (!confirm(`คุณต้องการแลก "${itemName}" ด้วย ${itemPoint} พ้อยต์ใช่หรือไม่?`)) {
           return; // ผู้ใช้กดยกเลิก
       }
 
-      const body = { action: 'redeemItem', lineId, itemId: itemId };
-      const res = await fetch('https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec', {
-        method: 'POST',
-        body: JSON.stringify(body)
-      });
-      const resultText = await res.text();
-      alert(resultText);
-      // หลังจากการแลกสำเร็จ ควรทำการอัปเดตแต้มและรายการ หรือปิด LIFF
-      if (resultText.includes("สำเร็จ") || resultText.includes("เรียบร้อย")) { // ปรับเงื่อนไขตามข้อความตอบกลับจาก Script
-          location.reload(); // โหลดหน้าใหม่เพื่ออัปเดตแต้มและรายการ
-          // หรือ liff.closeWindow(); ถ้าต้องการปิดทันที
+      showLoading(); // Show loading before fetch
+      try {
+        const body = { action: 'redeemItem', lineId, itemId: itemId, itemName: itemName, itemPoint: itemPoint }; // ส่งชื่อและแต้มไปหลังบ้านด้วย (ถ้า API รองรับ)
+        const res = await fetch('https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec', {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+        const resultText = await res.text();
+        showAlert("สถานะการแลก", resultText, () => {
+            // หลังจากการแลกสำเร็จ ควรทำการอัปเดตแต้มและรายการ หรือปิด LIFF
+            if (resultText.includes("สำเร็จ") || resultText.includes("เรียบร้อย")) {
+                location.reload(); // โหลดหน้าใหม่เพื่ออัปเดตแต้มและรายการ
+            }
+        });
+      } catch (error) {
+        console.error("Error redeeming item:", error);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถทำรายการได้ กรุณาลองใหม่อีกครั้ง");
+      } finally {
+        hideLoading(); // Hide loading after fetch completes (success or error)
       }
     }
 
     async function init() {
-      await liff.init({ liffId: '2007514355-N7ZqG4BK' });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
+      showLoading(); // Show loading on initial page load
+      try {
+        await liff.init({ liffId: '2007514355-N7ZqG4BK' });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return; // Stop execution if not logged in
+        }
+
+        const profile = await liff.getProfile();
+        lineId = profile.userId;
+
+        // ดึงรูปโปรไฟล์ LINE และนำมาแสดง
+        const profilePictureUrl = profile.pictureUrl;
+        const displayImageElement = document.getElementById('lineDisplayPicture');
+        if (displayImageElement && profilePictureUrl) {
+          displayImageElement.src = profilePictureUrl;
+          displayImageElement.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
+          displayImageElement.title = `รูปโปรไฟล์ของ ${profile.displayName}`;
+        } else {
+          console.log("Could not load LINE profile picture or element not found.");
+        }
+
+        // ดึงข้อมูลแต้มของผู้ใช้ (สำหรับแสดงที่มุมขวาบน)
+        const user = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`);
+        const userData = await user.json();
+        document.getElementById("pointVal").textContent = userData.point || 0;
+
+        // โหลดรายการของรางวัล
+        await fetchItems(); // ใช้ await เพื่อให้แน่ใจว่าโหลดเสร็จก่อนซ่อน loading
+      } catch (error) {
+        console.error("LIFF initialization or data loading error:", error);
+        showAlert("เกิดข้อผิดพลาดร้ายแรง", "ไม่สามารถเริ่มต้นแอปพลิเคชันได้ กรุณาลองใหม่อีกครั้ง หรือติดต่อผู้ดูแล");
+      } finally {
+        hideLoading(); // Hide loading once all initial tasks are done
       }
-
-      const profile = await liff.getProfile();
-      lineId = profile.userId;
-
-      // ดึงรูปโปรไฟล์ LINE และนำมาแสดง
-      const profilePictureUrl = profile.pictureUrl;
-      const displayImageElement = document.getElementById('lineDisplayPicture');
-      if (displayImageElement && profilePictureUrl) {
-        displayImageElement.src = profilePictureUrl;
-        displayImageElement.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
-        displayImageElement.title = `รูปโปรไฟล์ของ ${profile.displayName}`;
-      } else {
-        console.log("Could not load LINE profile picture or element not found.");
-      }
-
-      // ดึงข้อมูลแต้มของผู้ใช้ (สำหรับแสดงที่มุมขวาบน)
-      const user = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`);
-      const userData = await user.json();
-      document.getElementById("pointVal").textContent = userData.point || 0;
-
-      // โหลดรายการของรางวัล
-      fetchItems();
     }
 
     // เริ่มต้นการทำงานของ LIFF และโหลดข้อมูล
