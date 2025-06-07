@@ -5,11 +5,11 @@
   <title>รายละเอียดกิจกรรม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- 1) โหลด config.js ก่อน -->
+  <!-- config.js -->
   <script src="config.js"></script>
-  <!-- 2) LIFF SDK -->
+  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 3) Tailwind CSS -->
+  <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
   <style>
@@ -44,7 +44,9 @@
     <h2 class="text-xl font-bold text-gray-800">รายละเอียดกิจกรรม</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 pulse-custom">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
-      <div class="font-bold text-gray-800 text-lg px-2"><span id="pointVal">…</span>+</div>
+      <div class="font-bold text-gray-800 text-lg px-2">
+        <span id="pointVal">…</span>+
+      </div>
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
            alt="LINE DP"
@@ -97,14 +99,31 @@
       btn.classList.add("disabled");
     }
 
+    function showAlert(title, message, cb) {
+      const overlay = document.getElementById("customAlertOverlay");
+      document.getElementById("customAlertTitle").textContent   = title;
+      document.getElementById("customAlertMessage").textContent = message;
+      overlay.classList.remove("hidden");
+      overlay.querySelector("div").classList.remove("alert-fade-enter");
+      const hide = () => {
+        overlay.querySelector("div").classList.add("alert-fade-leave-to");
+        setTimeout(() => {
+          overlay.classList.add("hidden");
+          overlay.querySelector("div").classList.remove("alert-fade-leave-to");
+          cb && cb();
+        }, 300);
+        document.getElementById("customAlertButton").removeEventListener("click", hide);
+      };
+      document.getElementById("customAlertButton").addEventListener("click", hide);
+    }
+
     async function loadData() {
-      // parallel fetch: userInfo, eventData, history
-      const [ uRes, eRes, hRes ] = await Promise.all([
+      const [uRes, eRes, hRes] = await Promise.all([
         fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
         fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
         fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
       ]);
-      const [ userData, eventData, historyList ] = await Promise.all([
+      const [userData, eventData, historyList] = await Promise.all([
         uRes.json(), eRes.json(), hRes.json()
       ]);
 
@@ -116,14 +135,12 @@
         document.getElementById("desc").textContent  = eventData.error;
         disableJoin();
       } else {
-        // set event details
         eventTitle       = eventData.title;
         eventRewardPoint = eventData.point;
         document.getElementById("title").textContent      = eventTitle;
         document.getElementById("eventPoint").textContent = `${eventRewardPoint}+`;
         document.getElementById("desc").textContent       = eventData.desc;
 
-        // check by eventId in history
         const hasJoined = historyList.some(item =>
           item.type === 'event' && item.eventId === eventId
         );
@@ -134,7 +151,6 @@
         }
       }
 
-      // switch from skeleton to card
       document.getElementById("cardSkeleton").classList.add("hidden");
       document.getElementById("card").classList.remove("hidden");
     }
@@ -152,30 +168,13 @@
         })
       });
       const text = await res.text();
-      alert(text);
-      if (text.includes("สำเร็จ")) {
-        const btn = document.getElementById("joinBtn");
-        btn.textContent = "รับพ้อยต์แล้ว";
-        disableJoin();
-      }
-    }
-
-    function showAlert(title, msg, cb) {
-      const ovl = document.getElementById('customAlertOverlay');
-      document.getElementById('customAlertTitle').textContent   = title;
-      document.getElementById('customAlertMessage').textContent = msg;
-      ovl.classList.remove('hidden');
-      ovl.querySelector('div').classList.remove('alert-fade-enter');
-      const hide = () => {
-        ovl.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(() => {
-          ovl.classList.add('hidden');
-          ovl.querySelector('div').classList.remove('alert-fade-leave-to');
-          cb && cb();
-        }, 300);
-        document.getElementById('customAlertButton').removeEventListener('click', hide);
-      };
-      document.getElementById('customAlertButton').addEventListener('click', hide);
+      showAlert("สถานะ", text, () => {
+        if (text.includes("สำเร็จ")) {
+          const btn = document.getElementById("joinBtn");
+          btn.textContent = "รับพ้อยต์แล้ว";
+          disableJoin();
+        }
+      });
     }
 
     async function init() {
@@ -184,7 +183,7 @@
       const profile = await liff.getProfile();
       lineId = profile.userId;
       if (profile.pictureUrl) {
-        const dp = document.getElementById('lineDisplayPicture');
+        const dp = document.getElementById("lineDisplayPicture");
         dp.src = profile.pictureUrl;
         dp.alt = profile.displayName;
       }
