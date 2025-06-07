@@ -93,13 +93,6 @@
     </div>
   </div>
 
-  <!-- Loading Overlay -->
-  <div id="loadingOverlay" class="hidden fixed inset-0 bg-gray-100 bg-opacity-75 flex items-center justify-center z-40">
-    <div class="bg-white p-6 rounded-xl shadow-md text-center max-w-xs w-full loading-card-animation">
-      <p class="font-bold text-lg text-gray-800 mb-2">กำลังโหลด...</p>
-      <div class="h-4 w-4 rounded-full bg-yellow-400 animate-bounce mx-auto"></div>
-    </div>
-  </div>
 
   <script>
     let lineId = "";
@@ -114,7 +107,6 @@
     const customConfirmMessage    = document.getElementById('customConfirmMessage');
     const customConfirmConfirmBtn = document.getElementById('customConfirmConfirmButton');
     const customConfirmCancelBtn  = document.getElementById('customConfirmCancelButton');
-    const loadingOverlay          = document.getElementById('loadingOverlay');
 
     function showAlert(title, message, callback) {
       customAlertTitle.textContent   = title;
@@ -165,13 +157,6 @@
       });
     }
 
-    function showLoading() {
-      loadingOverlay.classList.remove('hidden');
-    }
-
-    function hideLoading() {
-      loadingOverlay.classList.add('hidden');
-    }
 
     async function transfer() {
       const toId   = document.getElementById('to').value.trim();
@@ -195,8 +180,6 @@
         `คุณต้องการโอน ${amount} พ้อยต์ ให้กับ "${toId}" หรือไม่?`
       );
       if (!ok) return;
-
-      showLoading();
       try {
         const res = await fetch(
           'https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec',
@@ -220,12 +203,10 @@
         console.error(e);
         showAlert("ข้อผิดพลาด", "ไม่สามารถโอนพ้อยต์ได้ กรุณาลองใหม่");
       } finally {
-        hideLoading();
       }
     }
 
     async function init() {
-      showLoading();
       try {
         await liff.init({ liffId: '2007514355-N7ZqG4BK' });
         if (!liff.isLoggedIn()) {
@@ -253,7 +234,6 @@
         console.error(e);
         showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเริ่มระบบได้ กรุณาลองใหม่");
       } finally {
-        hideLoading();
       }
     }
 
