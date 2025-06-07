@@ -4,31 +4,39 @@
   <meta charset="UTF-8">
   <title>ร้านค้าแลกของรางวัล</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- โหลด config ก่อน -->
+  <script src="config.js"></script>
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
   <style>
-    /* ฟอนต์ Kanit ตามธีมเดิม */
+    /* ฟอนต์ Kanit */
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
 
-    /* Card กระพริบ ขณะโหลด */
+    /* Loading card animation */
     .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
     @keyframes pulse-opacity {
-      0%   { opacity: 0.5; }
-      50%  { opacity: 1; }
-      100% { opacity: 0.5; }
+      0%,100% { opacity: 0.5; }
+      50%      { opacity: 1; }
     }
 
-    /* Transition สำหรับ Alert/Confirm */
-    .alert-fade-enter-active, .alert-fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
-    .alert-fade-enter, .alert-fade-leave-to { opacity: 0; transform: translateY(10px); }
+    /* Alert/Confirm transition */
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
 
-  <!-- Header: ปุ่มกลับ + แต้ม/DP -->
+  <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <a href="#" onclick="history.back(); return false;"
        class="text-gray-600 hover:text-purple-900 p-2 rounded-full transform hover:scale-110 transition-transform">
@@ -53,7 +61,7 @@
 
   <!-- รายการของรางวัล -->
   <div id="itemList" class="grid grid-cols-2 gap-4">
-    <!-- skeleton loaders -->
+    <!-- skeleton loaders แสดงตอนรอโหลดจริง -->
     <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
       <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
       <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
@@ -98,68 +106,10 @@
     </div>
   </div>
 
-
   <script>
     let lineId = "";
+    const itemList = document.getElementById('itemList');
 
-    // Element refs
-    const customAlertOverlay      = document.getElementById('customAlertOverlay');
-    const customAlertTitle        = document.getElementById('customAlertTitle');
-    const customAlertMessage      = document.getElementById('customAlertMessage');
-    const customAlertButton       = document.getElementById('customAlertButton');
-    const customConfirmOverlay    = document.getElementById('customConfirmOverlay');
-    const customConfirmTitle      = document.getElementById('customConfirmTitle');
-    const customConfirmMessage    = document.getElementById('customConfirmMessage');
-    const customConfirmConfirmBtn = document.getElementById('customConfirmConfirmButton');
-    const customConfirmCancelBtn  = document.getElementById('customConfirmCancelButton');
-    const itemList                = document.getElementById('itemList');
-
-    // Show custom alert
-    function showAlert(title, message, cb) {
-      customAlertTitle.textContent   = title;
-      customAlertMessage.textContent = message;
-      customAlertOverlay.classList.remove('hidden');
-      requestAnimationFrame(() => {
-        customAlertOverlay.querySelector('div').classList.remove('alert-fade-enter');
-      });
-      const hide = () => {
-        customAlertOverlay.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(() => {
-          customAlertOverlay.classList.add('hidden');
-          customAlertOverlay.querySelector('div').classList.remove('alert-fade-leave-to');
-          cb && cb();
-        }, 300);
-        customAlertButton.removeEventListener('click', hide);
-      };
-      customAlertButton.addEventListener('click', hide);
-    }
-
-    // Show custom confirm
-    function showConfirm(title, message) {
-      return new Promise(resolve => {
-        customConfirmTitle.textContent   = title;
-        customConfirmMessage.textContent = message;
-        customConfirmOverlay.classList.remove('hidden');
-        requestAnimationFrame(() => {
-          customConfirmOverlay.querySelector('div').classList.remove('alert-fade-enter');
-        });
-        const onOk = () => { cleanup(); resolve(true); };
-        const onCancel = () => { cleanup(); resolve(false); };
-        function cleanup() {
-          customConfirmOverlay.querySelector('div').classList.add('alert-fade-leave-to');
-          setTimeout(() => {
-            customConfirmOverlay.classList.add('hidden');
-            customConfirmOverlay.querySelector('div').classList.remove('alert-fade-leave-to');
-          }, 300);
-          customConfirmConfirmBtn.removeEventListener('click', onOk);
-          customConfirmCancelBtn.removeEventListener('click', onCancel);
-        }
-        customConfirmConfirmBtn.addEventListener('click', onOk);
-        customConfirmCancelBtn.addEventListener('click', onCancel);
-      });
-    }
-
- 
     // สร้าง skeleton cards
     function generateSkeleton(count) {
       let html = '';
@@ -175,66 +125,94 @@
       return html;
     }
 
+    // ฟังก์ชันแสดง Alert
+    function showAlert(title, message, cb) {
+      const o=document.getElementById('customAlertOverlay');
+      document.getElementById('customAlertTitle').textContent   = title;
+      document.getElementById('customAlertMessage').textContent = message;
+      o.classList.remove('hidden');
+      o.querySelector('div').classList.remove('alert-fade-enter');
+      const hide = () => {
+        o.querySelector('div').classList.add('alert-fade-leave-to');
+        setTimeout(()=>{
+          o.classList.add('hidden');
+          o.querySelector('div').classList.remove('alert-fade-leave-to');
+          cb && cb();
+        }, 300);
+        customAlertButton.removeEventListener('click', hide);
+      };
+      document.getElementById('customAlertButton').addEventListener('click', hide);
+    }
+
+    // ฟังก์ชันแสดง Confirm
+    function showConfirm(title, message) {
+      return new Promise(resolve => {
+        const o=document.getElementById('customConfirmOverlay');
+        document.getElementById('customConfirmTitle').textContent   = title;
+        document.getElementById('customConfirmMessage').textContent = message;
+        o.classList.remove('hidden');
+        o.querySelector('div').classList.remove('alert-fade-enter');
+        const ok = () => cleanup(true);
+        const cancel = () => cleanup(false);
+        function cleanup(result) {
+          o.querySelector('div').classList.add('alert-fade-leave-to');
+          setTimeout(()=>{
+            o.classList.add('hidden');
+            o.querySelector('div').classList.remove('alert-fade-leave-to');
+            resolve(result);
+          }, 300);
+          document.getElementById('customConfirmConfirmButton').removeEventListener('click', ok);
+          document.getElementById('customConfirmCancelButton').removeEventListener('click', cancel);
+        }
+        document.getElementById('customConfirmConfirmButton').addEventListener('click', ok);
+        document.getElementById('customConfirmCancelButton').addEventListener('click', cancel);
+      });
+    }
+
     // ดึงรายการของรางวัล
     async function fetchItems() {
       itemList.innerHTML = generateSkeleton(4);
-      try {
-        const res = await fetch(
-          'https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getItems'
-        );
-        const items = await res.json();
-        if (!items || items.length === 0) {
-          itemList.innerHTML = `<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลกในขณะนี้</p>`;
-          return;
-        }
-        itemList.innerHTML = items.map(item => `
-          <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
-            <img src="${item.image}" alt="${item.name}"
-                 class="h-24 object-contain mx-auto mb-3 rounded-md">
-            <div class="font-bold text-gray-800 mb-1">${item.name}</div>
-            <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">
-              ${item.point} พ้อยต์
-            </div>
-            <button onclick="redeem('${item.id}','${item.name}',${item.point})"
-                    class="bg-purple-900 text-white px-4 py-1.5 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">
-              แลก
-            </button>
-          </div>
-        `).join('');
-      } catch (e) {
-        console.error(e);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดรายการได้ กรุณาลองใหม่อีกครั้ง");
+      const res = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
+      const items = await res.json();
+      if (!items || items.length === 0) {
+        itemList.innerHTML = `<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลกในขณะนี้</p>`;
+        return;
       }
+      itemList.innerHTML = items.map(item => `
+        <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
+          <img src="${item.image}" alt="${item.name}"
+               class="h-24 object-contain mx-auto mb-3 rounded-md">
+          <div class="font-bold text-gray-800 mb-1">${item.name}</div>
+          <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">
+            ${item.point} พ้อยต์
+          </div>
+          <button onclick="redeem('${item.id}','${item.name}',${item.point})"
+                  class="bg-purple-900 text-white px-4 py-1.5 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">
+            แลก
+          </button>
+        </div>
+      `).join('');
     }
 
     // แลกของรางวัล
     async function redeem(id, name, point) {
-      const ok = await showConfirm("ยืนยันการแลก", `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
-      if (!ok) return;
-      try {
-        const res = await fetch(
-          'https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec',
-          {
-            method: 'POST',
-            body: JSON.stringify({ action:'redeemItem', lineId, itemId:id })
-          }
-        );
-        const txt = await res.text();
-        showAlert("สถานะการแลก", txt, () => {
-          if (txt.includes("สำเร็จ")) fetchItems();
-        });
-      } catch (e) {
-        console.error(e);
-        showAlert("ข้อผิดพลาด", "ไม่สามารถทำรายการได้ กรุณาลองใหม่");
-      } finally {
-      }
+      if (!await showConfirm("ยืนยันการแลก", `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`)) return;
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action:'redeemItem', lineId, itemId:id })
+      });
+      const txt = await res.text();
+      showAlert("สถานะการแลก", txt, () => {
+        if (txt.includes("สำเร็จ")) fetchItems();
+      });
     }
 
-    // เริ่มต้น LIFF + โหลดข้อมูล
+    // เริ่มต้น LIFF + ดึง data พร้อมกัน
     async function init() {
       try {
-        await liff.init({ liffId:'2007514355-N7ZqG4BK' });
+        await liff.init({ liffId: CONFIG.LIFF_ID });
         if (!liff.isLoggedIn()) { liff.login(); return; }
+
         const p = await liff.getProfile();
         lineId = p.userId;
         const dp = document.getElementById('lineDisplayPicture');
@@ -242,18 +220,26 @@
           dp.src = p.pictureUrl;
           dp.alt = p.displayName;
         }
-        const u = await fetch(
-          `https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`
-        );
-        const ud = await u.json();
-        document.getElementById('pointVal').textContent = (ud.point||0) + '+';
-        await fetchItems();
+
+        // เซ็ต skeleton ก่อน
+        document.getElementById('pointVal').textContent = '…';
+        itemList.innerHTML = generateSkeleton(4);
+
+        // fetch พร้อมกัน: userInfo + items
+        await Promise.all([
+          (async()=>{
+            const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+            const ud = await u.json();
+            document.getElementById('pointVal').textContent = (ud.point||0) + '+';
+          })(),
+          fetchItems()
+        ]);
       } catch(e) {
         console.error(e);
         showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเริ่มระบบได้ กรุณาลองใหม่");
-      } finally {
       }
     }
+
     init();
   </script>
 </body>
