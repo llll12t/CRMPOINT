@@ -39,12 +39,17 @@
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-md font-bold text-gray-800">สแกน/กรอกโค้ดเพื่อรับรางวัล</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0</div>+
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div class="font-bold text-gray-800 text-lg px-2 blink"><span id="point">0</span></div>
       <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/1/18/Line-icon.svg"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
            alt="LINE DP"
-           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
     </div>
   </div>
 
