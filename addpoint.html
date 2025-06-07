@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -44,8 +45,7 @@
     <h2 class="text-xl font-bold text-gray-800">สแกนเพื่อรับพ้อยต์</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 pulse-custom">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">…</div>
-      <span>+</span>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">…</div>+
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
            alt="LINE DP"
@@ -85,7 +85,7 @@
       document.getElementById('customAlertMessage').textContent = message;
       alertOvl.classList.remove('hidden');
       alertOvl.querySelector('div').classList.remove('alert-fade-enter');
-      function hide() {
+      const hide = () => {
         alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
         setTimeout(() => {
           alertOvl.classList.add('hidden');
@@ -93,26 +93,26 @@
           cb && cb();
         }, 300);
         alertOvl.removeEventListener('click', hide);
-      }
+      };
       alertOvl.addEventListener('click', hide);
     }
 
     async function scan() {
       try {
-        // สแกนได้ eventId มา
         const { value: scannedEventId } = await liff.scanCodeV2();
 
         // ดึงข้อมูลกิจกรรม
-        const eRes  = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${scannedEventId}`);
+        const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${scannedEventId}`);
         const eData = await eRes.json();
         if (eData.error) {
           showAlert('ไม่พบกิจกรรม', eData.error);
           return;
         }
 
-        // เรียก joinEvent เพื่อบันทึกและเพิ่มพ้อยต์
-        const jRes   = await fetch(CONFIG.GAS_URL, {
+        // บันทึกเหมือน joinEvent
+        const jRes = await fetch(CONFIG.GAS_URL, {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action:  'joinEvent',
             lineId,
@@ -123,12 +123,12 @@
         });
         const resultText = await jRes.text();
 
-        // แสดง alert พร้อมความยินดี และจำนวนพ้อยต์ที่ได้
+        // แสดง alert ยินดี และแสดงพ้อยต์ที่ได้รับ
         showAlert(
-          '🎉 ยินดีด้วย!',
+          'ยินดีด้วย!',
           `คุณได้รับ ${eData.point} พ้อยต์ จากกิจกรรม "${eData.title}"`,
           () => {
-            // อัปเดตแต้มที่แสดงบนหัว
+            // อัปเดต point บน UI
             const current = parseInt(pointEl.textContent) || 0;
             pointEl.textContent = current + eData.point;
             // disable ปุ่มสแกน
@@ -153,19 +153,10 @@
         dpEl.alt = profile.displayName;
       }
 
-      // ดึงแต้มและประวัติ เพื่อตรวจสอบเคยสแกนหรือไม่
-      const [ uRes, hRes ] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
-      ]);
-      const [ uData, historyList ] = await Promise.all([ uRes.json(), hRes.json() ]);
+      // ดึงแต้มปัจจุบัน
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+      const uData = await uRes.json();
       pointEl.textContent = uData.point || 0;
-
-      // ถ้ามีประวัติ event ดังกล่าวแล้ว ให้ disable ปุ่ม
-      if (historyList.some(i => i.type === 'event' && i.eventId)) {
-        scanBtn.disabled = true;
-        scanBtn.classList.add('disabled');
-      }
 
       scanBtn.addEventListener('click', scan);
     }
@@ -174,3 +165,4 @@
   </script>
 </body>
 </html>
+```
