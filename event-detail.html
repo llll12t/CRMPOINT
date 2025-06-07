@@ -2,60 +2,127 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>กิจกรรม</title>
+  <title>รายละเอียดกิจกรรม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    /* เพิ่มฟอนต์ที่ดูทันสมัยมากขึ้น (ตามธีมเดิม) */
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Kanit', sans-serif;
+    }
+  </style>
 </head>
-<body class="p-4 bg-gray-50 font-sans">
-  <div class="text-right text-sm font-bold mb-4">กิจกรรม</div>
+<body class="bg-gray-50 p-4">
 
-  <div id="card" class="bg-gray-200 p-4 rounded-xl">
-    <div class="flex justify-between mb-2">
-      <div class="font-bold" id="title">-</div>
-      <div class="text-sm" id="point">0+</div>
+  <!-- แถบ Header ใหม่: ปุ่มกลับ (ซ้าย) และ แต้ม/Display (ขวา) -->
+  <div class="flex justify-between items-center mb-6">
+    <!-- ปุ่มกลับ -->
+    <a href="#" onclick="history.back(); return false;" class="text-gray-600 hover:text-purple-900 p-2 rounded-full transform hover:scale-110 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+
+    <!-- แต้ม และ LINE display picture -->
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
+      <div class="font-bold text-gray-800 text-lg px-2"><span id="pointVal">0</span>+</div> <!-- เปลี่ยน id เพื่อไม่ให้ซ้ำกับ point ใน card -->
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE display picture"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
     </div>
-    <div class="text-sm text-gray-700 mb-4" id="desc">...</div>
-    <button onclick="join()" class="bg-purple-800 text-white py-2 w-full rounded-full font-bold">เข้าร่วม</button>
+  </div>
+
+  <!-- หัวข้อรายละเอียดกิจกรรม (อยู่ใต้แถบ Header) -->
+  <h2 class="text-xl font-bold mb-4 text-gray-800">รายละเอียดกิจกรรม</h2> 
+
+  <!-- การ์ดรายละเอียดกิจกรรม -->
+  <div id="card" class="bg-white p-6 rounded-xl shadow-md text-gray-800">
+    <div class="flex justify-between items-start mb-3">
+      <div class="font-bold text-lg" id="title">-</div>
+      <!-- แต้มสำหรับกิจกรรมนี้ (ยังคงอยู่ใน card แต่เปลี่ยน id เพื่อไม่ให้ซ้ำ) -->
+      <div class="bg-yellow-400 text-gray-800 font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
+    </div>
+    <div class="text-sm text-gray-700 mb-6 leading-relaxed" id="desc">...</div>
+    
+    <button onclick="join()" class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">เข้าร่วม</button>
   </div>
 
   <script>
     const params = new URLSearchParams(location.search);
     const eventId = params.get("id");
-    let lineId = "", point = 0, title = "";
+    let lineId = "", eventRewardPoint = 0, eventTitle = ""; // เปลี่ยนชื่อตัวแปร point, title เพื่อไม่ให้ชนกับ global element id
 
     async function load() {
       const res = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getEventById&id=${eventId}`);
       const data = await res.json();
-      if (data.error) return alert(data.error);
+      if (data.error) {
+        document.getElementById("title").textContent = "ไม่พบกิจกรรม";
+        document.getElementById("desc").textContent = data.error;
+        document.getElementById("eventPoint").textContent = ""; // ปรับ id
+        document.querySelector("button").disabled = true;
+        return;
+      }
 
-      title = data.title;
-      point = data.point;
+      eventTitle = data.title;
+      eventRewardPoint = data.point; // ค่า point ที่ได้จาก API
 
       document.getElementById("title").textContent = data.title;
-      document.getElementById("point").textContent = `${data.point}+`;
+      document.getElementById("eventPoint").textContent = `${data.point}+`; // ปรับ id
       document.getElementById("desc").textContent = data.desc;
     }
 
     async function join() {
+      if (!confirm(`คุณต้องการเข้าร่วมกิจกรรม "${eventTitle}" และรับ ${eventRewardPoint} แต้มใช่หรือไม่?`)) {
+          return;
+      }
+
       const res = await fetch("https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec", {
         method: "POST",
         body: JSON.stringify({
           action: "joinEvent",
           lineId,
           eventId,
-          title,
-          point
+          title: eventTitle, // ใช้ eventTitle
+          point: eventRewardPoint // ใช้ eventRewardPoint
         })
       });
-      alert(await res.text());
+      const resultText = await res.text();
+      alert(resultText);
+      if (resultText.includes("สำเร็จ")) {
+          liff.closeWindow();
+      }
     }
 
     async function init() {
       await liff.init({ liffId: "2007514355-N7ZqG4BK" });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
       const profile = await liff.getProfile();
       lineId = profile.userId;
-      load();
+
+      // ดึงรูปโปรไฟล์ LINE และนำมาแสดง
+      const profilePictureUrl = profile.pictureUrl;
+      const displayImageElement = document.getElementById('lineDisplayPicture');
+      if (displayImageElement && profilePictureUrl) {
+        displayImageElement.src = profilePictureUrl;
+        displayImageElement.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
+        displayImageElement.title = `รูปโปรไฟล์ของ ${profile.displayName}`;
+      } else {
+        console.log("Could not load LINE profile picture or element not found.");
+      }
+
+      // ดึงข้อมูลแต้มของผู้ใช้ (สำหรับแสดงที่มุมขวาบน)
+      const user = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getUserInfo&lineId=${lineId}`);
+      const userData = await user.json();
+      document.getElementById("pointVal").textContent = userData.point || 0; // ปรับ id
+
+      load(); // โหลดข้อมูลกิจกรรม
     }
 
     init();
