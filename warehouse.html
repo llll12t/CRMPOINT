@@ -2,10 +2,10 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>ร้านค้า</title>
+  <title>คลังของรางวัล</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <style>
     /* เพิ่มฟอนต์ที่ดูทันสมัยมากขึ้น (ตามธีมเดิม) */
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
@@ -24,17 +24,17 @@
       100% { opacity: 0.5; }
     }
 
-    /* Custom Alert/Confirm Transition */
+    /* Custom Alert Transition */
     .alert-fade-enter-active, .alert-fade-leave-active {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
-    .alert-fade-enter, .alert-fade-leave-to {
+    .alert-fade-enter, .alert-fade-leave-to /* .alert-fade-leave-active in <2.1.8 */ {
       opacity: 0;
       transform: translateY(10px);
     }
   </style>
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-gray-50 p-4"> <!-- เปลี่ยนพื้นหลังเป็น bg-gray-50 -->
 
   <!-- แถบ Header: ปุ่มกลับ (ซ้าย) และ แต้ม/Display (ขวา) -->
   <div class="flex justify-between items-center mb-6">
@@ -57,28 +57,15 @@
   </div>
 
   <!-- หัวข้อหลักของหน้านี้ -->
-  <h2 class="text-xl font-bold mb-4 text-gray-800">ร้านค้าแลกของรางวัล</h2>
-  
-  <div id="itemList" class="grid grid-cols-2 gap-4"></div>
+  <h2 class="text-xl font-bold mb-4 text-center text-gray-800">คลังของรางวัล</h2> <!-- เพิ่มสีข้อความ -->
+  <ul id="redeemList" class="space-y-3"></ul>
 
-  <!-- Custom Alert Overlay (สำหรับแจ้งเตือนทั่วไป) -->
+  <!-- Custom Alert Overlay -->
   <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
       <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
       <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
       <button id="customAlertButton" class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">ตกลง</button>
-    </div>
-  </div>
-
-  <!-- Custom Confirm Overlay (สำหรับยืนยันการทำรายการ) -->
-  <div id="customConfirmOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customConfirmTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
-      <div id="customConfirmMessage" class="text-gray-700 mb-6"></div>
-      <div class="flex justify-around space-x-4">
-          <button id="customConfirmCancelButton" class="bg-gray-300 text-gray-800 py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">ยกเลิก</button>
-          <button id="customConfirmConfirmButton" class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">ยืนยัน</button>
-      </div>
     </div>
   </div>
 
@@ -92,179 +79,85 @@
 
   <script>
     let lineId = "";
-    // Elements for Custom Alert
     const customAlertOverlay = document.getElementById('customAlertOverlay');
     const customAlertTitle = document.getElementById('customAlertTitle');
     const customAlertMessage = document.getElementById('customAlertMessage');
     const customAlertButton = document.getElementById('customAlertButton');
-    // Elements for Custom Confirm
-    const customConfirmOverlay = document.getElementById('customConfirmOverlay');
-    const customConfirmTitle = document.getElementById('customConfirmTitle');
-    const customConfirmMessage = document.getElementById('customConfirmMessage');
-    const customConfirmConfirmButton = document.getElementById('customConfirmConfirmButton');
-    const customConfirmCancelButton = document.getElementById('customConfirmCancelButton');
-    // Element for Loading
     const loadingOverlay = document.getElementById('loadingOverlay');
 
-    // Function to show custom alert
+    // Function to show custom alert (copied from redeem.html)
     function showAlert(title, message, callback) {
       customAlertTitle.textContent = title;
       customAlertMessage.textContent = message;
       customAlertOverlay.classList.remove('hidden');
 
-      // Add fade-in effect
       requestAnimationFrame(() => {
         customAlertOverlay.querySelector('div').classList.remove('alert-fade-enter');
       });
 
       const dismissHandler = () => {
-        // Add fade-out effect
         customAlertOverlay.querySelector('div').classList.add('alert-fade-leave-to');
         setTimeout(() => {
           customAlertOverlay.classList.add('hidden');
-          customAlertOverlay.querySelector('div').classList.remove('alert-fade-leave-to'); // Reset for next time
+          customAlertOverlay.querySelector('div').classList.remove('alert-fade-leave-to');
           if (callback) callback();
-        }, 300); // Match CSS transition duration
+        }, 300);
 
         customAlertButton.removeEventListener('click', dismissHandler);
-        // customAlertOverlay.removeEventListener('click', dismissHandler); // Removed to prevent accidental dismiss by clicking background
       };
-
       customAlertButton.addEventListener('click', dismissHandler);
-      // Optional: Dismiss on overlay click (if desired, but might be annoying)
-      // customAlertOverlay.addEventListener('click', (event) => {
-      //     if (event.target === customAlertOverlay) {
-      //         dismissHandler();
-      //     }
-      // });
     }
 
-    // Function to show custom confirm
-    function showConfirm(title, message) {
-      return new Promise((resolve) => {
-        customConfirmTitle.textContent = title;
-        customConfirmMessage.textContent = message;
-        customConfirmOverlay.classList.remove('hidden');
-
-        // Add fade-in effect
-        requestAnimationFrame(() => {
-          customConfirmOverlay.querySelector('div').classList.remove('alert-fade-enter');
-        });
-
-        const confirmHandler = () => {
-          // Add fade-out effect
-          customConfirmOverlay.querySelector('div').classList.add('alert-fade-leave-to');
-          setTimeout(() => {
-            customConfirmOverlay.classList.add('hidden');
-            customConfirmOverlay.querySelector('div').classList.remove('alert-fade-leave-to');
-            cleanupListeners();
-            resolve(true); // User confirmed
-          }, 300);
-        };
-
-        const cancelHandler = () => {
-          // Add fade-out effect
-          customConfirmOverlay.querySelector('div').classList.add('alert-fade-leave-to');
-          setTimeout(() => {
-            customConfirmOverlay.classList.add('hidden');
-            customConfirmOverlay.querySelector('div').classList.remove('alert-fade-leave-to');
-            cleanupListeners();
-            resolve(false); // User cancelled
-          }, 300);
-        };
-
-        const cleanupListeners = () => {
-          customConfirmConfirmButton.removeEventListener('click', confirmHandler);
-          customConfirmCancelButton.removeEventListener('click', cancelHandler);
-          // customConfirmOverlay.removeEventListener('click', overlayClickHandler); // If overlay click dismisses
-        };
-
-        customConfirmConfirmButton.addEventListener('click', confirmHandler);
-        customConfirmCancelButton.addEventListener('click', cancelHandler);
-        // Optional: If you want to dismiss by clicking outside the card and treat as cancel
-        // const overlayClickHandler = (event) => {
-        //   if (event.target === customConfirmOverlay) {
-        //     cancelHandler();
-        //   }
-        // };
-        // customConfirmOverlay.addEventListener('click', overlayClickHandler);
-      });
-    }
-
-    // Function to show loading animation
+    // Function to show loading animation (copied from redeem.html)
     function showLoading() {
       loadingOverlay.classList.remove('hidden');
     }
 
-    // Function to hide loading animation
+    // Function to hide loading animation (copied from redeem.html)
     function hideLoading() {
       loadingOverlay.classList.add('hidden');
     }
 
-    async function fetchItems() {
-      showLoading(); // Show loading before fetch
+    async function loadWarehouse() {
+      showLoading(); // แสดง loading ก่อนเริ่ม fetch
       try {
-        const res = await fetch('https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getItems');
-        const items = await res.json();
-        
-        if (!items || items.length === 0) {
-          document.getElementById('itemList').innerHTML = '<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลกในขณะนี้</p>';
+        const res = await fetch(`https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec?action=getHistory&lineId=${lineId}`);
+        const all = await res.json();
+        // กรองเฉพาะรายการ 'redeem' และเรียงจากล่าสุดก่อน
+        const redeemItems = all.filter(item => item.type === 'redeem').reverse();
+
+        if (redeemItems.length === 0) {
+          document.getElementById('redeemList').innerHTML = '<li class="text-center text-gray-500 py-4">ยังไม่มีรายการแลกของรางวัล</li>';
           return;
         }
 
-        document.getElementById('itemList').innerHTML = items.map(item => `
-          <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
-            <img src="${item.image}" alt="${item.name}" class="h-24 object-contain mx-auto mb-3 rounded-md">
-            <div class="font-bold text-gray-800 text-md mb-1">${item.name}</div>
-            <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">${item.point} พ้อยต์</div>
-            <button onclick="redeem('${item.id}', '${item.name}', ${item.point})" class="bg-purple-900 text-white px-4 py-1.5 mt-2 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">แลก</button>
-          </div>
+        const html = redeemItems.map(item => `
+          <li class="bg-white rounded-xl p-4 shadow-sm flex justify-between items-center transform hover:scale-105 transition-transform">
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">${item.detail}</div>
+              <div class="text-xs text-gray-500 mt-1">${item.date}</div>
+            </div>
+            <!-- แสดงจำนวนแต้มที่ใช้ไป -->
+            <div class="text-red-600 font-bold text-md">-${item.amount} พ้อยต์</div>
+          </li>
         `).join('');
-      } catch (error) {
-        console.error("Error fetching items:", error);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดรายการของรางวัลได้ กรุณาลองใหม่อีกครั้ง");
-      } finally {
-        hideLoading(); // Hide loading after fetch completes (success or error)
-      }
-    }
 
-    async function redeem(itemId, itemName, itemPoint) {
-      // แทนที่ confirm() ด้วย custom showConfirm()
-      const confirmed = await showConfirm("ยืนยันการแลกของรางวัล", `คุณต้องการแลก "${itemName}" ด้วย ${itemPoint} พ้อยต์ใช่หรือไม่?`);
-      
-      if (!confirmed) {
-          return; // ผู้ใช้กดยกเลิก
-      }
-
-      showLoading(); // Show loading before fetch
-      try {
-        const body = { action: 'redeemItem', lineId, itemId: itemId, itemName: itemName, itemPoint: itemPoint }; // ส่งชื่อและแต้มไปหลังบ้านด้วย (ถ้า API รองรับ)
-        const res = await fetch('https://script.google.com/macros/s/AKfycbwzjlrbM1XmUhpUg1nWCij7-0wq1CRhixz-uA9cwv58qMK5Hp1xq03XZDeVnAR6C3WheA/exec', {
-          method: 'POST',
-          body: JSON.stringify(body)
-        });
-        const resultText = await res.text();
-        showAlert("สถานะการแลก", resultText, () => {
-            // หลังจากการแลกสำเร็จ ควรทำการอัปเดตแต้มและรายการ หรือปิด LIFF
-            if (resultText.includes("สำเร็จ") || resultText.includes("เรียบร้อย")) {
-                location.reload(); // โหลดหน้าใหม่เพื่ออัปเดตแต้มและรายการ
-            }
-        });
+        document.getElementById('redeemList').innerHTML = html;
       } catch (error) {
-        console.error("Error redeeming item:", error);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถทำรายการได้ กรุณาลองใหม่อีกครั้ง");
+        console.error("Error loading warehouse items:", error);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดรายการคลังของรางวัลได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
-        hideLoading(); // Hide loading after fetch completes (success or error)
+        hideLoading(); // ซ่อน loading ไม่ว่าจะสำเร็จหรือเกิด error
       }
     }
 
     async function init() {
-      showLoading(); // Show loading on initial page load
+      showLoading(); // แสดง loading ตั้งแต่เริ่มต้นโหลดหน้า
       try {
         await liff.init({ liffId: '2007514355-N7ZqG4BK' });
         if (!liff.isLoggedIn()) {
           liff.login();
-          return; // Stop execution if not logged in
+          return;
         }
 
         const profile = await liff.getProfile();
@@ -286,13 +179,13 @@
         const userData = await user.json();
         document.getElementById("pointVal").textContent = userData.point || 0;
 
-        // โหลดรายการของรางวัล
-        await fetchItems(); // ใช้ await เพื่อให้แน่ใจว่าโหลดเสร็จก่อนซ่อน loading
+        // โหลดรายการคลังของรางวัล
+        await loadWarehouse(); // ใช้ await เพื่อให้แน่ใจว่าโหลดเสร็จก่อนซ่อน loading
       } catch (error) {
         console.error("LIFF initialization or data loading error:", error);
         showAlert("เกิดข้อผิดพลาดร้ายแรง", "ไม่สามารถเริ่มต้นแอปพลิเคชันได้ กรุณาลองใหม่อีกครั้ง หรือติดต่อผู้ดูแล");
       } finally {
-        hideLoading(); // Hide loading once all initial tasks are done
+        hideLoading(); // ซ่อน loading เมื่อทุกอย่างโหลดเสร็จ
       }
     }
 
