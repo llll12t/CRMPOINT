@@ -152,7 +152,7 @@
         histEl.innerHTML = latest10.map(item=>{
           const isDebit = ['redeem','transfer_out'].includes(item.type);
           const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-          const sign  = isDebit ? '-' : '+';
+          const sign  = isDebit ? '0';
           return `
             <li class="flex justify-between items-center">
               <div>
