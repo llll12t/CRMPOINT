@@ -15,6 +15,16 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
+
+    /* pulse animation */
+    @keyframes pulseCustom {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.02); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    /* alert transition */
     .alert-fade-enter-active, .alert-fade-leave-active {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
@@ -22,6 +32,7 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     .disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
@@ -30,7 +41,7 @@
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-xl font-bold text-gray-800">สแกนเพื่อรับรางวัล</h2>
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 pulse-custom">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
       <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">…</div>+
       <img id="lineDisplayPicture"
@@ -40,7 +51,7 @@
     </div>
   </div>
 
-  <!-- Scan / Preview / Accept -->
+  <!-- Scan / Preview Container -->
   <div id="scanContainer" class="mb-6">
     <button id="scanBtn"
             class="bg-purple-900 text-white py-4 px-8 rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
@@ -65,21 +76,25 @@
     const scanContainer = document.getElementById('scanContainer');
     const pointEl       = document.getElementById('pointVal');
     const dpEl          = document.getElementById('lineDisplayPicture');
+    const scanBtn       = document.getElementById('scanBtn');
     const alertOvl      = document.getElementById('customAlertOverlay');
+    const alertBtn      = document.getElementById('customAlertButton');
 
     function showAlert(title, msg, cb) {
       document.getElementById('customAlertTitle').textContent   = title;
       document.getElementById('customAlertMessage').textContent = msg;
       alertOvl.classList.remove('hidden');
       alertOvl.querySelector('div').classList.remove('alert-fade-enter');
-      function hide() {
+      function hide(e) {
+        // only hide when clicking button
+        if (e.target !== alertBtn) return;
         alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
         setTimeout(() => {
           alertOvl.classList.add('hidden');
           alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
+          alertOvl.removeEventListener('click', hide);
           cb && cb();
         }, 300);
-        alertOvl.removeEventListener('click', hide);
       }
       alertOvl.addEventListener('click', hide);
     }
@@ -87,29 +102,25 @@
     async function scan() {
       try {
         const { value: scannedEventId } = await liff.scanCodeV2();
-
-        // ดึงข้อมูลกิจกรรม
+        // fetch event details
         const eRes  = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${scannedEventId}`);
         const eData = await eRes.json();
         if (eData.error) {
           showAlert('ไม่พบกิจกรรม', eData.error);
           return;
         }
-
-        // แสดง preview พร้อมปุ่มรับรางวัล
+        // render preview + accept button
         scanContainer.innerHTML = `
           <div class="bg-white p-6 rounded-xl shadow mb-4">
             <div class="font-bold text-lg mb-2">${eData.title}</div>
             <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
-            <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่ได้รับ: ${eData.point}</div>
+            <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะรับ: ${eData.point}</div>
             <button id="acceptBtn"
                     class="bg-green-500 text-white py-2 px-6 rounded-full font-bold transform hover:scale-105 transition-transform">
-              รับพ้อยต์
+              รับรางวัล
             </button>
           </div>`;
-
         document.getElementById('acceptBtn').addEventListener('click', async () => {
-          // เรียก joinEvent เพื่อบันทึกและอัปเดตคะแนน
           const jRes = await fetch(CONFIG.GAS_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -122,17 +133,15 @@
             })
           });
           const resultText = await jRes.text();
-
           showAlert('ยินดีด้วย!', `คุณได้รับ ${eData.point} พ้อยต์`, () => {
-            // อัปเดตคะแนน UI
+            // update UI
             const cur = parseInt(pointEl.textContent) || 0;
             pointEl.textContent = cur + eData.point;
-            // ปิดปุ่มรับรางวัล
-            document.getElementById('acceptBtn').disabled = true;
-            document.getElementById('acceptBtn').classList.add('disabled');
+            const btn = document.getElementById('acceptBtn');
+            btn.disabled = true;
+            btn.classList.add('disabled');
           });
         });
-
       } catch (err) {
         console.error(err);
         showAlert('ข้อผิดพลาด', 'ไม่สามารถสแกนได้ กรุณาลองใหม่');
@@ -142,21 +151,17 @@
     async function init() {
       await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login(); return; }
-
       const profile = await liff.getProfile();
       lineId = profile.userId;
       if (profile.pictureUrl) {
         dpEl.src = profile.pictureUrl;
         dpEl.alt = profile.displayName;
       }
-
-      // ดึงคะแนนปัจจุบัน
+      // load current points
       const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
       const uData = await uRes.json();
       pointEl.textContent = uData.point || 0;
-
-      // bind scan
-      document.getElementById('scanBtn').addEventListener('click', scan);
+      scanBtn.addEventListener('click', scan);
     }
 
     init();
