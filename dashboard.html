@@ -25,7 +25,10 @@
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
       <div class="font-bold text-gray-800 text-lg px-2"><span id="point">0</span>+</div>
-      <div class="w-10 h-10 bg-purple-900 rounded-full"></div>
+      <!-- เปลี่ยนจากวงกลมสีม่วงเป็นรูป LINE icon -->
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png" 
+           alt="LINE display" 
+           class="w-10 h-10 rounded-lg object-contain">
     </div>
   </div>
 
@@ -122,17 +125,19 @@
         return;
       }
 
-      const html = list.map(item => {
+      // เรียงลำดับรายการ: "ล่าสุดก่อน" โดยใช้ .reverse() และจำกัดจำนวน "ให้แสดง 10 รายการ" โดยใช้ .slice(0, 10)
+      // สมมติว่า API คืนค่าเป็น "เก่าสุดก่อน" หาก API คืนค่า "ล่าสุดก่อน" อยู่แล้ว ไม่ต้องใช้ .reverse()
+      const latest10Items = list.reverse().slice(0, 10);
+
+      const html = latest10Items.map(item => {
         const isDebit = item.type === 'redeem' || item.type === 'transfer_out';
         const badgeClass = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-        const textClass = isDebit ? 'text-red-500' : 'text-green-600';
         const sign = isDebit ? '-' : '+';
 
         return `
           <li class="flex justify-between items-center">
             <div>
               <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
-              <div class="text-sm ${textClass}">${item.detail}</div>
               <div class="text-xs text-gray-400 mt-1">${item.date}</div>
             </div>
             <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badgeClass}">
