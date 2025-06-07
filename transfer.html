@@ -164,36 +164,34 @@
       }
     }
 
-    async function init() {
-      // init LIFF & getProfile + getUserInfo พร้อมกัน
-      await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
+async function init() {
+  // 1. เรียก LIFF init
+  await liff.init({ liffId: CONFIG.LIFF_ID });
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
 
-      const [profile, userRes] = await Promise.all([
-        liff.getProfile(),
-        (async()=>{
-          // placeholder until lineId set
-          await new Promise(r=>{});
-          return null;
-        })()
-      ]).catch(()=>{});
-      // Actually fetch userInfo after lineId known
-      lineId = profile.userId;
-      const [ , userInfo ] = await Promise.all([
-        Promise.resolve(profile),
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`).then(r=>r.json())
-      ]);
+  // 2. ดึง profile
+  const profile = await liff.getProfile();
+  lineId = profile.userId;
 
-      // show profile pic + points
-      if (profile.pictureUrl) {
-        const dp = document.getElementById('lineDisplayPicture');
-        dp.src = profile.pictureUrl;
-        dp.alt = profile.displayName;
-      }
-      document.getElementById('pointVal').textContent = (userInfo.point||0)+'+';
+  // 3. แสดงรูปโปรไฟล์
+  if (profile.pictureUrl) {
+    const dp = document.getElementById('lineDisplayPicture');
+    dp.src = profile.pictureUrl;
+    dp.alt = profile.displayName;
+  }
 
-      document.getElementById('transferBtn').addEventListener('click', transfer);
-    }
+  // 4. ดึงคะแนนผู้ใช้จริง
+  const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+  const uData = await uRes.json();
+  document.getElementById('pointVal').textContent = (uData.point||0) + '+';
+
+  // 5. ผูก event ให้ปุ่มโอน
+  document.getElementById('transferBtn')
+          .addEventListener('click', transfer);
+}
 
     init();
   </script>
