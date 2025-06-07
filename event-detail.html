@@ -4,14 +4,9 @@
   <meta charset="UTF-8">
   <title>รายละเอียดกิจกรรม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- 1) โหลด config ก่อน -->
   <script src="config.js"></script>
-  <!-- 2) LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 3) Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
@@ -25,11 +20,13 @@
     <h2 class="text-xl font-bold text-gray-800">รายละเอียดกิจกรรม</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
-      <div class="font-bold text-gray-800 text-lg px-2"><span id="pointVal">0</span>+</div>
+      <div class="font-bold text-gray-800 text-lg px-2">
+        <span id="pointVal">0</span>+
+      </div>
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE display picture"
-           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
     </div>
   </div>
 
@@ -39,7 +36,7 @@
       <div class="font-bold text-lg" id="title">–</div>
       <div class="bg-yellow-400 text-gray-800 font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
     </div>
-    <div class="text-sm text-gray-700 mb-6 leading-relaxed" id="desc">...</div>
+    <div class="text-sm text-gray-700 mb-6" id="desc">...</div>
     <button id="joinBtn"
             class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
       เข้าร่วม
@@ -47,51 +44,57 @@
   </div>
 
   <script>
-    const params           = new URLSearchParams(location.search);
-    const eventId          = params.get("id");
-    let   lineId           = "";
-    let   eventRewardPoint = 0;
-    let   eventTitle       = "";
+    const eventId = new URLSearchParams(location.search).get("id");
+    let lineId = "", eventTitle = "", eventRewardPoint = 0;
 
     async function loadData() {
-      const [ userRes, eventRes ] = await Promise.all([
+      // ดึง userInfo + eventData + history พร้อมกัน
+      const [ uRes, eRes, hRes ] = await Promise.all([
         fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`)
+        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
       ]);
-      const [ userData, eventData ] = await Promise.all([ userRes.json(), eventRes.json() ]);
+      const [ userData, eventData, historyList ] = await Promise.all([
+        uRes.json(), eRes.json(), hRes.json()
+      ]);
 
-      // อัปเดตแต้ม
+      // อัปเดตแต้มด้านบน
       document.getElementById("pointVal").textContent = userData.point || 0;
 
-      // แสดงข้อมูลกิจกรรม
+      // ถ้าไม่พบกิจกรรม
       if (eventData.error) {
         document.getElementById("title").textContent      = "ไม่พบกิจกรรม";
         document.getElementById("desc").textContent       = eventData.error;
         document.getElementById("eventPoint").textContent = "";
-        document.getElementById("joinBtn").disabled       = true;
+        disableJoin();
         return;
       }
+
+      // แสดงข้อมูลกิจกรรม
       eventTitle       = eventData.title;
       eventRewardPoint = eventData.point;
       document.getElementById("title").textContent      = eventTitle;
       document.getElementById("eventPoint").textContent = `${eventRewardPoint}+`;
       document.getElementById("desc").textContent       = eventData.desc;
 
-      // ถ้าผู้ใช้เคย join แล้ว ให้ disable ปุ่มและเปลี่ยนข้อความ
-      const joinBtn = document.getElementById("joinBtn");
-      const hasJoined = Array.isArray(userData.joinedEvents)
-                     && userData.joinedEvents.includes(eventId);
+      // ตรวจสอบจาก historyList ว่า เคย joinEvent ครั้งใดบ้าง
+      const hasJoined = historyList.some(item =>
+        item.type === 'joinEvent' && item.detail === eventId
+      );
       if (hasJoined) {
-        joinBtn.textContent = "รับพ้อยต์แล้ว";
-        joinBtn.disabled    = true;
-        joinBtn.classList.add("disabled");
+        document.getElementById("joinBtn").textContent = "รับพ้อยต์แล้ว";
+        disableJoin();
       }
     }
 
-    async function join() {
-      // ยืนยันก่อน join
-      if (!confirm(`เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`)) return;
+    function disableJoin() {
+      const btn = document.getElementById("joinBtn");
+      btn.disabled = true;
+      btn.classList.add("disabled");
+    }
 
+    async function join() {
+      if (!confirm(`คุณต้องการเข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`)) return;
       const res = await fetch(CONFIG.GAS_URL, {
         method: "POST",
         body: JSON.stringify({
@@ -104,32 +107,22 @@
       });
       const text = await res.text();
       alert(text);
-
-      // ถ้า join สำเร็จ ให้เปลี่ยนปุ่มเป็นรับแล้วและ disable
       if (text.includes("สำเร็จ")) {
-        const joinBtn = document.getElementById("joinBtn");
-        joinBtn.textContent = "รับพ้อยต์แล้ว";
-        joinBtn.disabled    = true;
-        joinBtn.classList.add("disabled");
+        document.getElementById("joinBtn").textContent = "รับพ้อยต์แล้ว";
+        disableJoin();
       }
     }
 
     async function init() {
       await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
-      }
-
+      if (!liff.isLoggedIn()) { liff.login(); return; }
       const profile = await liff.getProfile();
       lineId = profile.userId;
       if (profile.pictureUrl) {
         const dp = document.getElementById('lineDisplayPicture');
-        dp.src   = profile.pictureUrl;
-        dp.alt   = profile.displayName;
+        dp.src = profile.pictureUrl;
+        dp.alt = profile.displayName;
       }
-
-      // ผูกปุ่ม join และโหลดข้อมูลพร้อมเช็คสถานะ
       document.getElementById("joinBtn").addEventListener("click", join);
       await loadData();
     }
