@@ -2,10 +2,11 @@
 <html lang="th">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>สแกนเพื่อรับพ้อยต์</title>
+
   <!-- โหลด config.js -->
   <script src="config.js"></script>
   <!-- LIFF SDK -->
@@ -16,6 +17,16 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
+
+    /* pulse animation */
+    @keyframes pulseCustom {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.02); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    /* alert transition */
     .alert-fade-enter-active, .alert-fade-leave-active {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
@@ -23,6 +34,8 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
+    /* disabled button */
     .disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
@@ -33,7 +46,8 @@
     <h2 class="text-xl font-bold text-gray-800">สแกนเพื่อรับพ้อยต์</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 pulse-custom">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">…</div>+
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">…</div>
+      <span>+</span>
       <img id="lineDisplayPicture"
            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
            alt="LINE DP"
@@ -68,18 +82,18 @@
     const scanBtn  = document.getElementById('scanBtn');
     const alertOvl = document.getElementById('customAlertOverlay');
 
-    function showAlert(title, msg, cb) {
-      document.getElementById('customAlertTitle').textContent = title;
-      document.getElementById('customAlertMessage').textContent = msg;
+    function showAlert(title, message, cb) {
+      document.getElementById('customAlertTitle').textContent   = title;
+      document.getElementById('customAlertMessage').textContent = message;
       alertOvl.classList.remove('hidden');
       alertOvl.querySelector('div').classList.remove('alert-fade-enter');
       function hide() {
         alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(()=>{
+        setTimeout(() => {
           alertOvl.classList.add('hidden');
           alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
           cb && cb();
-        },300);
+        }, 300);
         alertOvl.removeEventListener('click', hide);
       }
       alertOvl.addEventListener('click', hide);
@@ -87,18 +101,19 @@
 
     async function scan() {
       try {
+        // สแกนได้ eventId มา
         const { value: scannedEventId } = await liff.scanCodeV2();
 
-        // 1) ดึงข้อมูลกิจกรรม
-        const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${scannedEventId}`);
+        // ดึงข้อมูลกิจกรรม
+        const eRes  = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${scannedEventId}`);
         const eData = await eRes.json();
         if (eData.error) {
           showAlert('ไม่พบกิจกรรม', eData.error);
           return;
         }
 
-        // 2) เรียก joinEvent เพื่อบันทึกเหมือนกดรับ
-        const jRes = await fetch(CONFIG.GAS_URL, {
+        // เรียก joinEvent เพื่อบันทึกและเพิ่มพ้อยต์
+        const jRes   = await fetch(CONFIG.GAS_URL, {
           method: 'POST',
           body: JSON.stringify({
             action:  'joinEvent',
@@ -110,10 +125,19 @@
         });
         const resultText = await jRes.text();
 
-        showAlert('สถานะ', resultText, () => {
-          scanBtn.disabled = true;
-          scanBtn.classList.add('disabled');
-        });
+        // แสดง alert พร้อมความยินดี และจำนวนพ้อยต์ที่ได้
+        showAlert(
+          '🎉 ยินดีด้วย!',
+          `คุณได้รับ ${eData.point} พ้อยต์ จากกิจกรรม "${eData.title}"`,
+          () => {
+            // อัปเดตแต้มที่แสดงบนหัว
+            const current = parseInt(pointEl.textContent) || 0;
+            pointEl.textContent = current + eData.point;
+            // disable ปุ่มสแกน
+            scanBtn.disabled = true;
+            scanBtn.classList.add('disabled');
+          }
+        );
       } catch (err) {
         console.error(err);
         showAlert('ข้อผิดพลาด', 'ไม่สามารถสแกนได้ กรุณาลองใหม่');
@@ -131,16 +155,15 @@
         dpEl.alt = profile.displayName;
       }
 
-      // ดึงแต้มและ history เพื่อตรวจสอบการสแกนก่อนหน้า
+      // ดึงแต้มและประวัติ เพื่อตรวจสอบเคยสแกนหรือไม่
       const [ uRes, hRes ] = await Promise.all([
         fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
         fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
       ]);
       const [ uData, historyList ] = await Promise.all([ uRes.json(), hRes.json() ]);
+      pointEl.textContent = uData.point || 0;
 
-      pointEl.textContent = (uData.point || 0);
-
-      // ถ้ามีประวัติ event พร้อม eventId ให้ disable
+      // ถ้ามีประวัติ event ดังกล่าวแล้ว ให้ disable ปุ่ม
       if (historyList.some(i => i.type === 'event' && i.eventId)) {
         scanBtn.disabled = true;
         scanBtn.classList.add('disabled');
@@ -153,4 +176,3 @@
   </script>
 </body>
 </html>
-
