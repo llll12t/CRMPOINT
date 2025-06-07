@@ -149,7 +149,6 @@
       if (!confirm(`เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`)) return;
       const res = await fetch(CONFIG.GAS_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json;charset=UTF-8" },
         body: JSON.stringify({
           action:   "joinEvent",
           lineId,
