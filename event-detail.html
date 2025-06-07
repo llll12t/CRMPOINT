@@ -5,24 +5,24 @@
   <title>รายละเอียดกิจกรรม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- 1) โหลด config ก่อนเสมอ -->
+  <!-- 1) โหลด config ก่อน -->
   <script src="config.js"></script>
   <!-- 2) LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <!-- 3) Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
+    .disabled { opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
 
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
-  <!-- Title -->
-  <h2 class="text-xl font-bold p-4 text-gray-800">รายละเอียดกิจกรรม</h2>
-
+    <h2 class="text-xl font-bold text-gray-800">รายละเอียดกิจกรรม</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
       <div class="font-bold text-gray-800 text-lg px-2"><span id="pointVal">0</span>+</div>
@@ -33,9 +33,8 @@
     </div>
   </div>
 
-
   <!-- Card -->
-  <div id="card" class="bg-white p-6 rounded-xl shadow-md text-gray-800">
+  <div class="bg-white p-6 rounded-xl shadow-md text-gray-800 mb-6">
     <div class="flex justify-between items-start mb-3">
       <div class="font-bold text-lg" id="title">–</div>
       <div class="bg-yellow-400 text-gray-800 font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
@@ -54,66 +53,72 @@
     let   eventRewardPoint = 0;
     let   eventTitle       = "";
 
-    // โหลดข้อมูล user + event พร้อมกัน
     async function loadData() {
       const [ userRes, eventRes ] = await Promise.all([
         fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
         fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`)
       ]);
-
-      const [ userData, eventData ] = await Promise.all([
-        userRes.json(),
-        eventRes.json()
-      ]);
+      const [ userData, eventData ] = await Promise.all([ userRes.json(), eventRes.json() ]);
 
       // อัปเดตแต้ม
-      document.getElementById("pointVal").textContent    = userData.point || 0;
-      // ถ้าเกิด error จาก API
+      document.getElementById("pointVal").textContent = userData.point || 0;
+
+      // แสดงข้อมูลกิจกรรม
       if (eventData.error) {
-        document.getElementById("title").textContent     = "ไม่พบกิจกรรม";
-        document.getElementById("desc").textContent      = eventData.error;
-        document.getElementById("eventPoint").textContent= "";
+        document.getElementById("title").textContent      = "ไม่พบกิจกรรม";
+        document.getElementById("desc").textContent       = eventData.error;
+        document.getElementById("eventPoint").textContent = "";
         document.getElementById("joinBtn").disabled       = true;
         return;
       }
-
-      // เก็บค่าไว้ใช้ตอน join
       eventTitle       = eventData.title;
       eventRewardPoint = eventData.point;
-
-      // แทรกข้อมูลลงหน้า
-      document.getElementById("title").textContent      = eventData.title;
-      document.getElementById("eventPoint").textContent = `${eventData.point}+`;
+      document.getElementById("title").textContent      = eventTitle;
+      document.getElementById("eventPoint").textContent = `${eventRewardPoint}+`;
       document.getElementById("desc").textContent       = eventData.desc;
+
+      // ถ้าผู้ใช้เคย join แล้ว ให้ disable ปุ่มและเปลี่ยนข้อความ
+      const joinBtn = document.getElementById("joinBtn");
+      const hasJoined = Array.isArray(userData.joinedEvents)
+                     && userData.joinedEvents.includes(eventId);
+      if (hasJoined) {
+        joinBtn.textContent = "รับพ้อยต์แล้ว";
+        joinBtn.disabled    = true;
+        joinBtn.classList.add("disabled");
+      }
     }
 
-    // ทำรายการ join
     async function join() {
-      if (!confirm(`คุณต้องการเข้าร่วมกิจกรรม "${eventTitle}" และรับ ${eventRewardPoint} แต้ม ใช่หรือไม่?`)) {
-        return;
-      }
+      // ยืนยันก่อน join
+      if (!confirm(`เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`)) return;
+
       const res = await fetch(CONFIG.GAS_URL, {
         method: "POST",
         body: JSON.stringify({
-          action: "joinEvent",
+          action:  "joinEvent",
           lineId,
           eventId,
-          title: eventTitle,
-          point: eventRewardPoint
+          title:   eventTitle,
+          point:   eventRewardPoint
         })
       });
       const text = await res.text();
       alert(text);
+
+      // ถ้า join สำเร็จ ให้เปลี่ยนปุ่มเป็นรับแล้วและ disable
       if (text.includes("สำเร็จ")) {
-        liff.closeWindow();
+        const joinBtn = document.getElementById("joinBtn");
+        joinBtn.textContent = "รับพ้อยต์แล้ว";
+        joinBtn.disabled    = true;
+        joinBtn.classList.add("disabled");
       }
     }
 
-    // เริ่มต้น LIFF + โหลด data
     async function init() {
       await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) {
-        liff.login(); return;
+        liff.login();
+        return;
       }
 
       const profile = await liff.getProfile();
@@ -121,13 +126,11 @@
       if (profile.pictureUrl) {
         const dp = document.getElementById('lineDisplayPicture');
         dp.src   = profile.pictureUrl;
-        dp.alt   = `รูปโปรไฟล์ของ ${profile.displayName}`;
+        dp.alt   = profile.displayName;
       }
 
-      // bind join button
+      // ผูกปุ่ม join และโหลดข้อมูลพร้อมเช็คสถานะ
       document.getElementById("joinBtn").addEventListener("click", join);
-
-      // โหลดข้อมูล
       await loadData();
     }
 
