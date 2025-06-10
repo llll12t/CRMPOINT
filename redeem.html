@@ -1,244 +1,523 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ร้านค้าแลกของรางวัล</title>
-  <!-- โหลด config ก่อน -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>CRM SPA</title>
+  <!-- Load once: config, LIFF SDK, Tailwind CSS -->
   <script src="config.js"></script>
-  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
   <style>
-    /* ฟอนต์ Kanit */
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
     body { font-family: 'Kanit', sans-serif; }
-
-    /* Loading card animation */
-    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
-    @keyframes pulse-opacity {
-      0%,100% { opacity: 0.5; }
-      50%      { opacity: 1; }
-    }
-
-    /* Alert/Confirm transition */
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
+    .hidden { display: none; }
+    .disabled { opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-gray-50">
+  <!-- Persistent Navigation -->
+  <nav class="bg-purple-900 fixed top-0 left-0 right-0 z-20">
+    <ul class="flex justify-around text-white py-3">
+      <li><a href="#dashboard" class="hover:underline">หน้าหลัก</a></li>
+      <li><a href="#event"     class="hover:underline">อีเวนต์</a></li>
+      <li><a href="#activity"  class="hover:underline">เช็คอิน</a></li>
+      <li><a href="#transfer"  class="hover:underline">โอนพ้อย</a></li>
+      <li><a href="#warehouse" class="hover:underline">คลัง</a></li>
+      <li><a href="#profile"   class="hover:underline">โปรไฟล์</a></li>
+      <li><a href="#redeem"    class="hover:underline">แลกพ้อย</a></li>
+    </ul>
+  </nav>
 
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
- <!-- Title -->
-  <h2 class="text-xl font-bold p-4 text-gray-800">ร้านค้าแลกของรางวัล</h2>
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE DP"
-           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+  <!-- Spacer so content isn't hidden under nav -->
+  <div class="pt-16"></div>
+  <!-- Main SPA container -->
+  <div id="app"></div>
+
+  <!-- Dashboard -->
+  <template id="view-dashboard">
+    <div class="p-4">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <p class="text-md font-semibold text-gray-800">อัพเกรด member</p>
+          <p class="text-sm text-gray-500">ปลดล็อกสิทธิประโยชน์</p>
+        </div>
+        <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+          <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold">★</div>
+          <div class="font-bold text-gray-800 text-lg px-2"><span id="point">0</span></div>
+          <img id="lineDP" class="w-10 h-10 rounded-full object-cover border-2 border-purple-900" alt="LINE DP">
+        </div>
+      </div>
+      <div id="checkinBox" class="hidden flex items-center mb-6 space-x-4">
+        <button id="checkinBtn" class="bg-purple-700 text-white py-2 px-6 rounded-full">เช็คอินวันนี้</button>
+        <span id="todayDate" class="text-gray-600"></span>
+      </div>
+      <ul id="historyList" class="space-y-4">
+        <!-- history items -->
+      </ul>
     </div>
-  </div>
+  </template>
 
- 
-
-  <!-- รายการของรางวัล -->
-  <div id="itemList" class="grid grid-cols-2 gap-4">
-    <!-- skeleton loaders แสดงตอนรอโหลดจริง -->
-    <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
-      <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
-      <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
-      <div class="h-3 bg-gray-200 rounded w-2/5 mx-auto mb-3"></div>
-      <div class="h-8 bg-gray-200 rounded-full w-full"></div>
-    </div>
-    <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
-      <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
-      <div class="h-4 bg-gray-200 rounded w-2/3 mx-auto mb-2"></div>
-      <div class="h-3 bg-gray-200 rounded w-1/2 mx-auto mb-3"></div>
-      <div class="h-8 bg-gray-200 rounded-full w-full"></div>
-    </div>
-  </div>
-
-  <!-- Custom Alert -->
-  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
-      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
-      <button id="customAlertButton"
-              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-        ตกลง
-      </button>
-    </div>
-  </div>
-
-  <!-- Custom Confirm -->
-  <div id="customConfirmOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customConfirmTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
-      <div id="customConfirmMessage" class="text-gray-700 mb-6"></div>
-      <div class="flex justify-around space-x-4">
-        <button id="customConfirmCancelButton"
-                class="bg-gray-300 text-gray-800 py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-          ยกเลิก
-        </button>
-        <button id="customConfirmConfirmButton"
-                class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-          ยืนยัน
-        </button>
+  <!-- Event list -->
+  <template id="view-event">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">อีเวนต์และกิจกรรม</h2>
+      <div id="eventList" class="space-y-4">
+        <!-- event cards -->
       </div>
     </div>
+  </template>
+
+  <!-- Daily check-in -->
+  <template id="view-activity">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">เช็คอินรายวัน</h2>
+      <div id="status" class="text-center text-gray-600 mb-4">กำลังโหลด...</div>
+      <button id="activityBtn" class="w-full bg-purple-700 text-white py-2 rounded hidden">เช็คอินวันนี้</button>
+    </div>
+  </template>
+
+  <!-- Transfer points -->
+  <template id="view-transfer">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">โอนคะแนน</h2>
+      <input id="transferTo" placeholder="LINE ID ปลายทาง" class="w-full p-2 border rounded mb-2" />
+      <input id="transferAmount" type="number" placeholder="จำนวนคะแนน" class="w-full p-2 border rounded mb-4" />
+      <button id="transferBtn" class="w-full bg-purple-700 text-white py-2 rounded">โอนคะแนน</button>
+    </div>
+  </template>
+
+  <!-- Warehouse (equipment) -->
+  <template id="view-warehouse">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">คลังอุปกรณ์</h2>
+      <ul id="warehouseList" class="list-disc pl-5 space-y-2">
+        <!-- equipment items -->
+      </ul>
+    </div>
+  </template>
+
+  <!-- Profile -->
+  <template id="view-profile">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">โปรไฟล์ของคุณ</h2>
+      <div class="space-y-4">
+        <input id="profileName" placeholder="ชื่อ" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profilePhone" placeholder="เบอร์โทรศัพท์" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profileEmail" placeholder="อีเมล" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profileAddress" placeholder="ที่อยู่" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profileNote" placeholder="หมายเหตุ" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <button id="updateProfileBtn" class="bg-purple-900 text-white py-3 w-full rounded-full font-bold">อัปเดตข้อมูล</button>
+      </div>
+    </div>
+  </template>
+
+  <!-- Add points -->
+  <template id="view-addpoint">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">เติมคะแนน</h2>
+      <input id="addAmount" type="number" placeholder="จำนวนที่จะเติม" class="w-full p-2 border rounded mb-4">
+      <button id="addPointBtn" class="w-full bg-green-500 text-white py-2 rounded">เติมคะแนน</button>
+    </div>
+  </template>
+
+  <!-- Event detail -->
+  <template id="view-event-detail">
+    <div class="p-4">
+      <h2 id="eventDetailTitle" class="text-xl font-bold mb-2">–</h2>
+      <p id="eventDetailDesc" class="text-gray-700 mb-4">...</p>
+      <button id="joinBtn" class="w-full bg-purple-700 text-white py-2 rounded">เข้าร่วมและรับคะแนน</button>
+    </div>
+  </template>
+
+  <!-- Register for event -->
+  <template id="view-register">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">สมัครเข้าร่วม</h2>
+      <form id="registerForm" class="space-y-4">
+        <input name="name" placeholder="ชื่อ" class="w-full p-2 border rounded">
+        <input name="phone" placeholder="เบอร์โทรศัพท์" class="w-full p-2 border rounded">
+        <input name="email" placeholder="อีเมล" class="w-full p-2 border rounded">
+        <button type="submit" class="w-full bg-purple-700 text-white py-2 rounded">ส่งใบสมัคร</button>
+      </form>
+    </div>
+  </template>
+
+<!-- Template: Redeem -->
+<template id="view-redeem">
+  <div class="p-4">
+    <h2 class="text-xl font-bold mb-4">ร้านค้าแลกของรางวัล</h2>
+    <div class="bg-gray-50 p-4 rounded-lg shadow mb-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-yellow-400 flex items-center justify-center rounded-full text-white">★</div>
+        <span class="font-bold text-gray-800 text-lg" id="pointVal">0+</span>
+      </div>
+      <img id="lineDP_redeem"
+           src=""
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
+    </div>
+    <ul id="redeemList" class="grid grid-cols-2 gap-4">
+      <!-- skeleton cards / items จะถูก inject ที่นี่ -->
+    </ul>
+
+    <!-- Alert Overlay -->
+    <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+        <div id="customAlertTitle" class="font-bold text-lg mb-3"></div>
+        <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+        <button id="customAlertButton" class="bg-purple-900 text-white py-2 px-8 rounded-full">ตกลง</button>
+      </div>
+    </div>
+    <!-- Confirm Overlay (ถ้ามี) … -->
   </div>
+</template>
+
 
   <script>
-    let lineId = "";
-    const itemList = document.getElementById('itemList');
-
-    // สร้าง skeleton cards
-    function generateSkeleton(count) {
-      let html = '';
-      for (let i = 0; i < count; i++) {
-        html += `
-          <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
-            <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
-            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30+Math.random()*50)}% mx-auto mb-2"></div>
-            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30+Math.random()*40)}% mx-auto mb-3"></div>
-            <div class="h-8 bg-gray-200 rounded-full w-full"></div>
-          </div>`;
-      }
-      return html;
-    }
-
-    // ฟังก์ชันแสดง Alert
-    function showAlert(title, message, cb) {
-      const o=document.getElementById('customAlertOverlay');
-      document.getElementById('customAlertTitle').textContent   = title;
-      document.getElementById('customAlertMessage').textContent = message;
-      o.classList.remove('hidden');
-      o.querySelector('div').classList.remove('alert-fade-enter');
-      const hide = () => {
-        o.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(()=>{
-          o.classList.add('hidden');
-          o.querySelector('div').classList.remove('alert-fade-leave-to');
-          cb && cb();
-        }, 300);
-        customAlertButton.removeEventListener('click', hide);
-      };
-      document.getElementById('customAlertButton').addEventListener('click', hide);
-    }
-
-    // ฟังก์ชันแสดง Confirm
-    function showConfirm(title, message) {
-      return new Promise(resolve => {
-        const o=document.getElementById('customConfirmOverlay');
-        document.getElementById('customConfirmTitle').textContent   = title;
-        document.getElementById('customConfirmMessage').textContent = message;
-        o.classList.remove('hidden');
-        o.querySelector('div').classList.remove('alert-fade-enter');
-        const ok = () => cleanup(true);
-        const cancel = () => cleanup(false);
-        function cleanup(result) {
-          o.querySelector('div').classList.add('alert-fade-leave-to');
-          setTimeout(()=>{
-            o.classList.add('hidden');
-            o.querySelector('div').classList.remove('alert-fade-leave-to');
-            resolve(result);
-          }, 300);
-          document.getElementById('customConfirmConfirmButton').removeEventListener('click', ok);
-          document.getElementById('customConfirmCancelButton').removeEventListener('click', cancel);
-        }
-        document.getElementById('customConfirmConfirmButton').addEventListener('click', ok);
-        document.getElementById('customConfirmCancelButton').addEventListener('click', cancel);
-      });
-    }
-
-    // ดึงรายการของรางวัล
-    async function fetchItems() {
-      itemList.innerHTML = generateSkeleton(4);
-      const res = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
-      const items = await res.json();
-      if (!items || items.length === 0) {
-        itemList.innerHTML = `<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลกในขณะนี้</p>`;
-        return;
-      }
-      itemList.innerHTML = items.map(item => `
-        <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
-          <img src="${item.image}" alt="${item.name}"
-               class="h-24 object-contain mx-auto mb-3 rounded-md">
-          <div class="font-bold text-gray-800 mb-1">${item.name}</div>
-          <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">
-            ${item.point} พ้อยต์
-          </div>
-          <button onclick="redeem('${item.id}','${item.name}',${item.point})"
-                  class="bg-purple-900 text-white px-4 py-1.5 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">
-            แลก
-          </button>
-        </div>
-      `).join('');
-    }
-
-    // แลกของรางวัล
-    async function redeem(id, name, point) {
-      if (!await showConfirm("ยืนยันการแลก", `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`)) return;
-      const res = await fetch(CONFIG.GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action:'redeemItem', lineId, itemId:id })
-      });
-      const txt = await res.text();
-      showAlert("สถานะการแลก", txt, () => {
-        if (txt.includes("สำเร็จ")) fetchItems();
-      });
-    }
-
-    // เริ่มต้น LIFF + ดึง data พร้อมกัน
-    async function init() {
-      try {
+    // Initialize LIFF once
+    let liffInitialized = false;
+    async function ensureLIFF() {
+      if (!liffInitialized) {
         await liff.init({ liffId: CONFIG.LIFF_ID });
-        if (!liff.isLoggedIn()) { liff.login(); return; }
+        liffInitialized = true;
+      }
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return false;
+      }
+      return true;
+    }
 
-        const p = await liff.getProfile();
-        lineId = p.userId;
-        const dp = document.getElementById('lineDisplayPicture');
-        if (p.pictureUrl) {
-          dp.src = p.pictureUrl;
-          dp.alt = p.displayName;
+    // Router setup
+    const routes = {
+      '#dashboard': { tpl: 'view-dashboard', init: initDashboard },
+      '#event':     { tpl: 'view-event',     init: initEvent     },
+      '#activity':  { tpl: 'view-activity',  init: initActivity  },
+      '#transfer':  { tpl: 'view-transfer',  init: initTransfer  },
+      '#warehouse': { tpl: 'view-warehouse', init: initWarehouse },
+      '#profile':   { tpl: 'view-profile',   init: initProfile   },
+      '#addpoint':  { tpl: 'view-addpoint',  init: initAddpoint  },
+      '#event-detail':{ tpl: 'view-event-detail', init: initEventDetail },
+      '#register':  { tpl: 'view-register',  init: initRegister  },
+      '#redeem':    { tpl: 'view-redeem',    init: initRedeem    },
+      '':           { tpl: 'view-dashboard', init: initDashboard }
+    };
+
+    function router() {
+      const hash = window.location.hash || '';
+      const route = routes[hash] || routes[''];
+      const tpl = document.getElementById(route.tpl);
+      document.getElementById('app').innerHTML = tpl.innerHTML;
+      route.init();
+    }
+
+    window.addEventListener('hashchange', router);
+
+    // Kick things off
+    ensureLIFF().then(ok => {
+      if (ok) router();
+    });
+
+    // --------- Init functions ---------
+
+    async function initDashboard() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const lineDP = document.getElementById('lineDP');
+      if (profile.pictureUrl) lineDP.src = profile.pictureUrl;
+
+      const [userRes, checkRes, histRes] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`),
+        fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${profile.userId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${profile.userId}`)
+      ]);
+      const [userData, checkData, history] = await Promise.all([userRes.json(), checkRes.json(), histRes.json()]);
+
+      document.getElementById('point').textContent = userData.point || 0;
+
+      // Check-in
+      if (!checkData.checkedInToday) {
+        document.getElementById('checkinBox').classList.remove('hidden');
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('th-TH');
+        document.getElementById('checkinBtn').addEventListener('click', async () => {
+          await fetch(CONFIG.GAS_URL, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({action:'dailyCheckin', lineId:profile.userId})
+          });
+          router();
+        });
+      }
+
+      // History
+      const listEl = document.getElementById('historyList');
+      listEl.innerHTML = '';
+      const items = history.reverse().slice(0, 10);
+      if (items.length === 0) {
+        listEl.innerHTML = `<li class="text-center text-gray-500">ไม่มีประวัติการทำรายการ</li>`;
+      } else {
+        for (const item of items) {
+          const isDebit = ['redeem','transfer_out'].includes(item.type);
+          const sign = isDebit ? '-' : '+';
+          listEl.insertAdjacentHTML('beforeend', `
+            <li class="flex justify-between items-center">
+              <div>
+                <div class="font-medium text-gray-800">${item.detail}</div>
+                <div class="text-xs text-gray-400">${item.date}</div>
+              </div>
+              <div class="font-bold ${ isDebit ? 'text-red-600' : 'text-green-600' }">${sign}${item.amount}</div>
+            </li>
+          `);
         }
-
-        // เซ็ต skeleton ก่อน
-        document.getElementById('pointVal').textContent = '…';
-        itemList.innerHTML = generateSkeleton(4);
-
-        // fetch พร้อมกัน: userInfo + items
-        await Promise.all([
-          (async()=>{
-            const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-            const ud = await u.json();
-            document.getElementById('pointVal').textContent = (ud.point||0) + '+';
-          })(),
-          fetchItems()
-        ]);
-      } catch(e) {
-        console.error(e);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเริ่มระบบได้ กรุณาลองใหม่");
       }
     }
 
-    init();
+    async function initEvent() {
+      if (!(await ensureLIFF())) return;
+      const listEl = document.getElementById('eventList');
+      listEl.innerHTML = `<p class="text-center text-gray-500">กำลังโหลด…</p>`;
+      const events = await fetch(`${CONFIG.GAS_URL}?action=getEvents`).then(r=>r.json());
+      if (!events.length) {
+        listEl.innerHTML = `<p class="text-center text-gray-500">ไม่มีกิจกรรมในขณะนี้</p>`;
+      } else {
+        listEl.innerHTML = events.map(e=>`
+          <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+            <div>
+              <div class="font-semibold text-gray-800">${e.title}</div>
+              <div class="text-sm text-gray-500">${e.detail||''}</div>
+            </div>
+            <a href="#event-detail?id=${e.id}" class="text-purple-700 font-medium">รายละเอียด</a>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function initActivity() {
+      if (!(await ensureLIFF())) return;
+      const statusEl = document.getElementById('status');
+      const btn = document.getElementById('activityBtn');
+      statusEl.textContent = 'กำลังตรวจสอบ…';
+      const profile = await liff.getProfile();
+      const res = await fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${profile.userId}`);
+      const data = await res.json();
+      if (data.checkedInToday) {
+        statusEl.textContent = 'เช็คอินแล้ววันนี้';
+      } else {
+        statusEl.textContent = '';
+        btn.classList.remove('hidden');
+        btn.addEventListener('click', async ()=>{
+          await fetch(CONFIG.GAS_URL, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({action:'dailyCheckin', lineId:profile.userId})
+          });
+          initActivity();
+        });
+      }
+    }
+
+    async function initTransfer() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const btn = document.getElementById('transferBtn');
+      btn.addEventListener('click', async ()=>{
+        const to = document.getElementById('transferTo').value.trim();
+        const amt = parseInt(document.getElementById('transferAmount').value,10);
+        if (!to||isNaN(amt)||amt<=0) return alert('กรุณากรอกข้อมูลให้ถูกต้อง');
+        if (to===profile.userId) return alert('ไม่สามารถโอนให้ตัวเอง');
+        if (!confirm(`โอน ${amt} พ้อยต์ ให้ ${to}?`)) return;
+        const res = await fetch(CONFIG.GAS_URL,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'transferPoints', from:profile.userId, to, amount:amt})
+        });
+        const txt = await res.text();
+        alert(txt);
+        router();
+      });
+    }
+
+    async function initWarehouse() {
+      if (!(await ensureLIFF())) return;
+      const listEl = document.getElementById('warehouseList');
+      // Example static data; replace with real fetch if available
+      listEl.innerHTML = `
+        <li>อุปกรณ์ A: คงเหลือ 10 ชิ้น</li>
+        <li>อุปกรณ์ B: คงเหลือ 5 ชิ้น</li>
+      `;
+    }
+
+    async function initProfile() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`);
+      const uData = await uRes.json();
+      document.getElementById('profileName').value    = uData.name    || '';
+      document.getElementById('profilePhone').value   = uData.phone   || '';
+      document.getElementById('profileEmail').value   = uData.email   || '';
+      document.getElementById('profileAddress').value = uData.address || '';
+      document.getElementById('profileNote').value    = uData.note    || '';
+      document.getElementById('updateProfileBtn').addEventListener('click', async ()=>{
+        const body = {
+          action: 'updateProfile',
+          lineId: profile.userId,
+          name: document.getElementById('profileName').value.trim(),
+          phone: document.getElementById('profilePhone').value.trim(),
+          email: document.getElementById('profileEmail').value.trim(),
+          address: document.getElementById('profileAddress').value.trim(),
+          note: document.getElementById('profileNote').value.trim()
+        };
+        const res = await fetch(CONFIG.GAS_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        alert(await res.text());
+      });
+    }
+
+    async function initAddpoint() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      document.getElementById('addPointBtn').addEventListener('click', async ()=>{
+        const amt = parseInt(document.getElementById('addAmount').value,10);
+        if (isNaN(amt)||amt<=0) return alert('กรุณากรอกจำนวนให้ถูกต้อง');
+        const res = await fetch(CONFIG.GAS_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({action:'addPoint', lineId:profile.userId, amount:amt})
+        });
+        alert(await res.text());
+        router();
+      });
+    }
+
+    async function initEventDetail() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const params = new URLSearchParams(location.hash.split('?')[1]);
+      const eventId = params.get('id');
+      const [userRes, eRes, hRes] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${profile.userId}`)
+      ]);
+      const [userData, eventData, history] = await Promise.all([userRes.json(), eRes.json(), hRes.json()]);
+      document.getElementById('lineDP').src = profile.pictureUrl || '';
+      document.getElementById('point').textContent = userData.point || 0;
+
+      if (eventData.error) {
+        document.getElementById('eventDetailTitle').textContent = 'ไม่พบกิจกรรม';
+        document.getElementById('eventDetailDesc').textContent  = eventData.error;
+        document.getElementById('joinBtn').disabled = true;
+      } else {
+        document.getElementById('eventDetailTitle').textContent = eventData.title;
+        document.getElementById('eventDetailDesc').textContent  = eventData.desc;
+        const hasJoined = history.some(i=>i.type==='event' && i.eventId===eventId);
+        const btn = document.getElementById('joinBtn');
+        if (hasJoined) {
+          btn.textContent = 'รับคะแนนแล้ว';
+          btn.disabled = true;
+        } else {
+          btn.addEventListener('click', async ()=>{
+            if (!confirm(`เข้าร่วม "${eventData.title}" และรับ ${eventData.point} พ้อยต์ ใช่หรือไม่?`)) return;
+            const res = await fetch(CONFIG.GAS_URL, {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({
+                action:'joinEvent',
+                lineId: profile.userId,
+                eventId,
+                title: eventData.title,
+                point: eventData.point
+              })
+            });
+            alert(await res.text());
+            router();
+          });
+        }
+      }
+    }
+
+    async function initRegister() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      document.getElementById('registerForm').addEventListener('submit', async e=>{
+        e.preventDefault();
+        const form = e.target;
+        const body = {
+          action: 'register',
+          lineId: profile.userId,
+          name: form.name.value.trim(),
+          phone: form.phone.value.trim(),
+          email: form.email.value.trim()
+        };
+        const res = await fetch(CONFIG.GAS_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        alert(await res.text());
+      });
+    }
+
+    async function initRedeem() {
+  if (!(await ensureLIFF())) return;
+  const profile = await liff.getProfile();
+  document.getElementById('lineDP_redeem').src = profile.pictureUrl || '';
+
+  // ดึงแต้มผู้ใช้
+  const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`);
+  const uData = await uRes.json();
+  document.getElementById('pointVal').textContent = (uData.point || 0) + '+';
+
+  // แสดง skeleton ขณะโหลด
+  const listEl = document.getElementById('redeemList');
+  listEl.innerHTML = generateSkeleton(4);
+
+  // ดึงรายการของรางวัล
+  const items = await fetch(`${CONFIG.GAS_URL}?action=getItems`).then(r=>r.json());
+  if (!items.length) {
+    listEl.innerHTML = `<li class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลก</li>`;
+    return;
+  }
+
+  // render items
+  listEl.innerHTML = items.map(item => `
+    <li class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
+      <img src="${item.image}" alt="${item.name}" class="h-24 mx-auto mb-2 rounded-md">
+      <div class="font-bold mb-1">${item.name}</div>
+      <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
+      <button onclick="redeemItem('${item.id}','${item.name}',${item.point})"
+              class="bg-purple-700 text-white py-1 px-4 rounded-full font-semibold">
+        แลกเลย
+      </button>
+    </li>
+  `).join('');
+}
+
+async function redeemItem(id, name, point) {
+  if (!confirm(`แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`)) return;
+  const profile = await liff.getProfile();
+  const res = await fetch(CONFIG.GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({action:'redeemItem', lineId:profile.userId, itemId:id})
+  });
+  const txt = await res.text();
+  alert(txt);
+  router(); // รีโหลดหน้า #redeem
+}
+
+function generateSkeleton(count) {
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += `
+      <li class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
+        <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
+        <div class="h-4 bg-gray-200 rounded w-${30 + Math.random()*50}% mb-2"></div>
+        <div class="h-3 bg-gray-200 rounded w-${20 + Math.random()*40}% mb-3"></div>
+        <div class="h-8 bg-gray-200 rounded-full w-full"></div>
+      </li>`;
+  }
+  return html;
+}
+
   </script>
 </body>
 </html>
