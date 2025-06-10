@@ -41,31 +41,15 @@
     .disabled { opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
-<body class="bg-gray-50 pb-4">
-
-  <!-- Persistent Navigation (from redeem.html's SPA structure) -->
-  <nav class="bg-purple-900 fixed top-0 left-0 right-0 z-20 shadow-md">
-    <ul class="flex justify-around text-white text-sm py-3">
-      <li><a href="#dashboard" class="hover:underline">หน้าหลัก</a></li>
-      <li><a href="#event"     class="hover:underline">กิจกรรม</a></li>
-      <li><a href="#addpoint"  class="hover:underline">สแกนรับ</a></li>
-      <li><a href="#transfer"  class="hover:underline">โอนพ้อย</a></li>
-      <li><a href="#redeem"    class="hover:underline">แลกพ้อย</a></li>
-      <li><a href="#warehouse" class="hover:underline">คลัง</a></li>
-      <li><a href="#profile"   class="hover:underline">โปรไฟล์</a></li>
-    </ul>
-  </nav>
-
-  <!-- Spacer to prevent content from hiding under fixed nav -->
-  <div class="pt-16"></div>
+<body class="bg-gray-50 p-4">
 
   <!-- Main SPA container -->
-  <div id="app" class="p-4">
+  <div id="app">
     <!-- Content will be injected here by JavaScript -->
     <div class="text-center text-gray-500 py-8">กำลังโหลด...</div>
   </div>
 
-  <!-- Common Alert/Confirm Overlays (from transfer.html) -->
+  <!-- Common Alert/Confirm Overlays -->
   <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 mx-4 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
       <div id="customAlertTitle" class="font-bold text-lg mb-3"></div>
@@ -91,14 +75,11 @@
     </div>
   </div>
 
-  <!-- Template: Dashboard -->
+  <!-- Template: Dashboard (Main Menu) -->
   <template id="view-dashboard">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
-      <div>
-        <p class="text-md font-semibold text-gray-800">อัพเกรด member</p>
-        <p class="text-sm text-gray-500">ปลดล็อกสิทธิประโยชน์</p>
-      </div>
+      <h2 class="text-xl font-bold text-gray-800">CRM-3RN</h2>
       <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
         <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
@@ -116,7 +97,7 @@
       </div>
     </div>
 
-    <!-- Menus (already navigation from above, so these are just visual links) -->
+    <!-- Menus (Visual links within dashboard) -->
     <div class="bg-purple-900 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6">
       <a href="#event" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
@@ -300,15 +281,15 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
               <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
               <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-            </svg>
-          </div>
-          <div class="font-bold text-gray-800 text-lg px-2">
-            <span id="pointVal">0</span>+
-          </div>
-          <img id="lineDisplayPicture"
-               src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-               alt="LINE DP"
-               class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
+          </svg>
+        </div>
+        <div class="font-bold text-gray-800 text-lg px-2">
+          <span id="pointVal">0</span>+
+        </div>
+        <img id="lineDisplayPicture"
+             src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+             alt="LINE DP"
+             class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
         </div>
       </div>
       <ul id="redeemList" class="grid grid-cols-2 gap-4">
@@ -549,21 +530,26 @@
     }
 
     // Update common header elements (point and display picture)
-    async function updateCommonHeader() {
+    async function updateCommonHeader(newPoints = null) {
       if (!currentUserProfile) return; // Wait for LIFF profile to be loaded
 
       const pointValEl = document.getElementById('pointVal');
       const dpEl = document.getElementById('lineDisplayPicture');
 
-      if (pointValEl) {
-        pointValEl.textContent = '…'; // Show loading state
-        const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
-        const userData = await userRes.json();
-        pointValEl.textContent = (userData.point || 0);
-      }
       if (dpEl) {
         dpEl.src = currentUserProfile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
         dpEl.alt = `รูปโปรไฟล์ของ ${currentUserProfile.displayName}`;
+      }
+
+      if (pointValEl) {
+        if (newPoints !== null) {
+          pointValEl.textContent = newPoints;
+        } else {
+          pointValEl.textContent = '…'; // Show loading state
+          const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
+          const userData = await userRes.json();
+          pointValEl.textContent = (userData.point || 0);
+        }
       }
     }
 
@@ -571,7 +557,7 @@
 
     async function initDashboard() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader(); // Initial update of header
 
       // Show skeleton loaders
       const historyListEl = document.getElementById('historyList');
@@ -594,11 +580,16 @@
           checkinBox.classList.remove('hidden');
           todayDateEl.textContent = new Date().getDate().toString().padStart(2,"0");
           checkinBtn.onclick = async () => {
-            await fetch(CONFIG.GAS_URL, {
+            const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
               body: JSON.stringify({ action: "dailyCheckin", lineId: currentUserLineId })
             });
-            showAlert('เช็คอินสำเร็จ', 'คุณได้รับ 1 พ้อยต์!', () => router()); // Reload dashboard
+            const text = await res.text();
+            showAlert('เช็คอินสำเร็จ', text, () => {
+              if (text.includes("สำเร็จ")) {
+                router(); // Reload dashboard to update status and points
+              }
+            });
           };
         } else {
           checkinBox.classList.add('hidden');
@@ -632,7 +623,7 @@
 
     async function initEvent() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader();
 
       const eventListEl = document.getElementById('eventList');
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5); // Show skeleton
@@ -662,7 +653,7 @@
 
     async function initEventDetail() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader();
 
       const params = new URLSearchParams(window.location.hash.split('?')[1]);
       const eventId = params.get("id");
@@ -729,7 +720,7 @@
                 if (text.includes("สำเร็จ")) {
                   if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
                   disableJoin();
-                  updateCommonHeader(); // Refresh points
+                  updateCommonHeader(userData.point + eventRewardPoint); // Update points immediately
                 }
               });
             };
@@ -742,7 +733,7 @@
 
     async function initProfile() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader();
 
       const profileNameEl = document.getElementById('profileName');
       const profilePhoneEl = document.getElementById('profilePhone');
@@ -782,7 +773,7 @@
 
     async function initRedeem() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader(); // Initial update of header
 
       const redeemListEl = document.getElementById('redeemList');
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
@@ -813,15 +804,31 @@
             const id = event.target.dataset.itemId;
             const name = event.target.dataset.itemName;
             const point = parseInt(event.target.dataset.itemPoint, 10);
+
+            // Fetch current user points to check if sufficient BEFORE confirming
+            const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
+            const userData = await userRes.json();
+            const currentPoints = userData.point || 0;
+
+            if (currentPoints < point) {
+              showAlert("ไม่เพียงพอ", `แต้มของคุณ (${currentPoints}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
+              return;
+            }
+
             const confirmed = await showConfirm(`ยืนยันการแลก`, `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
             if (!confirmed) return;
 
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({action: 'redeemItem', lineId: currentUserLineId, itemId: id})
+              body: JSON.stringify({action: 'redeemItem', lineId: currentUserLineId, itemId: id, point: point}) // Pass point to GAS
             });
-            showAlert("สถานะ", await res.text(), () => router()); // Refresh redeem page
+            const text = await res.text();
+            showAlert("สถานะ", text, () => {
+              if (text.includes("สำเร็จ")) {
+                updateCommonHeader(currentPoints - point); // Update points immediately
+              }
+            });
           });
         });
       }
@@ -829,7 +836,7 @@
 
     async function initTransfer() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader();
 
       const transferToEl = document.getElementById('transferTo');
       const transferAmountEl = document.getElementById('transferAmount');
@@ -839,9 +846,17 @@
         transferBtn.onclick = async () => {
           const toId = transferToEl.value.trim();
           const amt = parseInt(transferAmountEl.value, 10);
+
+          // Fetch current user points to check if sufficient
+          const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
+          const userData = await userRes.json();
+          const currentPoints = userData.point || 0;
+
           if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอกปลายทาง"); return; }
           if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนให้ถูกต้อง"); return; }
           if (toId === currentUserLineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนให้ตัวเอง"); return; }
+          if (currentPoints < amt) { showAlert("ไม่เพียงพอ", `แต้มของคุณ (${currentPoints}) ไม่พอสำหรับโอน ${amt} พ้อยต์`); return; }
+
 
           const confirmed = await showConfirm("ยืนยันโอน", `โอน ${amt} พ้อยต์ ให้ ${toId}?`);
           if (!confirmed) return;
@@ -852,7 +867,13 @@
               body: JSON.stringify({ action: 'transferPoints', from: currentUserLineId, to: toId, amount: amt })
             });
             const txt = await res.text();
-            showAlert("สถานะการโอน", txt, () => { if (/สำเร็จ|เรียบร้อย/.test(txt)) router(); }); // Refresh current page
+            showAlert("สถานะการโอน", txt, () => {
+              if (/สำเร็จ|เรียบร้อย/.test(txt)) {
+                updateCommonHeader(currentPoints - amt); // Update points immediately
+                transferToEl.value = ''; // Clear form
+                transferAmountEl.value = '';
+              }
+            });
           } catch (e) {
             console.error(e);
             showAlert("ข้อผิดพลาด", "ไม่สามารถโอนได้ ลองอีกครั้ง");
@@ -863,7 +884,7 @@
 
     async function initWarehouse() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader();
 
       const warehouseListEl = document.getElementById('warehouseList');
       if (warehouseListEl) warehouseListEl.innerHTML = generateListSkeleton(5); // Show skeleton
@@ -902,14 +923,14 @@
 
     async function initAddpoint() {
       if (!(await ensureLIFF())) return;
-      updateCommonHeader();
+      await updateCommonHeader();
 
       const scanContainer = document.getElementById('scanContainer');
       const scanBtn = document.getElementById('scanBtn');
       const enterBtn = document.getElementById('enterBtn');
       const manualInput = document.getElementById('manualCode');
 
-      // Addpoint specific logic
+      // Addpoint specific state
       let scannedCode = "";
       let eventTitle = "";
       let eventRewardPoint = 0;
@@ -974,7 +995,7 @@
           })
         });
         const text = await res.text();
-        showAlert("สถานะ", text, () => {
+        showAlert("สถานะ", text, async () => {
           if (text.includes("สำเร็จ")) {
             const acceptBtn = document.getElementById("acceptBtn");
             if (acceptBtn) {
@@ -982,7 +1003,10 @@
               acceptBtn.disabled = true;
               acceptBtn.classList.add("disabled");
             }
-            updateCommonHeader(); // Refresh points
+            // Re-fetch user data to get accurate new points
+            const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
+            const uData = await uRes.json();
+            updateCommonHeader(uData.point || 0);
           }
         });
       }
