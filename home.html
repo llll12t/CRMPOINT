@@ -43,7 +43,7 @@
 </head>
 <body class="bg-gray-50 p-4">
 
-  <!-- GLOBAL HEADER (Shared across all views) -->
+  <!-- GLOBAL HEADER (Shared across all views - MOVED OUT OF TEMPLATES) -->
   <div class="flex justify-between items-center mb-6">
     <h2 id="pageTitle" class="text-xl font-bold text-gray-800">กำลังโหลด...</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
@@ -67,7 +67,7 @@
     <div class="text-center text-gray-500 py-8">กำลังโหลดเนื้อหา...</div>
   </div>
 
-  <!-- Common Alert/Confirm Overlays -->
+  <!-- Common Alert/Confirm Overlays (MOVED OUT OF TEMPLATES) -->
   <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 mx-4 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
       <div id="customAlertTitle" class="font-bold text-lg mb-3"></div>
@@ -271,9 +271,12 @@
   <script>
     // Global LIFF status and user info
     let liffInitialized = false;
-    let currentUserProfile = null;
-    let currentUserLineId = "";
-    let currentPoints = 0; // Keep track of current user points
+    const userState = {
+        profile: null,
+        lineId: "",
+        points: 0,
+        // Add other frequently used global data here, e.g., history
+    };
 
     // Common Alert & Confirm Dialogs (references to elements are global now)
     const alertOvl = document.getElementById('customAlertOverlay');
@@ -287,7 +290,7 @@
     const okBtn    = document.getElementById('customConfirmConfirmButton');
     const noBtn    = document.getElementById('customConfirmCancelButton');
 
-    // Global Header Elements
+    // Global Header Elements (MOVED HERE)
     const pageTitleEl = document.getElementById('pageTitle');
     const pointValEl = document.getElementById('pointVal');
     const dpEl = document.getElementById('lineDisplayPicture');
@@ -297,13 +300,13 @@
       alertT.textContent = title;
       alertM.textContent = message;
       alertOvl.classList.remove('hidden');
-      requestAnimationFrame(() => alertOvl.querySelector('div').classList.remove('alert-fade-enter')); // Start fade-in
+      requestAnimationFrame(() => alertOvl.querySelector('div').classList.remove('alert-fade-enter'));
       const hide = () => {
-        alertOvl.querySelector('div').classList.add('alert-fade-leave-to'); // Start fade-out
+        alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
         setTimeout(() => {
           alertOvl.classList.add('hidden');
-          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to'); // Reset for next use
-          cb && cb(); // Call callback after alert closes
+          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
+          cb && cb();
         }, 300);
         alertBtn.removeEventListener('click', hide);
       };
@@ -315,14 +318,14 @@
         confT.textContent = title;
         confM.textContent = message;
         confOvl.classList.remove('hidden');
-        requestAnimationFrame(() => confOvl.querySelector('div').classList.remove('alert-fade-enter')); // Start fade-in
+        requestAnimationFrame(() => confOvl.querySelector('div').classList.remove('alert-fade-enter'));
         const onOk = () => { cleanup(); res(true); };
         const onNo = () => { cleanup(); res(false); };
         function cleanup() {
-          confOvl.querySelector('div').classList.add('alert-fade-leave-to'); // Start fade-out
+          confOvl.querySelector('div').classList.add('alert-fade-leave-to');
           setTimeout(() => {
             confOvl.classList.add('hidden');
-            confOvl.querySelector('div').classList.remove('alert-fade-leave-to'); // Reset for next use
+            confOvl.querySelector('div').classList.remove('alert-fade-leave-to');
           }, 300);
           okBtn.removeEventListener('click', onOk);
           noBtn.removeEventListener('click', onNo);
@@ -332,8 +335,8 @@
       });
     }
 
-    // --- LIFF Initialization ---
-    async function ensureLIFF() {
+    // --- LIFF Initialization & Initial Data Fetch ---
+    async function ensureLIFFAndFetchInitialData() {
       if (!liffInitialized) {
         await liff.init({ liffId: CONFIG.LIFF_ID });
         liffInitialized = true;
@@ -342,8 +345,24 @@
         liff.login();
         return false;
       }
-      currentUserProfile = await liff.getProfile();
-      currentUserLineId = currentUserProfile.userId;
+
+      userState.profile = await liff.getProfile();
+      userState.lineId = userState.profile.userId;
+
+      // Fetch initial user points once
+      pointValEl.textContent = '…'; // Show loading state for points
+      dpEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
+      dpEl.alt = `รูปโปรไฟล์ของ ${userState.profile.displayName}`;
+
+      try {
+        const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+        const userData = await userRes.json();
+        userState.points = userData.point || 0;
+        pointValEl.textContent = userState.points; // Update global header with fetched points
+      } catch (error) {
+        console.error("Failed to fetch initial user points:", error);
+        pointValEl.textContent = 'N/A'; // Indicate error
+      }
       return true;
     }
 
@@ -367,11 +386,10 @@
 
       // Update Header Title immediately
       pageTitleEl.textContent = route.title;
+      pointValEl.textContent = userState.points; // Ensure points are consistent with current state
 
-      // Clear previous content to prevent ID conflicts (only for the app content area)
+      // Clear previous content and load new template content
       appDiv.innerHTML = '';
-
-      // Clone template content to avoid modifying the original template
       const template = document.getElementById(route.tpl);
       if (template) {
         appDiv.appendChild(template.content.cloneNode(true));
@@ -415,48 +433,27 @@
     }
 
     /**
-     * Updates the global header with user points and display picture.
-     * @param {number|null} newPoints - The new point value to display. If null, fetches from GAS.
+     * Updates the global header with user points.
+     * This function should be called after any action that changes points.
+     * @param {number} newPoints - The new point value to display.
      */
-    async function updateGlobalHeader(newPoints = null) {
-      if (!currentUserProfile) return; // Wait for LIFF profile to be loaded
-
-      // Update display picture (only once, or if it changes)
-      if (dpEl.src !== currentUserProfile.pictureUrl) { // Prevent redundant updates if source is the same
-        dpEl.src = currentUserProfile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
-        dpEl.alt = `รูปโปรไฟล์ของ ${currentUserProfile.displayName}`;
-      }
-
-      // Update points
-      if (newPoints !== null) {
-        currentPoints = newPoints;
-        pointValEl.textContent = currentPoints;
-      } else {
-        // Only fetch points if newPoints is not provided
-        pointValEl.textContent = '…'; // Show loading state
-        try {
-          const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
-          const userData = await userRes.json();
-          currentPoints = userData.point || 0;
-          pointValEl.textContent = currentPoints;
-        } catch (error) {
-          console.error("Failed to fetch user points:", error);
-          pointValEl.textContent = 'N/A';
-        }
-      }
+    function updatePointsInHeader(newPoints) {
+      userState.points = newPoints;
+      pointValEl.textContent = userState.points;
     }
 
     // --------- Init functions for each view ---------
 
     async function initDashboard() {
-      await updateGlobalHeader(); // Initial update of header for this view
+      // No need to fetch profile/points again here, it's already in userState
+      // and header is updated by router().
 
       const historyListEl = document.getElementById('historyList');
       if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
       const [checkRes, histRes] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${currentUserLineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${currentUserLineId}`)
+        fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
       ]);
       const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
 
@@ -472,13 +469,13 @@
           checkinBtn.onclick = async () => {
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
-              body: JSON.stringify({ action: "dailyCheckin", lineId: currentUserLineId })
+              body: JSON.stringify({ action: "dailyCheckin", lineId: userState.lineId })
             });
             const text = await res.text();
             showAlert('เช็คอินสำเร็จ', text, () => {
               if (text.includes("สำเร็จ")) {
-                updateGlobalHeader(currentPoints + 1); // Optimistic update
-                router(); // Re-render dashboard to hide checkin button
+                updatePointsInHeader(userState.points + 1); // Optimistic update
+                router(); // Re-render dashboard to hide checkin button and update history
               }
             });
           };
@@ -513,8 +510,7 @@
     }
 
     async function initEvent() {
-      await updateGlobalHeader();
-
+      // Header updated by router()
       const eventListEl = document.getElementById('eventList');
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
@@ -542,8 +538,7 @@
     }
 
     async function initEventDetail() {
-      await updateGlobalHeader();
-
+      // Header updated by router()
       const params = new URLSearchParams(window.location.hash.split('?')[1]);
       const eventId = params.get("id");
       let eventTitle = "", eventRewardPoint = 0;
@@ -567,7 +562,7 @@
 
       const [eRes, hRes] = await Promise.all([
         fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${currentUserLineId}`)
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
       ]);
       const [eventData, historyList] = await Promise.all([eRes.json(), hRes.json()]);
 
@@ -597,7 +592,7 @@
                 method: "POST",
                 body: JSON.stringify({
                   action: "joinEvent",
-                  lineId: currentUserLineId,
+                  lineId: userState.lineId,
                   eventId,
                   title: eventTitle,
                   point: eventRewardPoint
@@ -608,7 +603,7 @@
                 if (text.includes("สำเร็จ")) {
                   if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
                   disableJoin();
-                  updateGlobalHeader(currentPoints + eventRewardPoint); // Update points immediately
+                  updatePointsInHeader(userState.points + eventRewardPoint); // Update points immediately
                 }
               });
             };
@@ -620,8 +615,7 @@
     }
 
     async function initProfile() {
-      await updateGlobalHeader();
-
+      // Header updated by router()
       const profileNameEl = document.getElementById('profileName');
       const profilePhoneEl = document.getElementById('profilePhone');
       const profileEmailEl = document.getElementById('profileEmail');
@@ -629,7 +623,8 @@
       const profileNoteEl = document.getElementById('profileNote');
       const updateBtn = document.getElementById('updateProfileBtn');
 
-      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
+      // Use userState.lineId directly, no need to fetch userInfo again
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
       const uData = await uRes.json();
 
       if (profileNameEl) profileNameEl.value = uData.name || '';
@@ -642,7 +637,7 @@
         updateBtn.onclick = async () => {
           const body = {
             action: 'updateProfile',
-            lineId: currentUserLineId,
+            lineId: userState.lineId,
             name: profileNameEl.value,
             phone: profilePhoneEl.value,
             email: profileEmailEl.value,
@@ -659,8 +654,7 @@
     }
 
     async function initRedeem() {
-      await updateGlobalHeader(); // Initial update of header for this view
-
+      // Header updated by router()
       const redeemListEl = document.getElementById('redeemList');
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
 
@@ -691,8 +685,8 @@
             const name = event.target.dataset.itemName;
             const point = parseInt(event.target.dataset.itemPoint, 10);
 
-            if (currentPoints < point) { // Use the global currentPoints
-              showAlert("ไม่เพียงพอ", `แต้มของคุณ (${currentPoints}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
+            if (userState.points < point) { // Use the global userState.points
+              showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
               return;
             }
 
@@ -702,12 +696,12 @@
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({action: 'redeemItem', lineId: currentUserLineId, itemId: id, point: point}) // Pass point to GAS
+              body: JSON.stringify({action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point}) // Pass point to GAS
             });
             const text = await res.text();
             showAlert("สถานะ", text, () => {
               if (text.includes("สำเร็จ")) {
-                updateGlobalHeader(currentPoints - point); // Update points immediately
+                updatePointsInHeader(userState.points - point); // Update points immediately
               }
             });
           });
@@ -716,8 +710,7 @@
     }
 
     async function initTransfer() {
-      await updateGlobalHeader();
-
+      // Header updated by router()
       const transferToEl = document.getElementById('transferTo');
       const transferAmountEl = document.getElementById('transferAmount');
       const transferBtn = document.getElementById('transferBtn');
@@ -729,8 +722,8 @@
 
           if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอกปลายทาง"); return; }
           if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนให้ถูกต้อง"); return; }
-          if (toId === currentUserLineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนให้ตัวเอง"); return; }
-          if (currentPoints < amt) { showAlert("ไม่เพียงพอ", `แต้มของคุณ (${currentPoints}) ไม่พอสำหรับโอน ${amt} พ้อยต์`); return; }
+          if (toId === userState.lineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนให้ตัวเอง"); return; }
+          if (userState.points < amt) { showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับโอน ${amt} พ้อยต์`); return; }
 
           const confirmed = await showConfirm("ยืนยันโอน", `โอน ${amt} พ้อยต์ ให้ ${toId}?`);
           if (!confirmed) return;
@@ -738,12 +731,12 @@
           try {
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
-              body: JSON.stringify({ action: 'transferPoints', from: currentUserLineId, to: toId, amount: amt })
+              body: JSON.stringify({ action: 'transferPoints', from: userState.lineId, to: toId, amount: amt })
             });
             const txt = await res.text();
             showAlert("สถานะการโอน", txt, () => {
               if (/สำเร็จ|เรียบร้อย/.test(txt)) {
-                updateGlobalHeader(currentPoints - amt); // Update points immediately
+                updatePointsInHeader(userState.points - amt); // Update points immediately
                 if (transferToEl) transferToEl.value = ''; // Clear form
                 if (transferAmountEl) transferAmountEl.value = '';
               }
@@ -757,13 +750,12 @@
     }
 
     async function initWarehouse() {
-      await updateGlobalHeader();
-
+      // Header updated by router()
       const warehouseListEl = document.getElementById('warehouseList');
       if (warehouseListEl) warehouseListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
       try {
-        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${currentUserLineId}`);
+        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
         const allHistory = await res.json();
         // Filter for redeemed items, assuming 'redeem' type history means owned items
         const ownedItems = allHistory.filter(i => i.type === 'redeem').reverse();
@@ -795,8 +787,7 @@
     }
 
     async function initAddpoint() {
-      await updateGlobalHeader();
-
+      // Header updated by router()
       const scanContainer = document.getElementById('scanContainer');
       const scanBtn = document.getElementById('scanBtn');
       const enterBtn = document.getElementById('enterBtn');
@@ -808,7 +799,7 @@
       let eventRewardPoint = 0;
 
       async function hasReceived(code) {
-        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${currentUserLineId}`);
+        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
         const historyList = await res.json();
         return historyList.some(item =>
           item.type === 'event' && item.eventId === code
@@ -860,7 +851,7 @@
           method: "POST",
           body: JSON.stringify({
             action: "joinEvent",
-            lineId: currentUserLineId,
+            lineId: userState.lineId,
             eventId: scannedCode,
             title: eventTitle,
             point: eventRewardPoint
@@ -875,7 +866,7 @@
               acceptBtn.disabled = true;
               acceptBtn.classList.add("disabled");
             }
-            updateGlobalHeader(currentPoints + eventRewardPoint); // Update points immediately
+            updatePointsInHeader(userState.points + eventRewardPoint); // Update points immediately
           }
         });
       }
@@ -902,15 +893,12 @@
 
     // --- Global App Initialization ---
     async function initializeApp() {
-      // Ensure LIFF is initialized and user is logged in
-      const liffReady = await ensureLIFF();
+      // Ensure LIFF is initialized and user is logged in, and fetch initial data
+      const liffReady = await ensureLIFFAndFetchInitialData();
       if (!liffReady) {
         // LIFF login will redirect, so no further action here
         return;
       }
-
-      // First time, update the global header with current user data
-      await updateGlobalHeader();
 
       // Set up the router
       window.addEventListener('hashchange', router);
