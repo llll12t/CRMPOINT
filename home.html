@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
+  <title>CRM SPA</title>
+  <!-- Load once: config, LIFF SDK, Tailwind CSS -->
+  <script src="config.js"></script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-kanit">
+  <!-- Main container where views will be injected -->
+  <div id="app"></div>
+
+  <!-- Template: event -->
+  <template id="view-event">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">อีเวนต์และกิจกรรม</h2>
+      <div class="space-y-4">
+        <div class="bg-white p-4 rounded-lg shadow">
+          <h3 class="font-semibold">Event 1</h3>
+          <p class="text-sm text-gray-600">รายละเอียดกิจกรรม</p>
+          <button class="mt-2 bg-purple-700 text-white py-2 px-4 rounded">ลงทะเบียน</button>
+        </div>
+        <!-- ... รายการอีเวนต์อื่น ๆ ... -->
+      </div>
+    </div>
+  </template>
+
+  <!-- Template: activity -->
+  <template id="view-activity">
+    <h2 class="text-xl font-bold mb-4">เช็คอินรายวัน</h2>
+    <div id="status" class="text-center text-gray-600 mb-4">กำลังโหลด...</div>
+    <button id="btn" onclick="checkin()" class="w-full bg-purple-700 text-white py-2 rounded hidden">เช็คอินวันนี้</button>
+  </template>
+
+  <!-- Template: transfer -->
+  <template id="view-transfer">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">โอนคะแนน</h2>
+      <input id="toUser" placeholder="UserID ปลายทาง" class="w-full p-2 border rounded mb-2" />
+      <input id="amount" type="number" placeholder="จำนวนคะแนน" class="w-full p-2 border rounded mb-2" />
+      <button id="transferBtn" class="w-full bg-purple-700 text-white py-2 rounded">โอนคะแนน</button>
+    </div>
+  </template>
+
+  <!-- Template: warehouse -->
+  <template id="view-warehouse">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">คลังอุปกรณ์</h2>
+      <ul class="list-disc pl-5">
+        <li>อุปกรณ์ A: คงเหลือ 10 ชิ้น</li>
+        <li>อุปกรณ์ B: คงเหลือ 5 ชิ้น</li>
+        <!-- ... -->
+      </ul>
+    </div>
+  </template>
+
+  <!-- Template: dashboard -->
+  <template id="view-dashboard">
+    <div class="bg-white p-4 rounded-lg shadow">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <p class="text-md font-semibold text-gray-800">อัพเกรด member</p>
+          <p class="text-sm text-gray-500">ปลดล็อกสิทธิประโยชน์</p>
+        </div>
+        <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+          <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
+          <div class="font-bold text-gray-800 text-lg px-2"><span id="point">0</span></div>
+          <img id="lineDisplayPicture" class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+        </div>
+      </div>
+      <!-- ... รายการประวัติและสถานะอื่น ๆ ... -->
+    </div>
+  </template>
+
+  <!-- Template: profile -->
+  <template id="view-profile">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">โปรไฟล์ของคุณ</h2>
+      <div class="space-y-4">
+        <input id="name"    placeholder="ชื่อ"            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="phone"   placeholder="เบอร์โทรศัพท์"    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="email"   placeholder="อีเมล"          class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="address" placeholder="ที่อยู่"          class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="note"    placeholder="หมายเหตุ"        class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <button id="updateBtn"
+                class="bg-purple-900 text-white py-3 w-full rounded-full font-bold">
+          อัปเดตข้อมูล
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <!-- Template: addpoint -->
+  <template id="view-addpoint">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">เติมคะแนน</h2>
+      <input id="addAmount" type="number" placeholder="จำนวนที่จะเติม" class="w-full p-2 border rounded mb-2" />
+      <button id="addPointBtn" class="w-full bg-green-500 text-white py-2 rounded">เติมคะแนน</button>
+    </div>
+  </template>
+
+  <!-- Template: event-detail -->
+  <template id="view-event-detail">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">รายละเอียดอีเวนต์</h2>
+      <div id="eventInfo">
+        <!-- แทรกรายละเอียดจาก event.html ที่นี่ -->
+      </div>
+      <button id="registerEventBtn" class="mt-4 bg-purple-700 text-white py-2 px-4 rounded">ลงทะเบียน</button>
+    </div>
+  </template>
+
+  <!-- Template: register -->
+  <template id="view-register">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">สมัครเข้าร่วม</h2>
+      <form id="registerForm" class="space-y-4">
+        <input name="name"    placeholder="ชื่อ" class="w-full p-2 border rounded">
+        <input name="phone"   placeholder="เบอร์โทรศัพท์" class="w-full p-2 border rounded">
+        <input name="email"   placeholder="อีเมล" class="w-full p-2 border rounded">
+        <button type="submit" class="w-full bg-purple-700 text-white py-2 rounded">ส่งใบสมัคร</button>
+      </form>
+    </div>
+  </template>
+
+  <!-- Template: redeem -->
+  <template id="view-redeem">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">แลกของรางวัล</h2>
+      <ul class="grid grid-cols-2 gap-4">
+        <li class="bg-white p-4 rounded-lg shadow">
+          <h3 class="font-semibold">Coupon A</h3>
+          <button class="mt-2 bg-blue-500 text-white py-1 px-3 rounded">แลกเลย</button>
+        </li>
+        <!-- ... รายการของรางวัลอื่น ๆ ... -->
+      </ul>
+    </div>
+  </template>
+
+  <script>
+    // Define routes: hash -> template ID & init function
+    const routes = {
+      '#event':       { tpl: 'view-event', init: initEvent },
+      '#activity':    { tpl: 'view-activity', init: initActivity },
+      '#transfer':    { tpl: 'view-transfer', init: initTransfer },
+      '#warehouse':   { tpl: 'view-warehouse', init: initWarehouse },
+      '#dashboard':   { tpl: 'view-dashboard', init: initDashboard },
+      '#profile':     { tpl: 'view-profile', init: initProfile },
+      '#addpoint':    { tpl: 'view-addpoint', init: initAddpoint },
+      '#event-detail':{ tpl: 'view-event-detail', init: initEvent-detail },
+      '#register':    { tpl: 'view-register', init: initRegister },
+      '#redeem':      { tpl: 'view-redeem', init: initRedeem },
+      '':             { tpl: 'view-dashboard', init: initDashboard },
+    };
+
+    // Router: injects view and calls init
+    function router() {
+      const hash = window.location.hash || "";
+      const route = routes[hash] || routes[""];
+      const tpl = document.getElementById(route.tpl);
+      document.getElementById("app").innerHTML = tpl.innerHTML;
+      if (route.init) route.init();
+    }
+
+    window.addEventListener("hashchange", router);
+    // Initial load
+    router();
+
+    // Init function stubs for each view
+    function initEvent() {
+      // TODO: Implement logic from event.html
+    }
+    function initActivity() {
+      // TODO: Implement logic from activity.html
+    }
+    function initTransfer() {
+      // TODO: Implement logic from transfer.html
+    }
+    function initWarehouse() {
+      // TODO: Implement logic from warehouse.html
+    }
+    function initDashboard() {
+      // TODO: Implement logic from dashboard.html
+    }
+    function initProfile() {
+      // TODO: Implement logic from profile.html
+    }
+    function initAddpoint() {
+      // TODO: Implement logic from addpoint.html
+    }
+    function initEvent-detail() {
+      // TODO: Implement logic from event-detail.html
+    }
+    function initRegister() {
+      // TODO: Implement logic from register.html
+    }
+    function initRedeem() {
+      // TODO: Implement logic from redeem.html
+    }
+  </script>
+</body>
+</html>
