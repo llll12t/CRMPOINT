@@ -267,28 +267,6 @@
     </div>
   </template>
 
-  <!-- Template: Register -->
-  <template id="view-register">
-    <div class="p-0">
-      <div class="bg-white p-6 rounded-xl shadow space-y-4">
-        <input id="registerName"    placeholder="ชื่อ-สกุล"
-               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-        <input id="registerPhone"   placeholder="เบอร์โทร"
-               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-        <input id="registerEmail"   placeholder="อีเมล"
-               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-        <input id="registerAddress" placeholder="ที่อยู่"
-               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-        <input id="registerNote"    placeholder="หมายเหตุ"
-               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-        <button id="submitRegistrationBtn"
-                class="w-full bg-purple-900 text-white py-3 rounded-full font-bold hover:scale-105 transform transition-transform">
-          สมัครสมาชิก
-        </button>
-      </div>
-    </div>
-  </template>
-
 
   <script>
     // Global LIFF status and user info
@@ -297,7 +275,7 @@
         profile: null,
         lineId: "",
         points: 0,
-        isRegistered: false, // NEW: Track registration status
+        // Add other frequently used global data here, e.g., history
     };
 
     // Common Alert & Confirm Dialogs (references to elements are global now)
@@ -365,61 +343,63 @@
       }
       if (!liff.isLoggedIn()) {
         liff.login();
-        return false;
+        return false; // Stop execution if not logged in, LIFF will handle redirect
       }
 
       userState.profile = await liff.getProfile();
       userState.lineId = userState.profile.userId;
 
-      // Update DP immediately
+      // Fetch initial user points once
+      pointValEl.textContent = '…'; // Show loading state for points
       dpEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
       dpEl.alt = `รูปโปรไฟล์ของ ${userState.profile.displayName}`;
 
-      // Fetch initial user data including points and registration status
-      pointValEl.textContent = '…'; // Show loading state for points
       try {
         const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
         const userData = await userRes.json();
-        userState.points = parseInt(userData.point || 0, 10); // Ensure points are parsed as integer
-        userState.isRegistered = userData.isRegistered === true; // NEW: Get registration status
 
+        // --- เพิ่มโค้ดการตรวจสอบการลงทะเบียนที่นี่ ---
+        // สมมติว่า `userData` จะไม่มี `name` หรือมี property `isRegistered: false`
+        // หากผู้ใช้ยังไม่ได้ลงทะเบียน (เช่น `userData.name` เป็นค่าว่างหรือ undefined)
+        // หรือถ้า GAS ส่ง `userData.isRegistered === false`
+        // ให้เปลี่ยนเส้นทางไปที่ register.html
+        if (!userData || !userData.name || userData.isRegistered === false) {
+            console.log("User not registered. Redirecting to register.html");
+            window.location.href = 'register.html';
+            return false; // หยุดการทำงานของฟังก์ชันนี้
+        }
+        // --- สิ้นสุดการตรวจสอบการลงทะเบียน ---
+
+        userState.points = parseInt(userData.point || 0, 10); // Ensure points are parsed as integer
         pointValEl.textContent = userState.points; // Update global header with fetched points
       } catch (error) {
-        console.error("Failed to fetch initial user data:", error);
+        console.error("Failed to fetch initial user points or check registration:", error);
         pointValEl.textContent = 'N/A'; // Indicate error
-        // If there's an error fetching user data, it's safer to assume not registered
-        userState.isRegistered = false;
+        // หากเกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้ (เช่น เครือข่ายมีปัญหา)
+        // คุณอาจต้องการพิจารณาว่าจะให้ redirect ไปที่ register.html ด้วยหรือไม่
+        // แต่ในกรณีนี้ สมมติว่านี่คือปัญหาการเชื่อมต่อมากกว่าการไม่ลงทะเบียน
+        return false;
       }
-      return true;
+      return true; // LIFF initialized and user info fetched successfully
     }
 
     // --- Router Setup ---
     const routes = {
-      '#dashboard': { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard, requiresRegistration: true },
-      '#event':     { title: 'กิจกรรม', tpl: 'view-event',     init: initEvent, requiresRegistration: true },
-      '#event-detail':{ title: 'รายละเอียดกิจกรรม', tpl: 'view-event-detail', init: initEventDetail, requiresRegistration: true },
-      '#profile':   { title: 'โปรไฟล์ของคุณ', tpl: 'view-profile',   init: initProfile, requiresRegistration: true },
-      '#redeem':    { title: 'ร้านค้าแลกของรางวัล', tpl: 'view-redeem',    init: initRedeem, requiresRegistration: true },
-      '#transfer':  { title: 'โอนพ้อยให้เพื่อน', tpl: 'view-transfer',  init: initTransfer, requiresRegistration: true },
-      '#warehouse': { title: 'คลังของรางวัล', tpl: 'view-warehouse', init: initWarehouse, requiresRegistration: true },
-      '#addpoint':  { title: 'สแกน/กรอกโค้ดเพื่อรับรางวัล', tpl: 'view-addpoint',  init: initAddpoint, requiresRegistration: true },
-      '#register':  { title: 'ลงทะเบียนสมาชิก', tpl: 'view-register', init: initRegister, requiresRegistration: false }, // NEW: Register route
-      '':           { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard, requiresRegistration: true } // Default route
+      '#dashboard': { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard },
+      '#event':     { title: 'กิจกรรม', tpl: 'view-event',     init: initEvent     },
+      '#event-detail':{ title: 'รายละเอียดกิจกรรม', tpl: 'view-event-detail', init: initEventDetail },
+      '#profile':   { title: 'โปรไฟล์ของคุณ', tpl: 'view-profile',   init: initProfile   },
+      '#redeem':    { title: 'ร้านค้าแลกของรางวัล', tpl: 'view-redeem',    init: initRedeem    },
+      '#transfer':  { title: 'โอนพ้อยให้เพื่อน', tpl: 'view-transfer',  init: initTransfer  },
+      '#warehouse': { title: 'คลังของรางวัล', tpl: 'view-warehouse', init: initWarehouse },
+      '#addpoint':  { title: 'สแกน/กรอกโค้ดเพื่อรับรางวัล', tpl: 'view-addpoint',  init: initAddpoint  },
+      '':           { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard } // Default route
     };
 
     async function router() {
-      let hash = window.location.hash.split('?')[0] || '';
-      let route = routes[hash] || routes[''];
+      const hash = window.location.hash.split('?')[0] || ''; // Get hash without query params
+      const route = routes[hash] || routes[''];
       const appDiv = document.getElementById('app');
-
-      // NEW: Check registration status before navigating to restricted routes
-      if (!userState.isRegistered && route.requiresRegistration) {
-          // If not registered and trying to access a restricted page, force to #register
-          if (hash !== '#register') { // Avoid infinite loop if already on #register
-              window.location.hash = '#register';
-              route = routes['#register']; // Update route object after changing hash
-          }
-      }
 
       // Update Header Title immediately
       pageTitleEl.textContent = route.title;
@@ -724,7 +704,7 @@
 
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
-              // IMPORTANT FIX: REMOVED: headers: {'Content-Type': 'application/json'}, <-- This was likely causing the TypeError for GAS
+              // REMOVED: headers: {'Content-Type': 'application/json'}, <-- This was likely causing the TypeError for GAS
               body: JSON.stringify({action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point}) // Pass point to GAS
             });
             const text = await res.text();
@@ -916,66 +896,13 @@
       }
     }
 
-    // NEW: initRegister function
-    async function initRegister() {
-        // Pre-fill with LIFF profile data if available
-        const registerNameEl = document.getElementById('registerName');
-        const registerEmailEl = document.getElementById('registerEmail');
-        const submitBtn = document.getElementById('submitRegistrationBtn');
-
-        if (registerNameEl && userState.profile) {
-            registerNameEl.value = userState.profile.displayName || '';
-        }
-        if (registerEmailEl && userState.profile) {
-            const idToken = liff.getDecodedIDToken();
-            registerEmailEl.value = idToken.email || '';
-        }
-
-        if (submitBtn) {
-            submitBtn.onclick = async () => {
-                const body = {
-                    action:  'register',
-                    lineId:  userState.lineId,
-                    name:    registerNameEl?.value.trim() || '',
-                    phone:   document.getElementById('registerPhone')?.value.trim() || '',
-                    email:   registerEmailEl?.value.trim() || '',
-                    address: document.getElementById('registerAddress')?.value.trim() || '',
-                    note:    document.getElementById('registerNote')?.value.trim() || ''
-                };
-
-                // Simple validation
-                if (!body.name || !body.phone || !body.email) {
-                    showAlert('ข้อมูลไม่ครบ', 'กรุณากรอก ชื่อ-สกุล, เบอร์โทร และ อีเมล');
-                    return;
-                }
-
-                try {
-                    const res = await fetch(CONFIG.GAS_URL, {
-                        method: 'POST',
-                        body:   JSON.stringify(body)
-                    });
-                    const text = await res.text();
-                    showAlert("สถานะการลงทะเบียน", text, () => {
-                        if (text.includes("สำเร็จ") || text.includes("เรียบร้อย")) {
-                            userState.isRegistered = true; // Mark as registered
-                            window.location.hash = '#dashboard'; // Redirect to dashboard
-                        }
-                    });
-                } catch (e) {
-                    console.error("Registration failed:", e);
-                    showAlert("ข้อผิดพลาด", "ไม่สามารถลงทะเบียนได้ ลองอีกครั้ง");
-                }
-            };
-        }
-    }
-
 
     // --- Global App Initialization ---
     async function initializeApp() {
       // Ensure LIFF is initialized and user is logged in, and fetch initial data
       const liffReady = await ensureLIFFAndFetchInitialData();
       if (!liffReady) {
-        // LIFF login will redirect, so no further action here
+        // LIFF login will redirect, or we redirected to register.html, so no further action here
         return;
       }
 
