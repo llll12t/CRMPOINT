@@ -407,7 +407,7 @@
       '':           { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard, requiresRegistration: true } // Default route
     };
 
-    async function router(initialLoad = false) {
+    async function router() {
       let hash = window.location.hash.split('?')[0] || '';
       let route = routes[hash] || routes[''];
       const appDiv = document.getElementById('app');
@@ -417,7 +417,7 @@
           // If not registered and trying to access a restricted page, force to #register
           if (hash !== '#register') { // Avoid infinite loop if already on #register
               window.location.hash = '#register';
-              route = routes['#register'];
+              route = routes['#register']; // Update route object after changing hash
           }
       }
 
@@ -724,7 +724,7 @@
 
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
-              // REMOVED: headers: {'Content-Type': 'application/json'}, <-- This was likely causing the TypeError for GAS
+              // IMPORTANT FIX: REMOVED: headers: {'Content-Type': 'application/json'}, <-- This was likely causing the TypeError for GAS
               body: JSON.stringify({action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point}) // Pass point to GAS
             });
             const text = await res.text();
