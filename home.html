@@ -43,10 +43,28 @@
 </head>
 <body class="bg-gray-50 p-4">
 
-  <!-- Main SPA container -->
+  <!-- GLOBAL HEADER (Shared across all views) -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 id="pageTitle" class="text-xl font-bold text-gray-800">กำลังโหลด...</h2>
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0</div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+  <!-- Main SPA container (Content area) -->
   <div id="app">
     <!-- Content will be injected here by JavaScript -->
-    <div class="text-center text-gray-500 py-8">กำลังโหลด...</div>
+    <div class="text-center text-gray-500 py-8">กำลังโหลดเนื้อหา...</div>
   </div>
 
   <!-- Common Alert/Confirm Overlays -->
@@ -77,26 +95,6 @@
 
   <!-- Template: Dashboard (Main Menu) -->
   <template id="view-dashboard">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold text-gray-800">CRM-3RN</h2>
-      <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-        <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-            <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-            <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="font-bold text-gray-800 text-lg px-2 ">
-          <span id="pointVal">0</span>
-        </div>
-        <img id="lineDisplayPicture"
-             src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-             alt="LINE DP"
-             class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-      </div>
-    </div>
-
     <!-- Menus (Visual links within dashboard) -->
     <div class="bg-purple-900 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6">
       <a href="#event" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
@@ -158,25 +156,6 @@
 
   <!-- Template: Event List -->
   <template id="view-event">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold text-gray-800">กิจกรรม</h2>
-      <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-        <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-            <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-            <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="font-bold text-gray-800 text-lg px-2 animate-pulse">
-          <span id="pointVal">0</span>
-        </div>
-        <img id="lineDisplayPicture"
-             src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-             alt="LINE display picture"
-             class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-      </div>
-    </div>
     <!-- Event List -->
     <div id="eventList" class="space-y-3">
       <!-- skeleton loaders -->
@@ -192,26 +171,6 @@
 
   <!-- Template: Event Detail -->
   <template id="view-event-detail">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold text-gray-800">รายละเอียดกิจกรรม</h2>
-      <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 ">
-        <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-            <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-            <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="font-bold text-gray-800 text-lg px-2">
-          <span id="pointVal">0</span>
-        </div>
-        <img id="lineDisplayPicture"
-             src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-             alt="LINE DP"
-             class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
-      </div>
-    </div>
-
     <!-- Card Wrapper -->
     <div id="cardWrapper">
       <!-- Skeleton Loader -->
@@ -238,25 +197,6 @@
 
   <!-- Template: Profile -->
   <template id="view-profile">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold text-gray-800">โปรไฟล์ของคุณ</h2>
-      <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-        <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-            <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-            <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="font-bold text-gray-800 text-lg px-2">
-          <span id="pointVal">0</span>+
-        </div>
-        <img id="lineDisplayPicture"
-             src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-             alt="LINE display picture"
-             class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-      </div>
-    </div>
     <div class="space-y-4">
       <input id="profileName"    placeholder="ชื่อ"            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
       <input id="profilePhone"   placeholder="เบอร์โทรศัพท์"    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
@@ -272,26 +212,7 @@
 
   <!-- Template: Redeem -->
   <template id="view-redeem">
-    <div class="p-4">
-      <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold text-gray-800">ร้านค้าแลกของรางวัล</h2>
-        <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-          <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-              <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-              <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div class="font-bold text-gray-800 text-lg px-2">
-          <span id="pointVal">0</span>+
-        </div>
-        <img id="lineDisplayPicture"
-             src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-             alt="LINE DP"
-             class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
-        </div>
-      </div>
+    <div class="p-0">
       <ul id="redeemList" class="grid grid-cols-2 gap-4">
         <!-- skeleton cards / items will be injected here -->
       </ul>
@@ -300,20 +221,6 @@
 
   <!-- Template: Transfer -->
   <template id="view-transfer">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold p-4 text-gray-800">โอนพ้อยให้เพื่อน</h2>
-      <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-        <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-            <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-            <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
-        <img id="lineDisplayPicture" src="https://img.icons8.com/?size=100&id=2I6j4b56xlOq&format=png&color=000000" alt="LINE display picture"  class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-      </div>
-    </div>
     <!-- Form -->
     <div class="space-y-4 mb-6">
       <input id="transferTo" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง"
@@ -328,23 +235,6 @@
 
   <!-- Template: Warehouse -->
   <template id="view-warehouse">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-xl font-bold p-4  text-gray-800">คลังของรางวัล</h2>
-      <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-        <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-            <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-            <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
-        <img id="lineDisplayPicture"
-             src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-             alt="LINE DP"
-             class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-      </div>
-    </div>
     <!-- List -->
     <ul id="warehouseList" class="space-y-3">
       <!-- skeleton loader -->
@@ -360,23 +250,6 @@
 
   <!-- Template: Add Points (Scan/Manual Code) -->
   <template id="view-addpoint">
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-md font-bold text-gray-800">สแกน/กรอกโค้ดเพื่อรับรางวัล</h2>
-      <div class="bg-gray-100 rounded-full  flex items-center p-1 space-x-2">
-        <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-            <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-            <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-          </svg>
-        </div>
-        <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0</div>+
-        <img id="lineDisplayPicture"
-             src="https://upload.wikimedia.org/wikipedia/commons/1/18/Line-icon.svg"
-             alt="LINE DP"
-             class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
-      </div>
-    </div>
     <!-- Scan & Manual Input -->
     <div id="scanContainer" class="space-y-4 mb-6">
       <button id="scanBtn"
@@ -400,8 +273,9 @@
     let liffInitialized = false;
     let currentUserProfile = null;
     let currentUserLineId = "";
+    let currentPoints = 0; // Keep track of current user points
 
-    // Common Alert & Confirm Dialogs
+    // Common Alert & Confirm Dialogs (references to elements are global now)
     const alertOvl = document.getElementById('customAlertOverlay');
     const alertT   = document.getElementById('customAlertTitle');
     const alertM   = document.getElementById('customAlertMessage');
@@ -413,6 +287,12 @@
     const okBtn    = document.getElementById('customConfirmConfirmButton');
     const noBtn    = document.getElementById('customConfirmCancelButton');
 
+    // Global Header Elements
+    const pageTitleEl = document.getElementById('pageTitle');
+    const pointValEl = document.getElementById('pointVal');
+    const dpEl = document.getElementById('lineDisplayPicture');
+
+    // --- Common UI Functions ---
     function showAlert(title, message, cb) {
       alertT.textContent = title;
       alertM.textContent = message;
@@ -452,7 +332,7 @@
       });
     }
 
-    // LIFF Initialization
+    // --- LIFF Initialization ---
     async function ensureLIFF() {
       if (!liffInitialized) {
         await liff.init({ liffId: CONFIG.LIFF_ID });
@@ -467,25 +347,28 @@
       return true;
     }
 
-    // Router setup
+    // --- Router Setup ---
     const routes = {
-      '#dashboard': { tpl: 'view-dashboard', init: initDashboard },
-      '#event':     { tpl: 'view-event',     init: initEvent     },
-      '#event-detail':{ tpl: 'view-event-detail', init: initEventDetail }, // Note: Needs URL parameter 'id'
-      '#profile':   { tpl: 'view-profile',   init: initProfile   },
-      '#redeem':    { tpl: 'view-redeem',    init: initRedeem    },
-      '#transfer':  { tpl: 'view-transfer',  init: initTransfer  },
-      '#warehouse': { tpl: 'view-warehouse', init: initWarehouse },
-      '#addpoint':  { tpl: 'view-addpoint',  init: initAddpoint  },
-      '':           { tpl: 'view-dashboard', init: initDashboard } // Default route
+      '#dashboard': { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard },
+      '#event':     { title: 'กิจกรรม', tpl: 'view-event',     init: initEvent     },
+      '#event-detail':{ title: 'รายละเอียดกิจกรรม', tpl: 'view-event-detail', init: initEventDetail },
+      '#profile':   { title: 'โปรไฟล์ของคุณ', tpl: 'view-profile',   init: initProfile   },
+      '#redeem':    { title: 'ร้านค้าแลกของรางวัล', tpl: 'view-redeem',    init: initRedeem    },
+      '#transfer':  { title: 'โอนพ้อยให้เพื่อน', tpl: 'view-transfer',  init: initTransfer  },
+      '#warehouse': { title: 'คลังของรางวัล', tpl: 'view-warehouse', init: initWarehouse },
+      '#addpoint':  { title: 'สแกน/กรอกโค้ดเพื่อรับรางวัล', tpl: 'view-addpoint',  init: initAddpoint  },
+      '':           { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard } // Default route
     };
 
-    function router() {
+    async function router() {
       const hash = window.location.hash.split('?')[0] || ''; // Get hash without query params
       const route = routes[hash] || routes[''];
       const appDiv = document.getElementById('app');
 
-      // Clear previous content to prevent ID conflicts
+      // Update Header Title immediately
+      pageTitleEl.textContent = route.title;
+
+      // Clear previous content to prevent ID conflicts (only for the app content area)
       appDiv.innerHTML = '';
 
       // Clone template content to avoid modifying the original template
@@ -502,7 +385,9 @@
       route.init();
     }
 
-    // Common skeleton generator for lists
+    // --- Common Helper Functions ---
+
+    // Skeleton generator for lists
     function generateListSkeleton(count) {
       return Array.from({length: count}).map(_=>`
         <li class="flex justify-between items-center animate-pulse">
@@ -514,7 +399,7 @@
         </li>`).join("");
     }
 
-    // Common skeleton generator for cards (e.g., redeem items)
+    // Skeleton generator for cards (e.g., redeem items)
     function generateCardSkeleton(count) {
       let html = '';
       for (let i = 0; i < count; i++) {
@@ -529,26 +414,34 @@
       return html;
     }
 
-    // Update common header elements (point and display picture)
-    async function updateCommonHeader(newPoints = null) {
+    /**
+     * Updates the global header with user points and display picture.
+     * @param {number|null} newPoints - The new point value to display. If null, fetches from GAS.
+     */
+    async function updateGlobalHeader(newPoints = null) {
       if (!currentUserProfile) return; // Wait for LIFF profile to be loaded
 
-      const pointValEl = document.getElementById('pointVal');
-      const dpEl = document.getElementById('lineDisplayPicture');
-
-      if (dpEl) {
+      // Update display picture (only once, or if it changes)
+      if (dpEl.src !== currentUserProfile.pictureUrl) { // Prevent redundant updates if source is the same
         dpEl.src = currentUserProfile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
         dpEl.alt = `รูปโปรไฟล์ของ ${currentUserProfile.displayName}`;
       }
 
-      if (pointValEl) {
-        if (newPoints !== null) {
-          pointValEl.textContent = newPoints;
-        } else {
-          pointValEl.textContent = '…'; // Show loading state
+      // Update points
+      if (newPoints !== null) {
+        currentPoints = newPoints;
+        pointValEl.textContent = currentPoints;
+      } else {
+        // Only fetch points if newPoints is not provided
+        pointValEl.textContent = '…'; // Show loading state
+        try {
           const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
           const userData = await userRes.json();
-          pointValEl.textContent = (userData.point || 0);
+          currentPoints = userData.point || 0;
+          pointValEl.textContent = currentPoints;
+        } catch (error) {
+          console.error("Failed to fetch user points:", error);
+          pointValEl.textContent = 'N/A';
         }
       }
     }
@@ -556,19 +449,16 @@
     // --------- Init functions for each view ---------
 
     async function initDashboard() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader(); // Initial update of header
+      await updateGlobalHeader(); // Initial update of header for this view
 
-      // Show skeleton loaders
       const historyListEl = document.getElementById('historyList');
-      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5);
+      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
-      const [userRes, checkRes, histRes] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`),
+      const [checkRes, histRes] = await Promise.all([
         fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${currentUserLineId}`),
         fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${currentUserLineId}`)
       ]);
-      const [userData, checkData, history] = await Promise.all([userRes.json(), checkRes.json(), histRes.json()]);
+      const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
 
       // Check-in
       const checkinBox = document.getElementById('checkinBox');
@@ -587,7 +477,8 @@
             const text = await res.text();
             showAlert('เช็คอินสำเร็จ', text, () => {
               if (text.includes("สำเร็จ")) {
-                router(); // Reload dashboard to update status and points
+                updateGlobalHeader(currentPoints + 1); // Optimistic update
+                router(); // Re-render dashboard to hide checkin button
               }
             });
           };
@@ -622,8 +513,7 @@
     }
 
     async function initEvent() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader();
+      await updateGlobalHeader();
 
       const eventListEl = document.getElementById('eventList');
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5); // Show skeleton
@@ -652,8 +542,7 @@
     }
 
     async function initEventDetail() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader();
+      await updateGlobalHeader();
 
       const params = new URLSearchParams(window.location.hash.split('?')[1]);
       const eventId = params.get("id");
@@ -676,12 +565,11 @@
         }
       }
 
-      const [uRes, eRes, hRes] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`),
+      const [eRes, hRes] = await Promise.all([
         fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
         fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${currentUserLineId}`)
       ]);
-      const [userData, eventData, historyList] = await Promise.all([uRes.json(), eRes.json(), hRes.json()]);
+      const [eventData, historyList] = await Promise.all([eRes.json(), hRes.json()]);
 
       if (eventData.error) {
         if (titleEl) titleEl.textContent = "ไม่พบกิจกรรม";
@@ -720,7 +608,7 @@
                 if (text.includes("สำเร็จ")) {
                   if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
                   disableJoin();
-                  updateCommonHeader(userData.point + eventRewardPoint); // Update points immediately
+                  updateGlobalHeader(currentPoints + eventRewardPoint); // Update points immediately
                 }
               });
             };
@@ -732,8 +620,7 @@
     }
 
     async function initProfile() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader();
+      await updateGlobalHeader();
 
       const profileNameEl = document.getElementById('profileName');
       const profilePhoneEl = document.getElementById('profilePhone');
@@ -772,8 +659,7 @@
     }
 
     async function initRedeem() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader(); // Initial update of header
+      await updateGlobalHeader(); // Initial update of header for this view
 
       const redeemListEl = document.getElementById('redeemList');
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
@@ -805,12 +691,7 @@
             const name = event.target.dataset.itemName;
             const point = parseInt(event.target.dataset.itemPoint, 10);
 
-            // Fetch current user points to check if sufficient BEFORE confirming
-            const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
-            const userData = await userRes.json();
-            const currentPoints = userData.point || 0;
-
-            if (currentPoints < point) {
+            if (currentPoints < point) { // Use the global currentPoints
               showAlert("ไม่เพียงพอ", `แต้มของคุณ (${currentPoints}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
               return;
             }
@@ -826,7 +707,7 @@
             const text = await res.text();
             showAlert("สถานะ", text, () => {
               if (text.includes("สำเร็จ")) {
-                updateCommonHeader(currentPoints - point); // Update points immediately
+                updateGlobalHeader(currentPoints - point); // Update points immediately
               }
             });
           });
@@ -835,8 +716,7 @@
     }
 
     async function initTransfer() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader();
+      await updateGlobalHeader();
 
       const transferToEl = document.getElementById('transferTo');
       const transferAmountEl = document.getElementById('transferAmount');
@@ -847,16 +727,10 @@
           const toId = transferToEl.value.trim();
           const amt = parseInt(transferAmountEl.value, 10);
 
-          // Fetch current user points to check if sufficient
-          const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
-          const userData = await userRes.json();
-          const currentPoints = userData.point || 0;
-
           if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอกปลายทาง"); return; }
           if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนให้ถูกต้อง"); return; }
           if (toId === currentUserLineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนให้ตัวเอง"); return; }
           if (currentPoints < amt) { showAlert("ไม่เพียงพอ", `แต้มของคุณ (${currentPoints}) ไม่พอสำหรับโอน ${amt} พ้อยต์`); return; }
-
 
           const confirmed = await showConfirm("ยืนยันโอน", `โอน ${amt} พ้อยต์ ให้ ${toId}?`);
           if (!confirmed) return;
@@ -869,9 +743,9 @@
             const txt = await res.text();
             showAlert("สถานะการโอน", txt, () => {
               if (/สำเร็จ|เรียบร้อย/.test(txt)) {
-                updateCommonHeader(currentPoints - amt); // Update points immediately
-                transferToEl.value = ''; // Clear form
-                transferAmountEl.value = '';
+                updateGlobalHeader(currentPoints - amt); // Update points immediately
+                if (transferToEl) transferToEl.value = ''; // Clear form
+                if (transferAmountEl) transferAmountEl.value = '';
               }
             });
           } catch (e) {
@@ -883,8 +757,7 @@
     }
 
     async function initWarehouse() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader();
+      await updateGlobalHeader();
 
       const warehouseListEl = document.getElementById('warehouseList');
       if (warehouseListEl) warehouseListEl.innerHTML = generateListSkeleton(5); // Show skeleton
@@ -922,8 +795,7 @@
     }
 
     async function initAddpoint() {
-      if (!(await ensureLIFF())) return;
-      await updateCommonHeader();
+      await updateGlobalHeader();
 
       const scanContainer = document.getElementById('scanContainer');
       const scanBtn = document.getElementById('scanBtn');
@@ -995,7 +867,7 @@
           })
         });
         const text = await res.text();
-        showAlert("สถานะ", text, async () => {
+        showAlert("สถานะ", text, () => {
           if (text.includes("สำเร็จ")) {
             const acceptBtn = document.getElementById("acceptBtn");
             if (acceptBtn) {
@@ -1003,10 +875,7 @@
               acceptBtn.disabled = true;
               acceptBtn.classList.add("disabled");
             }
-            // Re-fetch user data to get accurate new points
-            const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${currentUserLineId}`);
-            const uData = await uRes.json();
-            updateCommonHeader(uData.point || 0);
+            updateGlobalHeader(currentPoints + eventRewardPoint); // Update points immediately
           }
         });
       }
@@ -1039,6 +908,10 @@
         // LIFF login will redirect, so no further action here
         return;
       }
+
+      // First time, update the global header with current user data
+      await updateGlobalHeader();
+
       // Set up the router
       window.addEventListener('hashchange', router);
       // Trigger the router for the initial load
