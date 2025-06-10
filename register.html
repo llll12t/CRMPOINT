@@ -90,14 +90,30 @@
         document.getElementById('lineDisplayPicture').src = profileRes.pictureUrl;
       }
       // fetch current points
-      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-      const uData = await uRes.json();
-      document.getElementById('pointVal').textContent = (uData.point || 0) + '+';
+      try {
+        const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+        const uData = await uRes.json();
+        document.getElementById('pointVal').textContent = (uData.point || 0) + '+';
 
-      // fill default name & email
-      document.getElementById('name').value = profileRes.displayName || '';
-      const idToken = liff.getDecodedIDToken();
-      document.getElementById('email').value = idToken.email || '';
+        // fill default name & email
+        document.getElementById('name').value = profileRes.displayName || '';
+        const idToken = liff.getDecodedIDToken();
+        document.getElementById('email').value = idToken.email || '';
+
+        // ถ้าผู้ใช้เคยลงทะเบียนแล้ว ให้กลับไปหน้า home.html ทันที
+        // สมมติว่าถ้า userData.name มีค่าแสดงว่าลงทะเบียนแล้ว
+        if (uData && uData.name && uData.name !== '') {
+            console.log("User already registered. Redirecting to home.html");
+            window.location.href = 'home.html';
+            return; // หยุดการทำงานต่อ
+        }
+
+      } catch (error) {
+        console.error("Error fetching user info in register.html:", error);
+        // ในกรณีที่ดึงข้อมูลผู้ใช้ล้มเหลว (อาจจะยังไม่มีข้อมูลผู้ใช้ในระบบเลย)
+        // ถือว่ายังไม่ลงทะเบียน ให้ปล่อยให้กรอกข้อมูลต่อ
+        document.getElementById('pointVal').textContent = '0+'; // แสดง 0 ไปก่อน
+      }
     }
 
     async function submitRegistration() {
@@ -110,12 +126,31 @@
         address: document.getElementById('address').value.trim(),
         note:    document.getElementById('note').value.trim()
       };
-      const res = await fetch(CONFIG.GAS_URL, {
-        method: 'POST',
-        body:   JSON.stringify(body)
-      });
-      const text = await res.text();
-      alert(text);
+
+      // ตรวจสอบค่าที่จำเป็นก่อนส่ง
+      if (!body.name || !body.phone) {
+          alert("กรุณากรอกชื่อ-สกุล และเบอร์โทรศัพท์");
+          return;
+      }
+
+      try {
+        const res = await fetch(CONFIG.GAS_URL, {
+          method: 'POST',
+          body:   JSON.stringify(body)
+        });
+        const text = await res.text(); // รับข้อความตอบกลับจาก GAS
+
+        alert(text); // แสดงข้อความตอบกลับจาก GAS
+
+        // ตรวจสอบข้อความตอบกลับเพื่อยืนยันว่าลงทะเบียนสำเร็จหรือไม่
+        if (text.includes("ลงทะเบียนสำเร็จ")) {
+          // ถ้าลงทะเบียนสำเร็จ ให้เปลี่ยนเส้นทางไปยัง home.html
+          window.location.href = 'home.html';
+        }
+      } catch (error) {
+        console.error("Failed to submit registration:", error);
+        alert("เกิดข้อผิดพลาดในการลงทะเบียน โปรดลองอีกครั้ง");
+      }
     }
 
     document.getElementById('submitBtn')
