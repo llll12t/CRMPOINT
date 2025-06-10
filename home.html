@@ -171,17 +171,689 @@
 
     // Init function stubs for each view
     function initEvent() {
-      // TODO: Implement logic from event.html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>กิจกรรม</title>
+  <!-- 1) โหลด config ก่อน -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 3) Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+
+    @keyframes pulseCustom {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.02); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
     }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+ <!-- Title -->
+  <h2 class="text-xl font-bold p-4 text-gray-800">กิจกรรม</h2>
+
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div class="font-bold text-gray-800 text-lg px-2 animate-pulse">
+        <span id="pointVal">0</span>
+      </div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE display picture"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+ 
+  <!-- Event List -->
+  <div id="eventList" class="space-y-3">
+    <!-- skeleton loaders -->
+    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
+      <div class="space-y-2 w-3/4">
+        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        <div class="h-3 bg-gray-200 rounded w-2/3"></div>
+      </div>
+      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+    </div>
+    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
+      <div class="space-y-2 w-3/4">
+        <div class="h-4 bg-gray-200 rounded w-2/5"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
+      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+    </div>
+  </div>
+
+  <script>
+    let lineId = "";
+
+    function generateSkeleton(count) {
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        html += `
+          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
+            <div class="space-y-2 w-3/4">
+              <div class="h-4 bg-gray-200 rounded w-${Math.floor(40 + Math.random()*30)}%"></div>
+              <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
+            </div>
+            <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+          </div>`;
+      }
+      return html;
+    }
+
+    async function init() {
+      // 1) เรียก LIFF จาก CONFIG.LIFF_ID
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+
+      // 2) ดึง profile
+      const profile = await liff.getProfile();
+      lineId = profile.userId;
+      if (profile.pictureUrl) {
+        const dp = document.getElementById('lineDisplayPicture');
+        dp.src = profile.pictureUrl;
+        dp.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
+      }
+
+      // 3) แสดง skeleton ขณะรอ fetch
+      document.getElementById('pointVal').textContent = '…';
+      document.getElementById('eventList').innerHTML = generateSkeleton(5);
+
+      // 4) ใช้ Promise.all ดึง getUserInfo + getEvents พร้อมกัน
+      const [ userRes, eventsRes ] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getEvents`)
+      ]);
+
+      const [ userData, events ] = await Promise.all([
+        userRes.json(),
+        eventsRes.json()
+      ]);
+
+      // 5) อัปเดตแต้ม
+      document.getElementById('pointVal').textContent = (userData.point || 0);
+
+      // 6) แสดงกิจกรรม
+      const container = document.getElementById('eventList');
+      if (!events.length) {
+        container.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
+      } else {
+        container.innerHTML = events.map(e => `
+          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
+              <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
+            </div>
+            <a href="event-detail.html?id=${e.id}"
+               class="text-sm font-medium text-purple-700 hover:text-purple-900">
+              ดูรายละเอียด
+            </a>
+          </div>
+        `).join('');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>    }
     function initActivity() {
-      // TODO: Implement logic from activity.html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>กิจกรรม</title>
+  <!-- 1) โหลด config ก่อน -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 3) Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+
+    @keyframes pulseCustom {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.02); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
     }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+ <!-- Title -->
+  <h2 class="text-xl font-bold p-4 text-gray-800">กิจกรรม</h2>
+
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div class="font-bold text-gray-800 text-lg px-2 animate-pulse">
+        <span id="pointVal">0</span>
+      </div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE display picture"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+ 
+  <!-- Event List -->
+  <div id="eventList" class="space-y-3">
+    <!-- skeleton loaders -->
+    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
+      <div class="space-y-2 w-3/4">
+        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        <div class="h-3 bg-gray-200 rounded w-2/3"></div>
+      </div>
+      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+    </div>
+    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
+      <div class="space-y-2 w-3/4">
+        <div class="h-4 bg-gray-200 rounded w-2/5"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
+      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+    </div>
+  </div>
+
+  <script>
+    let lineId = "";
+
+    function generateSkeleton(count) {
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        html += `
+          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
+            <div class="space-y-2 w-3/4">
+              <div class="h-4 bg-gray-200 rounded w-${Math.floor(40 + Math.random()*30)}%"></div>
+              <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
+            </div>
+            <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+          </div>`;
+      }
+      return html;
+    }
+
+    async function init() {
+      // 1) เรียก LIFF จาก CONFIG.LIFF_ID
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+
+      // 2) ดึง profile
+      const profile = await liff.getProfile();
+      lineId = profile.userId;
+      if (profile.pictureUrl) {
+        const dp = document.getElementById('lineDisplayPicture');
+        dp.src = profile.pictureUrl;
+        dp.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
+      }
+
+      // 3) แสดง skeleton ขณะรอ fetch
+      document.getElementById('pointVal').textContent = '…';
+      document.getElementById('eventList').innerHTML = generateSkeleton(5);
+
+      // 4) ใช้ Promise.all ดึง getUserInfo + getEvents พร้อมกัน
+      const [ userRes, eventsRes ] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getEvents`)
+      ]);
+
+      const [ userData, events ] = await Promise.all([
+        userRes.json(),
+        eventsRes.json()
+      ]);
+
+      // 5) อัปเดตแต้ม
+      document.getElementById('pointVal').textContent = (userData.point || 0);
+
+      // 6) แสดงกิจกรรม
+      const container = document.getElementById('eventList');
+      if (!events.length) {
+        container.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
+      } else {
+        container.innerHTML = events.map(e => `
+          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
+              <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
+            </div>
+            <a href="event-detail.html?id=${e.id}"
+               class="text-sm font-medium text-purple-700 hover:text-purple-900">
+              ดูรายละเอียด
+            </a>
+          </div>
+        `).join('');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>    }
     function initTransfer() {
-      // TODO: Implement logic from transfer.html
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>โอนพ้อย</title>
+  <!-- 1) โหลด config.js  -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 3) Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
+    @keyframes pulse-opacity { 0%,100%{opacity:0.5;}50%{opacity:1;} }
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 max-w-md mx-auto p-4">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+  <!-- Title -->
+  <h2 class="text-xl font-bold  p-4 text-gray-800">โอนพ้อยให้เพื่อน</h2>
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
+      <img id="lineDisplayPicture" src="https://img.icons8.com/?size=100&id=2I6j4b56xlOq&format=png&color=000000" alt="LINE display picture"  class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="space-y-4 mb-6">
+    <input id="to" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง"
+           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
+    <input id="amount" placeholder="จำนวนพ้อยที่ต้องการโอน" type="number"
+           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
+    <button id="transferBtn" class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
+      โอนพ้อย
+    </button>
+  </div>
+
+  <!-- Alert -->
+  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 mx-4 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+      <div id="customAlertTitle" class="font-bold text-lg mb-3"></div>
+      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+      <button id="customAlertButton" class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <!-- Confirm -->
+  <div id="customConfirmOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 mx-4 rounded-xl shadow-lg max-w-sm w-full  text-center alert-fade-enter-active">
+      <div id="customConfirmTitle" class="font-bold text-lg mb-3"></div>
+      <div id="customConfirmMessage" class="text-gray-700 mb-6"></div>
+      <div class="flex justify-around space-x-4">
+        <button id="customConfirmCancelButton" class="bg-gray-300 text-gray-800 py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+          ยกเลิก
+        </button>
+        <button id="customConfirmConfirmButton" class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+          ยืนยัน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let lineId = "";
+    // Alert & Confirm refs
+    const alertOvl = document.getElementById('customAlertOverlay');
+    const alertT   = document.getElementById('customAlertTitle');
+    const alertM   = document.getElementById('customAlertMessage');
+    const alertBtn = document.getElementById('customAlertButton');
+    const confOvl  = document.getElementById('customConfirmOverlay');
+    const confT    = document.getElementById('customConfirmTitle');
+    const confM    = document.getElementById('customConfirmMessage');
+    const okBtn    = document.getElementById('customConfirmConfirmButton');
+    const noBtn    = document.getElementById('customConfirmCancelButton');
+
+    function showAlert(title, message, cb) {
+      alertT.textContent = title;
+      alertM.textContent = message;
+      alertOvl.classList.remove('hidden');
+      requestAnimationFrame(() => alertOvl.querySelector('div').classList.remove('alert-fade-enter'));
+      const hide = () => {
+        alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
+        setTimeout(() => {
+          alertOvl.classList.add('hidden');
+          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
+          cb && cb();
+        }, 300);
+        alertBtn.removeEventListener('click', hide);
+      };
+      alertBtn.addEventListener('click', hide);
+    }
+
+    function showConfirm(title, message) {
+      return new Promise(res => {
+        confT.textContent = title;
+        confM.textContent = message;
+        confOvl.classList.remove('hidden');
+        requestAnimationFrame(() => confOvl.querySelector('div').classList.remove('alert-fade-enter'));
+        const onOk = () => { cleanup(); res(true); };
+        const onNo = () => { cleanup(); res(false); };
+        function cleanup() {
+          confOvl.querySelector('div').classList.add('alert-fade-leave-to');
+          setTimeout(() => {
+            confOvl.classList.add('hidden');
+            confOvl.querySelector('div').classList.remove('alert-fade-leave-to');
+          }, 300);
+          okBtn.removeEventListener('click', onOk);
+          noBtn.removeEventListener('click', onNo);
+        }
+        okBtn.addEventListener('click', onOk);
+        noBtn.addEventListener('click', onNo);
+      });
+    }
+
+    async function transfer() {
+      const toId   = document.getElementById('to').value.trim();
+      const amt    = parseInt(document.getElementById('amount').value);
+      if (!toId) { showAlert("ข้อผิดพลาด","กรุณากรอกปลายทาง"); return; }
+      if (isNaN(amt)||amt<=0) { showAlert("ข้อผิดพลาด","กรุณากรอกจำนวนให้ถูกต้อง"); return; }
+      if (toId===lineId) { showAlert("ข้อผิดพลาด","ไม่สามารถโอนให้ตัวเอง"); return; }
+
+      const ok = await showConfirm("ยืนยันโอน",`โอน ${amt} พ้อยต์ ให้ ${toId}?`);
+      if (!ok) return;
+
+      try {
+        const res = await fetch(CONFIG.GAS_URL, {
+          method: 'POST',
+          body:   JSON.stringify({ action:'transferPoints', from:lineId, to:toId, amount:amt })
+        });
+        const txt = await res.text();
+        showAlert("สถานะการโอน", txt, ()=> { if (/สำเร็จ|เรียบร้อย/.test(txt)) location.reload(); });
+      } catch(e) {
+        console.error(e);
+        showAlert("ข้อผิดพลาด","ไม่สามารถโอนได้ ลองอีกครั้ง");
+      }
+    }
+
+async function init() {
+  // 1. เรียก LIFF init
+  await liff.init({ liffId: CONFIG.LIFF_ID });
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
+
+  // 2. ดึง profile
+  const profile = await liff.getProfile();
+  lineId = profile.userId;
+
+  // 3. แสดงรูปโปรไฟล์
+  if (profile.pictureUrl) {
+    const dp = document.getElementById('lineDisplayPicture');
+    dp.src = profile.pictureUrl;
+    dp.alt = profile.displayName;
+  }
+
+  // 4. ดึงคะแนนผู้ใช้จริง
+  const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+  const uData = await uRes.json();
+  document.getElementById('pointVal').textContent = (uData.point||0) + '+';
+
+  // 5. ผูก event ให้ปุ่มโอน
+  document.getElementById('transferBtn')
+          .addEventListener('click', transfer);
+}
+
+    init();
+  </script>
+</body>
+</html>    }
     function initWarehouse() {
-      // TODO: Implement logic from warehouse.html
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>คลังของรางวัล</title>
+  <!-- โหลด config ก่อนเสมอ -->
+  <script src="config.js"></script>
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+
+    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
+    @keyframes pulse-opacity {
+      0%,100% { opacity: 0.5; }
+      50%      { opacity: 1; }
     }
+
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+  <!-- Title -->
+  <h2 class="text-xl font-bold p-4  text-gray-800">คลังของรางวัล</h2>
+
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+
+  <!-- List -->
+  <ul id="redeemList" class="space-y-3">
+    <!-- skeleton loader -->
+    <li class="bg-white rounded-xl p-4 shadow-sm loading-card-animation flex justify-between items-center">
+      <div class="space-y-2 flex-1">
+        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+      </div>
+      <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
+    </li>
+    <li class="bg-white rounded-xl p-4 shadow-sm loading-card-animation flex justify-between items-center">
+      <div class="space-y-2 flex-1">
+        <div class="h-4 bg-gray-200 rounded w-2/5"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/4"></div>
+      </div>
+      <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
+    </li>
+  </ul>
+
+  <!-- Alert Overlay -->
+  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+      <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
+      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+      <button id="customAlertButton"
+              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let lineId = "";
+    const redeemList         = document.getElementById('redeemList');
+    const alertOvl           = document.getElementById('customAlertOverlay');
+    const alertTitle         = document.getElementById('customAlertTitle');
+    const alertMsg           = document.getElementById('customAlertMessage');
+    const alertBtn           = document.getElementById('customAlertButton');
+
+    function showAlert(title, message) {
+      alertTitle.textContent   = title;
+      alertMsg.textContent     = message;
+      alertOvl.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        alertOvl.querySelector('div').classList.remove('alert-fade-enter');
+      });
+      const hide = () => {
+        alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
+        setTimeout(() => {
+          alertOvl.classList.add('hidden');
+          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
+        }, 300);
+        alertBtn.removeEventListener('click', hide);
+      };
+      alertBtn.addEventListener('click', hide);
+    }
+
+    function generateSkeleton(count) {
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        html += `
+          <li class="bg-white rounded-xl p-4 shadow-sm loading-card-animation flex justify-between items-center">
+            <div class="space-y-2 flex-1">
+              <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
+              <div class="h-3 bg-gray-200 rounded w-${Math.floor(20 + Math.random()*30)}%"></div>
+            </div>
+            <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
+          </li>`;
+      }
+      return html;
+    }
+
+    async function loadWarehouse() {
+      redeemList.innerHTML = generateSkeleton(5);
+
+      try {
+        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`);
+        const all = await res.json();
+        const items = all.filter(i => i.type === 'redeem').reverse();
+        if (!items.length) {
+          redeemList.innerHTML = '<li class="text-center text-gray-500 py-4">ยังไม่มีรายการแลกของรางวัล</li>';
+          return;
+        }
+        redeemList.innerHTML = items.map(item => `
+          <li class="bg-white rounded-xl p-4 shadow-sm flex justify-between items-center transform hover:scale-105 transition-transform">
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">${item.detail}</div>
+              <div class="text-xs text-gray-500 mt-1">${item.date}</div>
+            </div>
+            <div class="text-red-600 font-bold text-md">-${item.amount} พ้อยต์</div>
+          </li>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดคลังของรางวัลได้");
+      }
+    }
+
+    async function init() {
+      // init LIFF
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+
+      const p = await liff.getProfile();
+      lineId = p.userId;
+      const dp = document.getElementById('lineDisplayPicture');
+      if (p.pictureUrl) dp.src = p.pictureUrl;
+
+      // แสดง skeleton ระหว่างโหลด
+      document.getElementById('pointVal').textContent = '…';
+      redeemList.innerHTML = generateSkeleton(5);
+
+      // ใช้ Promise.all ดึง getUserInfo + getHistory พร้อมกัน
+      await Promise.all([
+        (async ()=> {
+          const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+          const ud = await u.json();
+          document.getElementById('pointVal').textContent = (ud.point||0) + '+';
+        })(),
+        loadWarehouse()
+      ]);
+    }
+
+    init();
+  </script>
+</body>
+</html>    }
     function initDashboard() {
 <!DOCTYPE html>
 <html lang="th">
@@ -369,14 +1041,582 @@
       // TODO: Implement logic from addpoint.html
     }
     function initEventdetail() {
-      // TODO: Implement logic from event-detail.html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>รายละเอียดกิจกรรม</title>
+  <!-- config.js -->
+  <script src="config.js"></script>
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+
+    /* pulse animation */
+    @keyframes pulseCustom {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.02); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
     }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    /* alert transition */
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    /* disabled button */
+    .disabled { opacity: 0.6; cursor: not-allowed; }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-bold text-gray-800">รายละเอียดกิจกรรม</h2>
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 ">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div class="font-bold text-gray-800 text-lg px-2">
+        <span id="pointVal">0</span>
+      </div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
+    </div>
+  </div>
+
+  <!-- Card Wrapper -->
+  <div id="cardWrapper">
+    <!-- Skeleton Loader -->
+    <div id="cardSkeleton" class="bg-white p-6 rounded-xl shadow-md mb-6 animate-pulse">
+      <div class="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+      <div class="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+      <div class="h-3 bg-gray-200 rounded w-full mb-6"></div>
+      <div class="h-12 bg-gray-200 rounded-full w-full"></div>
+    </div>
+    <!-- Actual Card -->
+    <div id="card" class="bg-white p-6 rounded-xl shadow-md text-gray-800 mb-6 hidden">
+      <div class="flex justify-between items-start mb-3">
+        <div class="font-bold text-lg" id="title">–</div>
+        <div class="bg-yellow-400 text-gray-800 font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
+      </div>
+      <div class="text-sm text-gray-700 mb-6 leading-relaxed" id="desc">...</div>
+      <button id="joinBtn"
+              class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
+        เข้าร่วม
+      </button>
+    </div>
+  </div>
+
+  <!-- Alert Overlay -->
+  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+      <div id="customAlertTitle" class="font-bold text-lg mb-3 text-gray-800"></div>
+      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+      <button id="customAlertButton"
+              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const eventId = new URLSearchParams(location.search).get("id");
+    let lineId = "", eventTitle = "", eventRewardPoint = 0;
+
+    function disableJoin() {
+      const btn = document.getElementById("joinBtn");
+      btn.disabled = true;
+      btn.classList.add("disabled");
+    }
+
+    function showAlert(title, message, cb) {
+      const overlay = document.getElementById("customAlertOverlay");
+      document.getElementById("customAlertTitle").textContent   = title;
+      document.getElementById("customAlertMessage").textContent = message;
+      overlay.classList.remove("hidden");
+      overlay.querySelector("div").classList.remove("alert-fade-enter");
+      const hide = () => {
+        overlay.querySelector("div").classList.add("alert-fade-leave-to");
+        setTimeout(() => {
+          overlay.classList.add("hidden");
+          overlay.querySelector("div").classList.remove("alert-fade-leave-to");
+          cb && cb();
+        }, 300);
+        document.getElementById("customAlertButton").removeEventListener("click", hide);
+      };
+      document.getElementById("customAlertButton").addEventListener("click", hide);
+    }
+
+    async function loadData() {
+      const [uRes, eRes, hRes] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
+      ]);
+      const [userData, eventData, historyList] = await Promise.all([
+        uRes.json(), eRes.json(), hRes.json()
+      ]);
+
+      // update header points
+      document.getElementById("pointVal").textContent = userData.point || 0;
+
+      if (eventData.error) {
+        document.getElementById("title").textContent = "ไม่พบกิจกรรม";
+        document.getElementById("desc").textContent  = eventData.error;
+        disableJoin();
+      } else {
+        eventTitle       = eventData.title;
+        eventRewardPoint = eventData.point;
+        document.getElementById("title").textContent      = eventTitle;
+        document.getElementById("eventPoint").textContent = `${eventRewardPoint}+`;
+        document.getElementById("desc").textContent       = eventData.desc;
+
+        const hasJoined = historyList.some(item =>
+          item.type === 'event' && item.eventId === eventId
+        );
+        if (hasJoined) {
+          const btn = document.getElementById("joinBtn");
+          btn.textContent = "รับพ้อยต์แล้ว";
+          disableJoin();
+        }
+      }
+
+      document.getElementById("cardSkeleton").classList.add("hidden");
+      document.getElementById("card").classList.remove("hidden");
+    }
+
+    async function join() {
+      if (!confirm(`เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`)) return;
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action:  "joinEvent",
+          lineId,
+          eventId,
+          title:   eventTitle,
+          point:   eventRewardPoint
+        })
+      });
+      const text = await res.text();
+      showAlert("สถานะ", text, () => {
+        if (text.includes("สำเร็จ")) {
+          const btn = document.getElementById("joinBtn");
+          btn.textContent = "รับพ้อยต์แล้ว";
+          disableJoin();
+        }
+      });
+    }
+
+    async function init() {
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const profile = await liff.getProfile();
+      lineId = profile.userId;
+      if (profile.pictureUrl) {
+        const dp = document.getElementById("lineDisplayPicture");
+        dp.src = profile.pictureUrl;
+        dp.alt = profile.displayName;
+      }
+      document.getElementById("joinBtn").addEventListener("click", join);
+      await loadData();
+    }
+
+    init();
+  </script>
+</body>
+</html>    }
     function initRegister() {
-      // TODO: Implement logic from register.html
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ลงทะเบียนสมาชิก</title>
+
+  <!-- 1) โหลด config.js ก่อน -->
+  <script src="config.js"></script>
+  <!-- 2) LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 3) Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+    @keyframes pulseCustom {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.02); opacity: 0.6; }
     }
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0; transform: translateY(10px);
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center bg-white p-4 shadow">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">ลงทะเบียนสมาชิก</h2>
+
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg">0+</div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/1/18/Line-icon.svg"
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="p-4">
+    <div class="bg-white p-6 rounded-xl shadow space-y-4">
+      <input id="name"    placeholder="ชื่อ-สกุล"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="phone"   placeholder="เบอร์โทร"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="email"   placeholder="อีเมล"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="address" placeholder="ที่อยู่"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <input id="note"    placeholder="หมายเหตุ"
+             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+      <button id="submitBtn"
+              class="w-full bg-purple-900 text-white py-3 rounded-full font-bold hover:scale-105 transform transition-transform">
+        สมัครสมาชิก
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let lineId = "";
+
+    async function init() {
+      // 1) init LIFF
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      // 2) get profile + userInfo
+      const profileRes = await liff.getProfile();
+      lineId = profileRes.userId;
+      if (profileRes.pictureUrl) {
+        document.getElementById('lineDisplayPicture').src = profileRes.pictureUrl;
+      }
+      // fetch current points
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+      const uData = await uRes.json();
+      document.getElementById('pointVal').textContent = (uData.point || 0) + '+';
+
+      // fill default name & email
+      document.getElementById('name').value = profileRes.displayName || '';
+      const idToken = liff.getDecodedIDToken();
+      document.getElementById('email').value = idToken.email || '';
+    }
+
+    async function submitRegistration() {
+      const body = {
+        action:  'register',
+        lineId,
+        name:    document.getElementById('name').value.trim(),
+        phone:   document.getElementById('phone').value.trim(),
+        email:   document.getElementById('email').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        note:    document.getElementById('note').value.trim()
+      };
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json;charset=UTF-8' },
+        body:   JSON.stringify(body)
+      });
+      const text = await res.text();
+      alert(text);
+    }
+
+    document.getElementById('submitBtn')
+            .addEventListener('click', submitRegistration);
+
+    init();
+  </script>
+</body>
+</html>    }
     function initRedeem() {
-      // TODO: Implement logic from redeem.html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ร้านค้าแลกของรางวัล</title>
+  <!-- โหลด config ก่อน -->
+  <script src="config.js"></script>
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    /* ฟอนต์ Kanit */
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+
+    /* Loading card animation */
+    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
+    @keyframes pulse-opacity {
+      0%,100% { opacity: 0.5; }
+      50%      { opacity: 1; }
     }
+
+    /* Alert/Confirm transition */
+    .alert-fade-enter-active, .alert-fade-leave-active {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .alert-fade-enter, .alert-fade-leave-to {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+ <!-- Title -->
+  <h2 class="text-xl font-bold p-4 text-gray-800">ร้านค้าแลกของรางวัล</h2>
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
+          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+</div>
+      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
+      <img id="lineDisplayPicture"
+           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+           alt="LINE DP"
+           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+    </div>
+  </div>
+
+ 
+
+  <!-- รายการของรางวัล -->
+  <div id="itemList" class="grid grid-cols-2 gap-4">
+    <!-- skeleton loaders แสดงตอนรอโหลดจริง -->
+    <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
+      <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
+      <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+      <div class="h-3 bg-gray-200 rounded w-2/5 mx-auto mb-3"></div>
+      <div class="h-8 bg-gray-200 rounded-full w-full"></div>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
+      <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
+      <div class="h-4 bg-gray-200 rounded w-2/3 mx-auto mb-2"></div>
+      <div class="h-3 bg-gray-200 rounded w-1/2 mx-auto mb-3"></div>
+      <div class="h-8 bg-gray-200 rounded-full w-full"></div>
+    </div>
+  </div>
+
+  <!-- Custom Alert -->
+  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+      <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
+      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
+      <button id="customAlertButton"
+              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <!-- Custom Confirm -->
+  <div id="customConfirmOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
+      <div id="customConfirmTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
+      <div id="customConfirmMessage" class="text-gray-700 mb-6"></div>
+      <div class="flex justify-around space-x-4">
+        <button id="customConfirmCancelButton"
+                class="bg-gray-300 text-gray-800 py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+          ยกเลิก
+        </button>
+        <button id="customConfirmConfirmButton"
+                class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
+          ยืนยัน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let lineId = "";
+    const itemList = document.getElementById('itemList');
+
+    // สร้าง skeleton cards
+    function generateSkeleton(count) {
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        html += `
+          <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
+            <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
+            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30+Math.random()*50)}% mx-auto mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30+Math.random()*40)}% mx-auto mb-3"></div>
+            <div class="h-8 bg-gray-200 rounded-full w-full"></div>
+          </div>`;
+      }
+      return html;
+    }
+
+    // ฟังก์ชันแสดง Alert
+    function showAlert(title, message, cb) {
+      const o=document.getElementById('customAlertOverlay');
+      document.getElementById('customAlertTitle').textContent   = title;
+      document.getElementById('customAlertMessage').textContent = message;
+      o.classList.remove('hidden');
+      o.querySelector('div').classList.remove('alert-fade-enter');
+      const hide = () => {
+        o.querySelector('div').classList.add('alert-fade-leave-to');
+        setTimeout(()=>{
+          o.classList.add('hidden');
+          o.querySelector('div').classList.remove('alert-fade-leave-to');
+          cb && cb();
+        }, 300);
+        customAlertButton.removeEventListener('click', hide);
+      };
+      document.getElementById('customAlertButton').addEventListener('click', hide);
+    }
+
+    // ฟังก์ชันแสดง Confirm
+    function showConfirm(title, message) {
+      return new Promise(resolve => {
+        const o=document.getElementById('customConfirmOverlay');
+        document.getElementById('customConfirmTitle').textContent   = title;
+        document.getElementById('customConfirmMessage').textContent = message;
+        o.classList.remove('hidden');
+        o.querySelector('div').classList.remove('alert-fade-enter');
+        const ok = () => cleanup(true);
+        const cancel = () => cleanup(false);
+        function cleanup(result) {
+          o.querySelector('div').classList.add('alert-fade-leave-to');
+          setTimeout(()=>{
+            o.classList.add('hidden');
+            o.querySelector('div').classList.remove('alert-fade-leave-to');
+            resolve(result);
+          }, 300);
+          document.getElementById('customConfirmConfirmButton').removeEventListener('click', ok);
+          document.getElementById('customConfirmCancelButton').removeEventListener('click', cancel);
+        }
+        document.getElementById('customConfirmConfirmButton').addEventListener('click', ok);
+        document.getElementById('customConfirmCancelButton').addEventListener('click', cancel);
+      });
+    }
+
+    // ดึงรายการของรางวัล
+    async function fetchItems() {
+      itemList.innerHTML = generateSkeleton(4);
+      const res = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
+      const items = await res.json();
+      if (!items || items.length === 0) {
+        itemList.innerHTML = `<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลกในขณะนี้</p>`;
+        return;
+      }
+      itemList.innerHTML = items.map(item => `
+        <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
+          <img src="${item.image}" alt="${item.name}"
+               class="h-24 object-contain mx-auto mb-3 rounded-md">
+          <div class="font-bold text-gray-800 mb-1">${item.name}</div>
+          <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">
+            ${item.point} พ้อยต์
+          </div>
+          <button onclick="redeem('${item.id}','${item.name}',${item.point})"
+                  class="bg-purple-900 text-white px-4 py-1.5 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">
+            แลก
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // แลกของรางวัล
+    async function redeem(id, name, point) {
+      if (!await showConfirm("ยืนยันการแลก", `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`)) return;
+      const res = await fetch(CONFIG.GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action:'redeemItem', lineId, itemId:id })
+      });
+      const txt = await res.text();
+      showAlert("สถานะการแลก", txt, () => {
+        if (txt.includes("สำเร็จ")) fetchItems();
+      });
+    }
+
+    // เริ่มต้น LIFF + ดึง data พร้อมกัน
+    async function init() {
+      try {
+        await liff.init({ liffId: CONFIG.LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+
+        const p = await liff.getProfile();
+        lineId = p.userId;
+        const dp = document.getElementById('lineDisplayPicture');
+        if (p.pictureUrl) {
+          dp.src = p.pictureUrl;
+          dp.alt = p.displayName;
+        }
+
+        // เซ็ต skeleton ก่อน
+        document.getElementById('pointVal').textContent = '…';
+        itemList.innerHTML = generateSkeleton(4);
+
+        // fetch พร้อมกัน: userInfo + items
+        await Promise.all([
+          (async()=>{
+            const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
+            const ud = await u.json();
+            document.getElementById('pointVal').textContent = (ud.point||0) + '+';
+          })(),
+          fetchItems()
+        ]);
+      } catch(e) {
+        console.error(e);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเริ่มระบบได้ กรุณาลองใหม่");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>    }
   </script>
 </body>
 </html>
