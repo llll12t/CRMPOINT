@@ -16,7 +16,21 @@
   </style>
 </head>
 <body class="bg-gray-50">
+  <!-- Persistent Navigation -->
+  <nav class="bg-purple-900 fixed top-0 left-0 right-0 z-20">
+    <ul class="flex justify-around text-white py-3">
+      <li><a href="#dashboard" class="hover:underline">หน้าหลัก</a></li>
+      <li><a href="#event"     class="hover:underline">อีเวนต์</a></li>
+      <li><a href="#activity"  class="hover:underline">เช็คอิน</a></li>
+      <li><a href="#transfer"  class="hover:underline">โอนพ้อย</a></li>
+      <li><a href="#warehouse" class="hover:underline">คลัง</a></li>
+      <li><a href="#profile"   class="hover:underline">โปรไฟล์</a></li>
+      <li><a href="#redeem"    class="hover:underline">แลกพ้อย</a></li>
+    </ul>
+  </nav>
 
+  <!-- Spacer so content isn't hidden under nav -->
+  <div class="pt-16"></div>
   <!-- Main SPA container -->
   <div id="app"></div>
 
