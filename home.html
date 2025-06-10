@@ -16,18 +16,37 @@
   </style>
 </head>
 <body class="bg-gray-50">
-  <!-- Persistent Navigation -->
-  <nav class="bg-purple-900 fixed top-0 left-0 right-0 z-20">
-    <ul class="flex justify-around text-white py-3">
-      <li><a href="#dashboard" class="hover:underline">หน้าหลัก</a></li>
-      <li><a href="#event"     class="hover:underline">อีเวนต์</a></li>
-      <li><a href="#activity"  class="hover:underline">เช็คอิน</a></li>
-      <li><a href="#transfer"  class="hover:underline">โอนพ้อย</a></li>
-      <li><a href="#warehouse" class="hover:underline">คลัง</a></li>
-      <li><a href="#profile"   class="hover:underline">โปรไฟล์</a></li>
-      <li><a href="#redeem"    class="hover:underline">แลกพ้อย</a></li>
-    </ul>
-  </nav>
+  <!-- เมนู -->
+  <div class="bg-purple-900 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6">
+    <a href="#event" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+      <span>กิจกรรม</span>
+    </a>
+    <a href="#warehouse" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+      <span>คลัง</span>
+    </a>
+    <a href="#dashboard" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6" color="#4d1f96" fill="none">
+        <path d="M2.5 8.18677C2.60406 6.08705 2.91537 4.77792 3.84664 3.84664C4.77792 2.91537 6.08705 2.60406 8.18677 2.5M21.5 8.18677C21.3959 6.08705 21.0846 4.77792 20.1534 3.84664C19.2221 2.91537 17.9129 2.60406 15.8132 2.5M15.8132 21.5C17.9129 21.3959 19.2221 21.0846 20.1534 20.1534C21.0846 19.2221 21.3959 17.9129 21.5 15.8132M8.18676 21.5C6.08705 21.3959 4.77792 21.0846 3.84664 20.1534C2.91537 19.2221 2.60406 17.9129 2.5 15.8132" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M2.49986 12H21.4999" stroke="#000000" stroke-width="1.5" stroke-linecap="round"></path>
+        <path d="M6 12C6 8.68629 8.68629 6 12 6C12 7.65685 13.3431 9 15 9C15.6755 9 16.2989 8.77672 16.8004 8.39993C17.5536 9.40273 18 10.6492 18 12M17.1973 15C16.1599 16.7934 14.2208 18 12 18C9.77915 18 7.84012 16.7934 6.80269 15" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+      <span>สแกนรับ</span>
+    </a>
+    <a href="#transfer" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+      <span>โอนพ้อย</span>
+    </a>
+    <a href="#redeem" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
+      <span>แลกพ้อย</span>
+    </a>
+    <a href="#profile" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+      <span>ข้อมูลส่วนตัว</span>
+    </a>
+  </div>
 
   <!-- Spacer so content isn't hidden under nav -->
   <div class="pt-16"></div>
