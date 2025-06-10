@@ -8,1615 +8,457 @@
   <script src="config.js"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Kanit', sans-serif; }
+    .hidden { display: none; }
+    .disabled { opacity: 0.6; cursor: not-allowed; }
+  </style>
 </head>
-<body class="bg-gray-50 font-kanit">
-  <!-- Main container where views will be injected -->
+<body class="bg-gray-50">
+
+  <!-- Main SPA container -->
   <div id="app"></div>
 
-  <!-- Template: event -->
-  <template id="view-event">
-    <div class="p-4">
-      <h2 class="text-xl font-bold mb-4">อีเวนต์และกิจกรรม</h2>
-      <div class="space-y-4">
-        <div class="bg-white p-4 rounded-lg shadow">
-          <h3 class="font-semibold">Event 1</h3>
-          <p class="text-sm text-gray-600">รายละเอียดกิจกรรม</p>
-          <button class="mt-2 bg-purple-700 text-white py-2 px-4 rounded">ลงทะเบียน</button>
-        </div>
-        <!-- ... รายการอีเวนต์อื่น ๆ ... -->
-      </div>
-    </div>
-  </template>
-
-  <!-- Template: activity -->
-  <template id="view-activity">
-    <h2 class="text-xl font-bold mb-4">เช็คอินรายวัน</h2>
-    <div id="status" class="text-center text-gray-600 mb-4">กำลังโหลด...</div>
-    <button id="btn" onclick="checkin()" class="w-full bg-purple-700 text-white py-2 rounded hidden">เช็คอินวันนี้</button>
-  </template>
-
-  <!-- Template: transfer -->
-  <template id="view-transfer">
-    <div class="p-4">
-      <h2 class="text-xl font-bold mb-4">โอนคะแนน</h2>
-      <input id="toUser" placeholder="UserID ปลายทาง" class="w-full p-2 border rounded mb-2" />
-      <input id="amount" type="number" placeholder="จำนวนคะแนน" class="w-full p-2 border rounded mb-2" />
-      <button id="transferBtn" class="w-full bg-purple-700 text-white py-2 rounded">โอนคะแนน</button>
-    </div>
-  </template>
-
-  <!-- Template: warehouse -->
-  <template id="view-warehouse">
-    <div class="p-4">
-      <h2 class="text-xl font-bold mb-4">คลังอุปกรณ์</h2>
-      <ul class="list-disc pl-5">
-        <li>อุปกรณ์ A: คงเหลือ 10 ชิ้น</li>
-        <li>อุปกรณ์ B: คงเหลือ 5 ชิ้น</li>
-        <!-- ... -->
-      </ul>
-    </div>
-  </template>
-
-  <!-- Template: dashboard -->
+  <!-- Dashboard -->
   <template id="view-dashboard">
-    <div class="bg-white p-4 rounded-lg shadow">
+    <div class="p-4">
       <div class="flex justify-between items-center mb-6">
         <div>
           <p class="text-md font-semibold text-gray-800">อัพเกรด member</p>
           <p class="text-sm text-gray-500">ปลดล็อกสิทธิประโยชน์</p>
         </div>
         <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-          <div class="w-8 h-8 bg-yellow-400 rounded-full"></div>
+          <div class="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold">★</div>
           <div class="font-bold text-gray-800 text-lg px-2"><span id="point">0</span></div>
-          <img id="lineDisplayPicture" class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
+          <img id="lineDP" class="w-10 h-10 rounded-full object-cover border-2 border-purple-900" alt="LINE DP">
         </div>
       </div>
-      <!-- ... รายการประวัติและสถานะอื่น ๆ ... -->
+      <div id="checkinBox" class="hidden flex items-center mb-6 space-x-4">
+        <button id="checkinBtn" class="bg-purple-700 text-white py-2 px-6 rounded-full">เช็คอินวันนี้</button>
+        <span id="todayDate" class="text-gray-600"></span>
+      </div>
+      <ul id="historyList" class="space-y-4">
+        <!-- history items -->
+      </ul>
     </div>
   </template>
 
-  <!-- Template: profile -->
+  <!-- Event list -->
+  <template id="view-event">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">อีเวนต์และกิจกรรม</h2>
+      <div id="eventList" class="space-y-4">
+        <!-- event cards -->
+      </div>
+    </div>
+  </template>
+
+  <!-- Daily check-in -->
+  <template id="view-activity">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">เช็คอินรายวัน</h2>
+      <div id="status" class="text-center text-gray-600 mb-4">กำลังโหลด...</div>
+      <button id="activityBtn" class="w-full bg-purple-700 text-white py-2 rounded hidden">เช็คอินวันนี้</button>
+    </div>
+  </template>
+
+  <!-- Transfer points -->
+  <template id="view-transfer">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">โอนคะแนน</h2>
+      <input id="transferTo" placeholder="LINE ID ปลายทาง" class="w-full p-2 border rounded mb-2" />
+      <input id="transferAmount" type="number" placeholder="จำนวนคะแนน" class="w-full p-2 border rounded mb-4" />
+      <button id="transferBtn" class="w-full bg-purple-700 text-white py-2 rounded">โอนคะแนน</button>
+    </div>
+  </template>
+
+  <!-- Warehouse (equipment) -->
+  <template id="view-warehouse">
+    <div class="p-4">
+      <h2 class="text-xl font-bold mb-4">คลังอุปกรณ์</h2>
+      <ul id="warehouseList" class="list-disc pl-5 space-y-2">
+        <!-- equipment items -->
+      </ul>
+    </div>
+  </template>
+
+  <!-- Profile -->
   <template id="view-profile">
     <div class="p-4">
       <h2 class="text-xl font-bold mb-4">โปรไฟล์ของคุณ</h2>
       <div class="space-y-4">
-        <input id="name"    placeholder="ชื่อ"            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
-        <input id="phone"   placeholder="เบอร์โทรศัพท์"    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
-        <input id="email"   placeholder="อีเมล"          class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
-        <input id="address" placeholder="ที่อยู่"          class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
-        <input id="note"    placeholder="หมายเหตุ"        class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
-        <button id="updateBtn"
-                class="bg-purple-900 text-white py-3 w-full rounded-full font-bold">
-          อัปเดตข้อมูล
-        </button>
+        <input id="profileName" placeholder="ชื่อ" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profilePhone" placeholder="เบอร์โทรศัพท์" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profileEmail" placeholder="อีเมล" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profileAddress" placeholder="ที่อยู่" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <input id="profileNote" placeholder="หมายเหตุ" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500">
+        <button id="updateProfileBtn" class="bg-purple-900 text-white py-3 w-full rounded-full font-bold">อัปเดตข้อมูล</button>
       </div>
     </div>
   </template>
 
-  <!-- Template: addpoint -->
+  <!-- Add points -->
   <template id="view-addpoint">
     <div class="p-4">
       <h2 class="text-xl font-bold mb-4">เติมคะแนน</h2>
-      <input id="addAmount" type="number" placeholder="จำนวนที่จะเติม" class="w-full p-2 border rounded mb-2" />
+      <input id="addAmount" type="number" placeholder="จำนวนที่จะเติม" class="w-full p-2 border rounded mb-4">
       <button id="addPointBtn" class="w-full bg-green-500 text-white py-2 rounded">เติมคะแนน</button>
     </div>
   </template>
 
-  <!-- Template: event-detail -->
+  <!-- Event detail -->
   <template id="view-event-detail">
     <div class="p-4">
-      <h2 class="text-xl font-bold mb-4">รายละเอียดอีเวนต์</h2>
-      <div id="eventInfo">
-        <!-- แทรกรายละเอียดจาก event.html ที่นี่ -->
-      </div>
-      <button id="registerEventBtn" class="mt-4 bg-purple-700 text-white py-2 px-4 rounded">ลงทะเบียน</button>
+      <h2 id="eventDetailTitle" class="text-xl font-bold mb-2">–</h2>
+      <p id="eventDetailDesc" class="text-gray-700 mb-4">...</p>
+      <button id="joinBtn" class="w-full bg-purple-700 text-white py-2 rounded">เข้าร่วมและรับคะแนน</button>
     </div>
   </template>
 
-  <!-- Template: register -->
+  <!-- Register for event -->
   <template id="view-register">
     <div class="p-4">
       <h2 class="text-xl font-bold mb-4">สมัครเข้าร่วม</h2>
       <form id="registerForm" class="space-y-4">
-        <input name="name"    placeholder="ชื่อ" class="w-full p-2 border rounded">
-        <input name="phone"   placeholder="เบอร์โทรศัพท์" class="w-full p-2 border rounded">
-        <input name="email"   placeholder="อีเมล" class="w-full p-2 border rounded">
+        <input name="name" placeholder="ชื่อ" class="w-full p-2 border rounded">
+        <input name="phone" placeholder="เบอร์โทรศัพท์" class="w-full p-2 border rounded">
+        <input name="email" placeholder="อีเมล" class="w-full p-2 border rounded">
         <button type="submit" class="w-full bg-purple-700 text-white py-2 rounded">ส่งใบสมัคร</button>
       </form>
     </div>
   </template>
 
-  <!-- Template: redeem -->
+  <!-- Redeem rewards -->
   <template id="view-redeem">
     <div class="p-4">
       <h2 class="text-xl font-bold mb-4">แลกของรางวัล</h2>
-      <ul class="grid grid-cols-2 gap-4">
-        <li class="bg-white p-4 rounded-lg shadow">
-          <h3 class="font-semibold">Coupon A</h3>
-          <button class="mt-2 bg-blue-500 text-white py-1 px-3 rounded">แลกเลย</button>
-        </li>
-        <!-- ... รายการของรางวัลอื่น ๆ ... -->
+      <ul id="redeemList" class="grid grid-cols-2 gap-4">
+        <!-- reward items -->
       </ul>
     </div>
   </template>
 
   <script>
-    // Define routes: hash -> template ID & init function
-    const routes = {
-      '#event':       { tpl: 'view-event', init: initEvent },
-      '#activity':    { tpl: 'view-activity', init: initActivity },
-      '#transfer':    { tpl: 'view-transfer', init: initTransfer },
-      '#warehouse':   { tpl: 'view-warehouse', init: initWarehouse },
-      '#dashboard':   { tpl: 'view-dashboard', init: initDashboard },
-      '#profile':     { tpl: 'view-profile', init: initProfile },
-      '#addpoint':    { tpl: 'view-addpoint', init: initAddpoint },
-      '#eventdetail':{ tpl: 'view-eventdetail', init: initEventdetail },
-      '#register':    { tpl: 'view-register', init: initRegister },
-      '#redeem':      { tpl: 'view-redeem', init: initRedeem },
-      '':             { tpl: 'view-dashboard', init: initDashboard },
-    };
-
-    // Router: injects view and calls init
-    function router() {
-      const hash = window.location.hash || "";
-      const route = routes[hash] || routes[""];
-      const tpl = document.getElementById(route.tpl);
-      document.getElementById("app").innerHTML = tpl.innerHTML;
-      if (route.init) route.init();
-    }
-
-    window.addEventListener("hashchange", router);
-    // Initial load
-    router();
-
-    // Init function stubs for each view
-    function initEvent() {
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>กิจกรรม</title>
-  <!-- 1) โหลด config ก่อน -->
-  <script src="config.js"></script>
-  <!-- 2) LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 3) Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-
-    @keyframes pulseCustom {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.02); opacity: 0.6; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
-
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-  </style>
-</head>
-<body class="bg-gray-50 p-4">
-
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
- <!-- Title -->
-  <h2 class="text-xl font-bold p-4 text-gray-800">กิจกรรม</h2>
-
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div class="font-bold text-gray-800 text-lg px-2 animate-pulse">
-        <span id="pointVal">0</span>
-      </div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE display picture"
-           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-    </div>
-  </div>
-
- 
-  <!-- Event List -->
-  <div id="eventList" class="space-y-3">
-    <!-- skeleton loaders -->
-    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
-      <div class="space-y-2 w-3/4">
-        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-        <div class="h-3 bg-gray-200 rounded w-2/3"></div>
-      </div>
-      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
-    </div>
-    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
-      <div class="space-y-2 w-3/4">
-        <div class="h-4 bg-gray-200 rounded w-2/5"></div>
-        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-      </div>
-      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
-    </div>
-  </div>
-
-  <script>
-    let lineId = "";
-
-    function generateSkeleton(count) {
-      let html = '';
-      for (let i = 0; i < count; i++) {
-        html += `
-          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
-            <div class="space-y-2 w-3/4">
-              <div class="h-4 bg-gray-200 rounded w-${Math.floor(40 + Math.random()*30)}%"></div>
-              <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
-            </div>
-            <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
-          </div>`;
+    // Initialize LIFF once
+    let liffInitialized = false;
+    async function ensureLIFF() {
+      if (!liffInitialized) {
+        await liff.init({ liffId: CONFIG.LIFF_ID });
+        liffInitialized = true;
       }
-      return html;
-    }
-
-    async function init() {
-      // 1) เรียก LIFF จาก CONFIG.LIFF_ID
-      await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-
-      // 2) ดึง profile
-      const profile = await liff.getProfile();
-      lineId = profile.userId;
-      if (profile.pictureUrl) {
-        const dp = document.getElementById('lineDisplayPicture');
-        dp.src = profile.pictureUrl;
-        dp.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
-      }
-
-      // 3) แสดง skeleton ขณะรอ fetch
-      document.getElementById('pointVal').textContent = '…';
-      document.getElementById('eventList').innerHTML = generateSkeleton(5);
-
-      // 4) ใช้ Promise.all ดึง getUserInfo + getEvents พร้อมกัน
-      const [ userRes, eventsRes ] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getEvents`)
-      ]);
-
-      const [ userData, events ] = await Promise.all([
-        userRes.json(),
-        eventsRes.json()
-      ]);
-
-      // 5) อัปเดตแต้ม
-      document.getElementById('pointVal').textContent = (userData.point || 0);
-
-      // 6) แสดงกิจกรรม
-      const container = document.getElementById('eventList');
-      if (!events.length) {
-        container.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
-      } else {
-        container.innerHTML = events.map(e => `
-          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
-            <div>
-              <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
-              <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
-            </div>
-            <a href="event-detail.html?id=${e.id}"
-               class="text-sm font-medium text-purple-700 hover:text-purple-900">
-              ดูรายละเอียด
-            </a>
-          </div>
-        `).join('');
-      }
-    }
-
-    init();
-  </script>
-</body>
-</html>    }
-    function initActivity() {
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>กิจกรรม</title>
-  <!-- 1) โหลด config ก่อน -->
-  <script src="config.js"></script>
-  <!-- 2) LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 3) Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-
-    @keyframes pulseCustom {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.02); opacity: 0.6; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
-
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-  </style>
-</head>
-<body class="bg-gray-50 p-4">
-
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
- <!-- Title -->
-  <h2 class="text-xl font-bold p-4 text-gray-800">กิจกรรม</h2>
-
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div class="font-bold text-gray-800 text-lg px-2 animate-pulse">
-        <span id="pointVal">0</span>
-      </div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE display picture"
-           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-    </div>
-  </div>
-
- 
-  <!-- Event List -->
-  <div id="eventList" class="space-y-3">
-    <!-- skeleton loaders -->
-    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
-      <div class="space-y-2 w-3/4">
-        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-        <div class="h-3 bg-gray-200 rounded w-2/3"></div>
-      </div>
-      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
-    </div>
-    <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
-      <div class="space-y-2 w-3/4">
-        <div class="h-4 bg-gray-200 rounded w-2/5"></div>
-        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-      </div>
-      <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
-    </div>
-  </div>
-
-  <script>
-    let lineId = "";
-
-    function generateSkeleton(count) {
-      let html = '';
-      for (let i = 0; i < count; i++) {
-        html += `
-          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm animate-pulse">
-            <div class="space-y-2 w-3/4">
-              <div class="h-4 bg-gray-200 rounded w-${Math.floor(40 + Math.random()*30)}%"></div>
-              <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
-            </div>
-            <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
-          </div>`;
-      }
-      return html;
-    }
-
-    async function init() {
-      // 1) เรียก LIFF จาก CONFIG.LIFF_ID
-      await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-
-      // 2) ดึง profile
-      const profile = await liff.getProfile();
-      lineId = profile.userId;
-      if (profile.pictureUrl) {
-        const dp = document.getElementById('lineDisplayPicture');
-        dp.src = profile.pictureUrl;
-        dp.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
-      }
-
-      // 3) แสดง skeleton ขณะรอ fetch
-      document.getElementById('pointVal').textContent = '…';
-      document.getElementById('eventList').innerHTML = generateSkeleton(5);
-
-      // 4) ใช้ Promise.all ดึง getUserInfo + getEvents พร้อมกัน
-      const [ userRes, eventsRes ] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getEvents`)
-      ]);
-
-      const [ userData, events ] = await Promise.all([
-        userRes.json(),
-        eventsRes.json()
-      ]);
-
-      // 5) อัปเดตแต้ม
-      document.getElementById('pointVal').textContent = (userData.point || 0);
-
-      // 6) แสดงกิจกรรม
-      const container = document.getElementById('eventList');
-      if (!events.length) {
-        container.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
-      } else {
-        container.innerHTML = events.map(e => `
-          <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
-            <div>
-              <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
-              <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
-            </div>
-            <a href="event-detail.html?id=${e.id}"
-               class="text-sm font-medium text-purple-700 hover:text-purple-900">
-              ดูรายละเอียด
-            </a>
-          </div>
-        `).join('');
-      }
-    }
-
-    init();
-  </script>
-</body>
-</html>    }
-    function initTransfer() {
-<!DOCTYPE html>
-<html lang="th">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>โอนพ้อย</title>
-  <!-- 1) โหลด config.js  -->
-  <script src="config.js"></script>
-  <!-- 2) LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 3) Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
-    @keyframes pulse-opacity { 0%,100%{opacity:0.5;}50%{opacity:1;} }
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-  </style>
-</head>
-<body class="bg-gray-50 max-w-md mx-auto p-4">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-  <!-- Title -->
-  <h2 class="text-xl font-bold  p-4 text-gray-800">โอนพ้อยให้เพื่อน</h2>
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
-      <img id="lineDisplayPicture" src="https://img.icons8.com/?size=100&id=2I6j4b56xlOq&format=png&color=000000" alt="LINE display picture"  class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-    </div>
-  </div>
-
-  <!-- Form -->
-  <div class="space-y-4 mb-6">
-    <input id="to" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง"
-           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
-    <input id="amount" placeholder="จำนวนพ้อยที่ต้องการโอน" type="number"
-           class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
-    <button id="transferBtn" class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
-      โอนพ้อย
-    </button>
-  </div>
-
-  <!-- Alert -->
-  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 mx-4 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customAlertTitle" class="font-bold text-lg mb-3"></div>
-      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
-      <button id="customAlertButton" class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-        ตกลง
-      </button>
-    </div>
-  </div>
-
-  <!-- Confirm -->
-  <div id="customConfirmOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 mx-4 rounded-xl shadow-lg max-w-sm w-full  text-center alert-fade-enter-active">
-      <div id="customConfirmTitle" class="font-bold text-lg mb-3"></div>
-      <div id="customConfirmMessage" class="text-gray-700 mb-6"></div>
-      <div class="flex justify-around space-x-4">
-        <button id="customConfirmCancelButton" class="bg-gray-300 text-gray-800 py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-          ยกเลิก
-        </button>
-        <button id="customConfirmConfirmButton" class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-          ยืนยัน
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let lineId = "";
-    // Alert & Confirm refs
-    const alertOvl = document.getElementById('customAlertOverlay');
-    const alertT   = document.getElementById('customAlertTitle');
-    const alertM   = document.getElementById('customAlertMessage');
-    const alertBtn = document.getElementById('customAlertButton');
-    const confOvl  = document.getElementById('customConfirmOverlay');
-    const confT    = document.getElementById('customConfirmTitle');
-    const confM    = document.getElementById('customConfirmMessage');
-    const okBtn    = document.getElementById('customConfirmConfirmButton');
-    const noBtn    = document.getElementById('customConfirmCancelButton');
-
-    function showAlert(title, message, cb) {
-      alertT.textContent = title;
-      alertM.textContent = message;
-      alertOvl.classList.remove('hidden');
-      requestAnimationFrame(() => alertOvl.querySelector('div').classList.remove('alert-fade-enter'));
-      const hide = () => {
-        alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(() => {
-          alertOvl.classList.add('hidden');
-          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
-          cb && cb();
-        }, 300);
-        alertBtn.removeEventListener('click', hide);
-      };
-      alertBtn.addEventListener('click', hide);
-    }
-
-    function showConfirm(title, message) {
-      return new Promise(res => {
-        confT.textContent = title;
-        confM.textContent = message;
-        confOvl.classList.remove('hidden');
-        requestAnimationFrame(() => confOvl.querySelector('div').classList.remove('alert-fade-enter'));
-        const onOk = () => { cleanup(); res(true); };
-        const onNo = () => { cleanup(); res(false); };
-        function cleanup() {
-          confOvl.querySelector('div').classList.add('alert-fade-leave-to');
-          setTimeout(() => {
-            confOvl.classList.add('hidden');
-            confOvl.querySelector('div').classList.remove('alert-fade-leave-to');
-          }, 300);
-          okBtn.removeEventListener('click', onOk);
-          noBtn.removeEventListener('click', onNo);
-        }
-        okBtn.addEventListener('click', onOk);
-        noBtn.addEventListener('click', onNo);
-      });
-    }
-
-    async function transfer() {
-      const toId   = document.getElementById('to').value.trim();
-      const amt    = parseInt(document.getElementById('amount').value);
-      if (!toId) { showAlert("ข้อผิดพลาด","กรุณากรอกปลายทาง"); return; }
-      if (isNaN(amt)||amt<=0) { showAlert("ข้อผิดพลาด","กรุณากรอกจำนวนให้ถูกต้อง"); return; }
-      if (toId===lineId) { showAlert("ข้อผิดพลาด","ไม่สามารถโอนให้ตัวเอง"); return; }
-
-      const ok = await showConfirm("ยืนยันโอน",`โอน ${amt} พ้อยต์ ให้ ${toId}?`);
-      if (!ok) return;
-
-      try {
-        const res = await fetch(CONFIG.GAS_URL, {
-          method: 'POST',
-          body:   JSON.stringify({ action:'transferPoints', from:lineId, to:toId, amount:amt })
-        });
-        const txt = await res.text();
-        showAlert("สถานะการโอน", txt, ()=> { if (/สำเร็จ|เรียบร้อย/.test(txt)) location.reload(); });
-      } catch(e) {
-        console.error(e);
-        showAlert("ข้อผิดพลาด","ไม่สามารถโอนได้ ลองอีกครั้ง");
-      }
-    }
-
-async function init() {
-  // 1. เรียก LIFF init
-  await liff.init({ liffId: CONFIG.LIFF_ID });
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
-
-  // 2. ดึง profile
-  const profile = await liff.getProfile();
-  lineId = profile.userId;
-
-  // 3. แสดงรูปโปรไฟล์
-  if (profile.pictureUrl) {
-    const dp = document.getElementById('lineDisplayPicture');
-    dp.src = profile.pictureUrl;
-    dp.alt = profile.displayName;
-  }
-
-  // 4. ดึงคะแนนผู้ใช้จริง
-  const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-  const uData = await uRes.json();
-  document.getElementById('pointVal').textContent = (uData.point||0) + '+';
-
-  // 5. ผูก event ให้ปุ่มโอน
-  document.getElementById('transferBtn')
-          .addEventListener('click', transfer);
-}
-
-    init();
-  </script>
-</body>
-</html>    }
-    function initWarehouse() {
-<!DOCTYPE html>
-<html lang="th">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>คลังของรางวัล</title>
-  <!-- โหลด config ก่อนเสมอ -->
-  <script src="config.js"></script>
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-
-    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
-    @keyframes pulse-opacity {
-      0%,100% { opacity: 0.5; }
-      50%      { opacity: 1; }
-    }
-
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-  </style>
-</head>
-<body class="bg-gray-50 p-4">
-
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-  <!-- Title -->
-  <h2 class="text-xl font-bold p-4  text-gray-800">คลังของรางวัล</h2>
-
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE DP"
-           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-    </div>
-  </div>
-
-
-  <!-- List -->
-  <ul id="redeemList" class="space-y-3">
-    <!-- skeleton loader -->
-    <li class="bg-white rounded-xl p-4 shadow-sm loading-card-animation flex justify-between items-center">
-      <div class="space-y-2 flex-1">
-        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-        <div class="h-3 bg-gray-200 rounded w-1/3"></div>
-      </div>
-      <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
-    </li>
-    <li class="bg-white rounded-xl p-4 shadow-sm loading-card-animation flex justify-between items-center">
-      <div class="space-y-2 flex-1">
-        <div class="h-4 bg-gray-200 rounded w-2/5"></div>
-        <div class="h-3 bg-gray-200 rounded w-1/4"></div>
-      </div>
-      <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
-    </li>
-  </ul>
-
-  <!-- Alert Overlay -->
-  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
-      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
-      <button id="customAlertButton"
-              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-        ตกลง
-      </button>
-    </div>
-  </div>
-
-  <script>
-    let lineId = "";
-    const redeemList         = document.getElementById('redeemList');
-    const alertOvl           = document.getElementById('customAlertOverlay');
-    const alertTitle         = document.getElementById('customAlertTitle');
-    const alertMsg           = document.getElementById('customAlertMessage');
-    const alertBtn           = document.getElementById('customAlertButton');
-
-    function showAlert(title, message) {
-      alertTitle.textContent   = title;
-      alertMsg.textContent     = message;
-      alertOvl.classList.remove('hidden');
-      requestAnimationFrame(() => {
-        alertOvl.querySelector('div').classList.remove('alert-fade-enter');
-      });
-      const hide = () => {
-        alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(() => {
-          alertOvl.classList.add('hidden');
-          alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
-        }, 300);
-        alertBtn.removeEventListener('click', hide);
-      };
-      alertBtn.addEventListener('click', hide);
-    }
-
-    function generateSkeleton(count) {
-      let html = '';
-      for (let i = 0; i < count; i++) {
-        html += `
-          <li class="bg-white rounded-xl p-4 shadow-sm loading-card-animation flex justify-between items-center">
-            <div class="space-y-2 flex-1">
-              <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
-              <div class="h-3 bg-gray-200 rounded w-${Math.floor(20 + Math.random()*30)}%"></div>
-            </div>
-            <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
-          </li>`;
-      }
-      return html;
-    }
-
-    async function loadWarehouse() {
-      redeemList.innerHTML = generateSkeleton(5);
-
-      try {
-        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`);
-        const all = await res.json();
-        const items = all.filter(i => i.type === 'redeem').reverse();
-        if (!items.length) {
-          redeemList.innerHTML = '<li class="text-center text-gray-500 py-4">ยังไม่มีรายการแลกของรางวัล</li>';
-          return;
-        }
-        redeemList.innerHTML = items.map(item => `
-          <li class="bg-white rounded-xl p-4 shadow-sm flex justify-between items-center transform hover:scale-105 transition-transform">
-            <div>
-              <div class="font-semibold text-gray-800 text-sm">${item.detail}</div>
-              <div class="text-xs text-gray-500 mt-1">${item.date}</div>
-            </div>
-            <div class="text-red-600 font-bold text-md">-${item.amount} พ้อยต์</div>
-          </li>
-        `).join('');
-      } catch (e) {
-        console.error(e);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดคลังของรางวัลได้");
-      }
-    }
-
-    async function init() {
-      // init LIFF
-      await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-
-      const p = await liff.getProfile();
-      lineId = p.userId;
-      const dp = document.getElementById('lineDisplayPicture');
-      if (p.pictureUrl) dp.src = p.pictureUrl;
-
-      // แสดง skeleton ระหว่างโหลด
-      document.getElementById('pointVal').textContent = '…';
-      redeemList.innerHTML = generateSkeleton(5);
-
-      // ใช้ Promise.all ดึง getUserInfo + getHistory พร้อมกัน
-      await Promise.all([
-        (async ()=> {
-          const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-          const ud = await u.json();
-          document.getElementById('pointVal').textContent = (ud.point||0) + '+';
-        })(),
-        loadWarehouse()
-      ]);
-    }
-
-    init();
-  </script>
-</body>
-</html>    }
-    function initDashboard() {
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>CRM-3RN</title>
-  <!-- config.js ต้องโหลดก่อน script หลัก -->
-  <script src="config.js"></script>
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-    @keyframes blink { 0%,100%{opacity:1;}50%{opacity:0.4;} }
-    .blink { animation: blink 1.2s ease-in-out infinite; }
-    @keyframes pulseCustom { 0%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:0.6;}100%{transform:scale(1);opacity:1;} }
-    .pulse { animation: pulseCustom 1.2s ease-in-out infinite; }
-  </style>
-</head>
-<body class="bg-gray-50 p-4">
-
-  <!-- แต้ม -->
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <p class="text-md font-semibold text-gray-800">อัพเกรด member</p>
-      <p class="text-sm text-gray-500">ปลดล็อกสิทธิประโยชน์</p>
-    </div>
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 rounded-full "></div>
-      <div class="font-bold text-gray-800 text-lg px-2 "><span id="point">0</span></div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE DP"
-           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-    </div>
-  </div>
-
-  <!-- เมนู -->
-  <div class="bg-purple-900 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6">
-    <a href="event.html" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-      <span>กิจกรรม</span>
-    </a>
-    <a href="warehouse.html" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-      <span>คลัง</span>
-    </a>
-    <a href="addpoint.html" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
-     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6" color="#4d1f96" fill="none">
-        <path d="M2.5 8.18677C2.60406 6.08705 2.91537 4.77792 3.84664 3.84664C4.77792 2.91537 6.08705 2.60406 8.18677 2.5M21.5 8.18677C21.3959 6.08705 21.0846 4.77792 20.1534 3.84664C19.2221 2.91537 17.9129 2.60406 15.8132 2.5M15.8132 21.5C17.9129 21.3959 19.2221 21.0846 20.1534 20.1534C21.0846 19.2221 21.3959 17.9129 21.5 15.8132M8.18676 21.5C6.08705 21.3959 4.77792 21.0846 3.84664 20.1534C2.91537 19.2221 2.60406 17.9129 2.5 15.8132" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-        <path d="M2.49986 12H21.4999" stroke="#000000" stroke-width="1.5" stroke-linecap="round"></path>
-        <path d="M6 12C6 8.68629 8.68629 6 12 6C12 7.65685 13.3431 9 15 9C15.6755 9 16.2989 8.77672 16.8004 8.39993C17.5536 9.40273 18 10.6492 18 12M17.1973 15C16.1599 16.7934 14.2208 18 12 18C9.77915 18 7.84012 16.7934 6.80269 15" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-    </svg>
-      <span>สแกนรับ</span>
-    </a>
-    <a href="transfer.html" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-      <span>โอนพ้อย</span>
-    </a>
-    <a href="redeem.html" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
-      <span>แลกพ้อย</span>
-    </a>
-    <a href="profile.html" class="bg-white text-purple-900 p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-      <span>ข้อมูลส่วนตัว</span>
-    </a>
-  </div>
-
-  <!-- เช็คอิน -->
-  <div id="checkinBox" class="flex items-center justify-between mb-8 hidden">
-    <div class="bg-gray-100 rounded-full px-4 py-2 flex items-center space-x-2 text-gray-700">
-      <span class="text-sm">วันที่</span>
-      <span id="todayDate" class="font-bold text-md">00</span>
-    </div>
-    <div class="bg-yellow-400 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold text-sm">
-      +1
-    </div>
-    <button onclick="checkin()"
-            class="bg-purple-900 text-white px-8 py-3 rounded-full text-sm font-semibold transform hover:scale-105 transition-transform">
-      เช็คอิน
-    </button>
-  </div>
-
-  <!-- ประวัติ -->
-  <div>
-    <div class="flex justify-between items-center mb-4">
-      <div class="font-bold text-lg">รายการล่าสุด</div>
-      <div class="text-xs text-gray-400 font-medium">POINT</div>
-    </div>
-    <ul id="historyList" class="space-y-4">
-      <!-- skeleton loader -->
-    </ul>
-  </div>
-
-  <script>
-    function generateSkeleton(count) {
-      return Array.from({length: count}).map(_=>`
-        <li class="flex justify-between items-center animate-pulse">
-          <div class="space-y-2 flex-1">
-            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
-            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*30)}%"></div>
-          </div>
-          <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
-        </li>`).join("");
-    }
-
-    async function init() {
-      // init LIFF
-      await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-
-      const profile = await liff.getProfile();
-      const lineId = profile.userId;
-      document.getElementById('lineDisplayPicture').src = profile.pictureUrl || '';
-      document.getElementById('lineDisplayPicture').alt = profile.displayName;
-
-      // แสดง skeleton ก่อน
-      const histEl = document.getElementById("historyList");
-      histEl.innerHTML = generateSkeleton(6);
-
-      // parallel fetch
-      const [userRes, checkRes, histRes] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
-      ]);
-      const [userData, checkData, historyList] = await Promise.all([
-        userRes.json(),
-        checkRes.json(),
-        histRes.json()
-      ]);
-
-      // แต้ม
-      document.getElementById("point").textContent = userData.point || 0;
-      // เช็คอิน
-      if (!checkData.checkedInToday) {
-        document.getElementById("checkinBox").classList.remove("hidden");
-        document.getElementById("todayDate").textContent = new Date().getDate().toString().padStart(2,"0");
-      }
-      // ประวัติ
-      if (historyList.length === 0) {
-        histEl.innerHTML = `<li class="text-center text-gray-500 py-4">ไม่มีประวัติการทำรายการ</li>`;
-      } else {
-        const latest10 = historyList.reverse().slice(0,10);
-        histEl.innerHTML = latest10.map(item=>{
-          const isDebit = ['redeem','transfer_out'].includes(item.type);
-          const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-          const sign  = isDebit ? '-' : '+';
-          return `
-            <li class="flex justify-between items-center">
-              <div>
-                <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
-                <div class="text-xs text-gray-400 mt-1">${item.date}</div>
-              </div>
-              <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
-                ${sign} ${item.amount}
-              </div>
-            </li>`;
-        }).join("");
-      }
-    }
-
-    async function checkin() {
-      await fetch(CONFIG.GAS_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "dailyCheckin", lineId: (await liff.getProfile()).userId })
-      });
-      location.reload();
-    }
-
-    init();
-  </script>
-</body>
-</html>    }
-    function initProfile() {
-      // TODO: Implement logic from profile.html
-    }
-    function initAddpoint() {
-      // TODO: Implement logic from addpoint.html
-    }
-    function initEventdetail() {
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>รายละเอียดกิจกรรม</title>
-  <!-- config.js -->
-  <script src="config.js"></script>
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-
-    /* pulse animation */
-    @keyframes pulseCustom {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.02); opacity: 0.6; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
-
-    /* alert transition */
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    /* disabled button */
-    .disabled { opacity: 0.6; cursor: not-allowed; }
-  </style>
-</head>
-<body class="bg-gray-50 p-4">
-
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-xl font-bold text-gray-800">รายละเอียดกิจกรรม</h2>
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2 ">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div class="font-bold text-gray-800 text-lg px-2">
-        <span id="pointVal">0</span>
-      </div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE DP"
-           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
-    </div>
-  </div>
-
-  <!-- Card Wrapper -->
-  <div id="cardWrapper">
-    <!-- Skeleton Loader -->
-    <div id="cardSkeleton" class="bg-white p-6 rounded-xl shadow-md mb-6 animate-pulse">
-      <div class="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-      <div class="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-      <div class="h-3 bg-gray-200 rounded w-full mb-6"></div>
-      <div class="h-12 bg-gray-200 rounded-full w-full"></div>
-    </div>
-    <!-- Actual Card -->
-    <div id="card" class="bg-white p-6 rounded-xl shadow-md text-gray-800 mb-6 hidden">
-      <div class="flex justify-between items-start mb-3">
-        <div class="font-bold text-lg" id="title">–</div>
-        <div class="bg-yellow-400 text-gray-800 font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
-      </div>
-      <div class="text-sm text-gray-700 mb-6 leading-relaxed" id="desc">...</div>
-      <button id="joinBtn"
-              class="bg-purple-900 text-white py-3 w-full rounded-full font-bold text-lg transform hover:scale-105 transition-transform">
-        เข้าร่วม
-      </button>
-    </div>
-  </div>
-
-  <!-- Alert Overlay -->
-  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customAlertTitle" class="font-bold text-lg mb-3 text-gray-800"></div>
-      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
-      <button id="customAlertButton"
-              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-        ตกลง
-      </button>
-    </div>
-  </div>
-
-  <script>
-    const eventId = new URLSearchParams(location.search).get("id");
-    let lineId = "", eventTitle = "", eventRewardPoint = 0;
-
-    function disableJoin() {
-      const btn = document.getElementById("joinBtn");
-      btn.disabled = true;
-      btn.classList.add("disabled");
-    }
-
-    function showAlert(title, message, cb) {
-      const overlay = document.getElementById("customAlertOverlay");
-      document.getElementById("customAlertTitle").textContent   = title;
-      document.getElementById("customAlertMessage").textContent = message;
-      overlay.classList.remove("hidden");
-      overlay.querySelector("div").classList.remove("alert-fade-enter");
-      const hide = () => {
-        overlay.querySelector("div").classList.add("alert-fade-leave-to");
-        setTimeout(() => {
-          overlay.classList.add("hidden");
-          overlay.querySelector("div").classList.remove("alert-fade-leave-to");
-          cb && cb();
-        }, 300);
-        document.getElementById("customAlertButton").removeEventListener("click", hide);
-      };
-      document.getElementById("customAlertButton").addEventListener("click", hide);
-    }
-
-    async function loadData() {
-      const [uRes, eRes, hRes] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${lineId}`)
-      ]);
-      const [userData, eventData, historyList] = await Promise.all([
-        uRes.json(), eRes.json(), hRes.json()
-      ]);
-
-      // update header points
-      document.getElementById("pointVal").textContent = userData.point || 0;
-
-      if (eventData.error) {
-        document.getElementById("title").textContent = "ไม่พบกิจกรรม";
-        document.getElementById("desc").textContent  = eventData.error;
-        disableJoin();
-      } else {
-        eventTitle       = eventData.title;
-        eventRewardPoint = eventData.point;
-        document.getElementById("title").textContent      = eventTitle;
-        document.getElementById("eventPoint").textContent = `${eventRewardPoint}+`;
-        document.getElementById("desc").textContent       = eventData.desc;
-
-        const hasJoined = historyList.some(item =>
-          item.type === 'event' && item.eventId === eventId
-        );
-        if (hasJoined) {
-          const btn = document.getElementById("joinBtn");
-          btn.textContent = "รับพ้อยต์แล้ว";
-          disableJoin();
-        }
-      }
-
-      document.getElementById("cardSkeleton").classList.add("hidden");
-      document.getElementById("card").classList.remove("hidden");
-    }
-
-    async function join() {
-      if (!confirm(`เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`)) return;
-      const res = await fetch(CONFIG.GAS_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action:  "joinEvent",
-          lineId,
-          eventId,
-          title:   eventTitle,
-          point:   eventRewardPoint
-        })
-      });
-      const text = await res.text();
-      showAlert("สถานะ", text, () => {
-        if (text.includes("สำเร็จ")) {
-          const btn = document.getElementById("joinBtn");
-          btn.textContent = "รับพ้อยต์แล้ว";
-          disableJoin();
-        }
-      });
-    }
-
-    async function init() {
-      await liff.init({ liffId: CONFIG.LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-      const profile = await liff.getProfile();
-      lineId = profile.userId;
-      if (profile.pictureUrl) {
-        const dp = document.getElementById("lineDisplayPicture");
-        dp.src = profile.pictureUrl;
-        dp.alt = profile.displayName;
-      }
-      document.getElementById("joinBtn").addEventListener("click", join);
-      await loadData();
-    }
-
-    init();
-  </script>
-</body>
-</html>    }
-    function initRegister() {
-<!DOCTYPE html>
-<html lang="th">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ลงทะเบียนสมาชิก</title>
-
-  <!-- 1) โหลด config.js ก่อน -->
-  <script src="config.js"></script>
-  <!-- 2) LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 3) Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
-    @keyframes pulseCustom {
-      0%,100% { transform: scale(1); opacity: 1; }
-      50%      { transform: scale(1.02); opacity: 0.6; }
-    }
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0; transform: translateY(10px);
-    }
-  </style>
-</head>
-
-<body class="bg-gray-50 min-h-screen">
-
-  <!-- Header -->
-  <div class="flex justify-between items-center bg-white p-4 shadow">
-    <h2 class="text-xl font-semibold text-gray-800 mb-4">ลงทะเบียนสมาชิก</h2>
-
-    <div class="flex items-center space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg">0+</div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/1/18/Line-icon.svg"
-           alt="LINE DP"
-           class="w-10 h-10 rounded-full border-2 border-purple-900 object-cover">
-    </div>
-  </div>
-
-  <!-- Content -->
-  <div class="p-4">
-    <div class="bg-white p-6 rounded-xl shadow space-y-4">
-      <input id="name"    placeholder="ชื่อ-สกุล"
-             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-      <input id="phone"   placeholder="เบอร์โทร"
-             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-      <input id="email"   placeholder="อีเมล"
-             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-      <input id="address" placeholder="ที่อยู่"
-             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-      <input id="note"    placeholder="หมายเหตุ"
-             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-      <button id="submitBtn"
-              class="w-full bg-purple-900 text-white py-3 rounded-full font-bold hover:scale-105 transform transition-transform">
-        สมัครสมาชิก
-      </button>
-    </div>
-  </div>
-
-  <script>
-    let lineId = "";
-
-    async function init() {
-      // 1) init LIFF
-      await liff.init({ liffId: CONFIG.LIFF_ID });
       if (!liff.isLoggedIn()) {
         liff.login();
-        return;
+        return false;
+      }
+      return true;
+    }
+
+    // Router setup
+    const routes = {
+      '#dashboard': { tpl: 'view-dashboard', init: initDashboard },
+      '#event':     { tpl: 'view-event',     init: initEvent     },
+      '#activity':  { tpl: 'view-activity',  init: initActivity  },
+      '#transfer':  { tpl: 'view-transfer',  init: initTransfer  },
+      '#warehouse': { tpl: 'view-warehouse', init: initWarehouse },
+      '#profile':   { tpl: 'view-profile',   init: initProfile   },
+      '#addpoint':  { tpl: 'view-addpoint',  init: initAddpoint  },
+      '#event-detail':{ tpl: 'view-event-detail', init: initEventDetail },
+      '#register':  { tpl: 'view-register',  init: initRegister  },
+      '#redeem':    { tpl: 'view-redeem',    init: initRedeem    },
+      '':           { tpl: 'view-dashboard', init: initDashboard }
+    };
+
+    function router() {
+      const hash = window.location.hash || '';
+      const route = routes[hash] || routes[''];
+      const tpl = document.getElementById(route.tpl);
+      document.getElementById('app').innerHTML = tpl.innerHTML;
+      route.init();
+    }
+
+    window.addEventListener('hashchange', router);
+
+    // Kick things off
+    ensureLIFF().then(ok => {
+      if (ok) router();
+    });
+
+    // --------- Init functions ---------
+
+    async function initDashboard() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const lineDP = document.getElementById('lineDP');
+      if (profile.pictureUrl) lineDP.src = profile.pictureUrl;
+
+      const [userRes, checkRes, histRes] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`),
+        fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${profile.userId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${profile.userId}`)
+      ]);
+      const [userData, checkData, history] = await Promise.all([userRes.json(), checkRes.json(), histRes.json()]);
+
+      document.getElementById('point').textContent = userData.point || 0;
+
+      // Check-in
+      if (!checkData.checkedInToday) {
+        document.getElementById('checkinBox').classList.remove('hidden');
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('th-TH');
+        document.getElementById('checkinBtn').addEventListener('click', async () => {
+          await fetch(CONFIG.GAS_URL, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({action:'dailyCheckin', lineId:profile.userId})
+          });
+          router();
+        });
       }
 
-      // 2) get profile + userInfo
-      const profileRes = await liff.getProfile();
-      lineId = profileRes.userId;
-      if (profileRes.pictureUrl) {
-        document.getElementById('lineDisplayPicture').src = profileRes.pictureUrl;
-      }
-      // fetch current points
-      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-      const uData = await uRes.json();
-      document.getElementById('pointVal').textContent = (uData.point || 0) + '+';
-
-      // fill default name & email
-      document.getElementById('name').value = profileRes.displayName || '';
-      const idToken = liff.getDecodedIDToken();
-      document.getElementById('email').value = idToken.email || '';
-    }
-
-    async function submitRegistration() {
-      const body = {
-        action:  'register',
-        lineId,
-        name:    document.getElementById('name').value.trim(),
-        phone:   document.getElementById('phone').value.trim(),
-        email:   document.getElementById('email').value.trim(),
-        address: document.getElementById('address').value.trim(),
-        note:    document.getElementById('note').value.trim()
-      };
-      const res = await fetch(CONFIG.GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json;charset=UTF-8' },
-        body:   JSON.stringify(body)
-      });
-      const text = await res.text();
-      alert(text);
-    }
-
-    document.getElementById('submitBtn')
-            .addEventListener('click', submitRegistration);
-
-    init();
-  </script>
-</body>
-</html>    }
-    function initRedeem() {
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ร้านค้าแลกของรางวัล</title>
-  <!-- โหลด config ก่อน -->
-  <script src="config.js"></script>
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-  <style>
-    /* ฟอนต์ Kanit */
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
-
-    /* Loading card animation */
-    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
-    @keyframes pulse-opacity {
-      0%,100% { opacity: 0.5; }
-      50%      { opacity: 1; }
-    }
-
-    /* Alert/Confirm transition */
-    .alert-fade-enter-active, .alert-fade-leave-active {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .alert-fade-enter, .alert-fade-leave-to {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-  </style>
-</head>
-<body class="bg-gray-50 p-4">
-
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
- <!-- Title -->
-  <h2 class="text-xl font-bold p-4 text-gray-800">ร้านค้าแลกของรางวัล</h2>
-    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
-      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="#ffffff" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"></path>
-      </svg>
-</div>
-      <div id="pointVal" class="font-bold text-gray-800 text-lg px-2">0+</div>
-      <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE DP"
-           class="w-10 h-10 rounded-full object-cover border-2 border-purple-900">
-    </div>
-  </div>
-
- 
-
-  <!-- รายการของรางวัล -->
-  <div id="itemList" class="grid grid-cols-2 gap-4">
-    <!-- skeleton loaders แสดงตอนรอโหลดจริง -->
-    <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
-      <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
-      <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
-      <div class="h-3 bg-gray-200 rounded w-2/5 mx-auto mb-3"></div>
-      <div class="h-8 bg-gray-200 rounded-full w-full"></div>
-    </div>
-    <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
-      <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
-      <div class="h-4 bg-gray-200 rounded w-2/3 mx-auto mb-2"></div>
-      <div class="h-3 bg-gray-200 rounded w-1/2 mx-auto mb-3"></div>
-      <div class="h-8 bg-gray-200 rounded-full w-full"></div>
-    </div>
-  </div>
-
-  <!-- Custom Alert -->
-  <div id="customAlertOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customAlertTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
-      <div id="customAlertMessage" class="text-gray-700 mb-6"></div>
-      <button id="customAlertButton"
-              class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-        ตกลง
-      </button>
-    </div>
-  </div>
-
-  <!-- Custom Confirm -->
-  <div id="customConfirmOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center alert-fade-enter-active">
-      <div id="customConfirmTitle" class="font-bold text-lg text-gray-800 mb-3"></div>
-      <div id="customConfirmMessage" class="text-gray-700 mb-6"></div>
-      <div class="flex justify-around space-x-4">
-        <button id="customConfirmCancelButton"
-                class="bg-gray-300 text-gray-800 py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-          ยกเลิก
-        </button>
-        <button id="customConfirmConfirmButton"
-                class="bg-purple-900 text-white py-2 px-8 rounded-full font-bold transform hover:scale-105 transition-transform">
-          ยืนยัน
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let lineId = "";
-    const itemList = document.getElementById('itemList');
-
-    // สร้าง skeleton cards
-    function generateSkeleton(count) {
-      let html = '';
-      for (let i = 0; i < count; i++) {
-        html += `
-          <div class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
-            <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
-            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30+Math.random()*50)}% mx-auto mb-2"></div>
-            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30+Math.random()*40)}% mx-auto mb-3"></div>
-            <div class="h-8 bg-gray-200 rounded-full w-full"></div>
-          </div>`;
-      }
-      return html;
-    }
-
-    // ฟังก์ชันแสดง Alert
-    function showAlert(title, message, cb) {
-      const o=document.getElementById('customAlertOverlay');
-      document.getElementById('customAlertTitle').textContent   = title;
-      document.getElementById('customAlertMessage').textContent = message;
-      o.classList.remove('hidden');
-      o.querySelector('div').classList.remove('alert-fade-enter');
-      const hide = () => {
-        o.querySelector('div').classList.add('alert-fade-leave-to');
-        setTimeout(()=>{
-          o.classList.add('hidden');
-          o.querySelector('div').classList.remove('alert-fade-leave-to');
-          cb && cb();
-        }, 300);
-        customAlertButton.removeEventListener('click', hide);
-      };
-      document.getElementById('customAlertButton').addEventListener('click', hide);
-    }
-
-    // ฟังก์ชันแสดง Confirm
-    function showConfirm(title, message) {
-      return new Promise(resolve => {
-        const o=document.getElementById('customConfirmOverlay');
-        document.getElementById('customConfirmTitle').textContent   = title;
-        document.getElementById('customConfirmMessage').textContent = message;
-        o.classList.remove('hidden');
-        o.querySelector('div').classList.remove('alert-fade-enter');
-        const ok = () => cleanup(true);
-        const cancel = () => cleanup(false);
-        function cleanup(result) {
-          o.querySelector('div').classList.add('alert-fade-leave-to');
-          setTimeout(()=>{
-            o.classList.add('hidden');
-            o.querySelector('div').classList.remove('alert-fade-leave-to');
-            resolve(result);
-          }, 300);
-          document.getElementById('customConfirmConfirmButton').removeEventListener('click', ok);
-          document.getElementById('customConfirmCancelButton').removeEventListener('click', cancel);
+      // History
+      const listEl = document.getElementById('historyList');
+      listEl.innerHTML = '';
+      const items = history.reverse().slice(0, 10);
+      if (items.length === 0) {
+        listEl.innerHTML = `<li class="text-center text-gray-500">ไม่มีประวัติการทำรายการ</li>`;
+      } else {
+        for (const item of items) {
+          const isDebit = ['redeem','transfer_out'].includes(item.type);
+          const sign = isDebit ? '-' : '+';
+          listEl.insertAdjacentHTML('beforeend', `
+            <li class="flex justify-between items-center">
+              <div>
+                <div class="font-medium text-gray-800">${item.detail}</div>
+                <div class="text-xs text-gray-400">${item.date}</div>
+              </div>
+              <div class="font-bold ${ isDebit ? 'text-red-600' : 'text-green-600' }">${sign}${item.amount}</div>
+            </li>
+          `);
         }
-        document.getElementById('customConfirmConfirmButton').addEventListener('click', ok);
-        document.getElementById('customConfirmCancelButton').addEventListener('click', cancel);
-      });
+      }
     }
 
-    // ดึงรายการของรางวัล
-    async function fetchItems() {
-      itemList.innerHTML = generateSkeleton(4);
-      const res = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
-      const items = await res.json();
-      if (!items || items.length === 0) {
-        itemList.innerHTML = `<p class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลกในขณะนี้</p>`;
-        return;
-      }
-      itemList.innerHTML = items.map(item => `
-        <div class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
-          <img src="${item.image}" alt="${item.name}"
-               class="h-24 object-contain mx-auto mb-3 rounded-md">
-          <div class="font-bold text-gray-800 mb-1">${item.name}</div>
-          <div class="bg-yellow-400 text-gray-800 font-bold text-sm px-3 py-1 rounded-full inline-block mb-3">
-            ${item.point} พ้อยต์
+    async function initEvent() {
+      if (!(await ensureLIFF())) return;
+      const listEl = document.getElementById('eventList');
+      listEl.innerHTML = `<p class="text-center text-gray-500">กำลังโหลด…</p>`;
+      const events = await fetch(`${CONFIG.GAS_URL}?action=getEvents`).then(r=>r.json());
+      if (!events.length) {
+        listEl.innerHTML = `<p class="text-center text-gray-500">ไม่มีกิจกรรมในขณะนี้</p>`;
+      } else {
+        listEl.innerHTML = events.map(e=>`
+          <div class="bg-white p-4 rounded-lg shadow flex justify-between items-center">
+            <div>
+              <div class="font-semibold text-gray-800">${e.title}</div>
+              <div class="text-sm text-gray-500">${e.detail||''}</div>
+            </div>
+            <a href="#event-detail?id=${e.id}" class="text-purple-700 font-medium">รายละเอียด</a>
           </div>
-          <button onclick="redeem('${item.id}','${item.name}',${item.point})"
-                  class="bg-purple-900 text-white px-4 py-1.5 rounded-full font-semibold w-full transform hover:scale-105 transition-transform">
-            แลก
-          </button>
-        </div>
-      `).join('');
-    }
-
-    // แลกของรางวัล
-    async function redeem(id, name, point) {
-      if (!await showConfirm("ยืนยันการแลก", `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`)) return;
-      const res = await fetch(CONFIG.GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action:'redeemItem', lineId, itemId:id })
-      });
-      const txt = await res.text();
-      showAlert("สถานะการแลก", txt, () => {
-        if (txt.includes("สำเร็จ")) fetchItems();
-      });
-    }
-
-    // เริ่มต้น LIFF + ดึง data พร้อมกัน
-    async function init() {
-      try {
-        await liff.init({ liffId: CONFIG.LIFF_ID });
-        if (!liff.isLoggedIn()) { liff.login(); return; }
-
-        const p = await liff.getProfile();
-        lineId = p.userId;
-        const dp = document.getElementById('lineDisplayPicture');
-        if (p.pictureUrl) {
-          dp.src = p.pictureUrl;
-          dp.alt = p.displayName;
-        }
-
-        // เซ็ต skeleton ก่อน
-        document.getElementById('pointVal').textContent = '…';
-        itemList.innerHTML = generateSkeleton(4);
-
-        // fetch พร้อมกัน: userInfo + items
-        await Promise.all([
-          (async()=>{
-            const u = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${lineId}`);
-            const ud = await u.json();
-            document.getElementById('pointVal').textContent = (ud.point||0) + '+';
-          })(),
-          fetchItems()
-        ]);
-      } catch(e) {
-        console.error(e);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถเริ่มระบบได้ กรุณาลองใหม่");
+        `).join('');
       }
     }
 
-    init();
-  </script>
-</body>
-</html>    }
+    async function initActivity() {
+      if (!(await ensureLIFF())) return;
+      const statusEl = document.getElementById('status');
+      const btn = document.getElementById('activityBtn');
+      statusEl.textContent = 'กำลังตรวจสอบ…';
+      const profile = await liff.getProfile();
+      const res = await fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${profile.userId}`);
+      const data = await res.json();
+      if (data.checkedInToday) {
+        statusEl.textContent = 'เช็คอินแล้ววันนี้';
+      } else {
+        statusEl.textContent = '';
+        btn.classList.remove('hidden');
+        btn.addEventListener('click', async ()=>{
+          await fetch(CONFIG.GAS_URL, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({action:'dailyCheckin', lineId:profile.userId})
+          });
+          initActivity();
+        });
+      }
+    }
+
+    async function initTransfer() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const btn = document.getElementById('transferBtn');
+      btn.addEventListener('click', async ()=>{
+        const to = document.getElementById('transferTo').value.trim();
+        const amt = parseInt(document.getElementById('transferAmount').value,10);
+        if (!to||isNaN(amt)||amt<=0) return alert('กรุณากรอกข้อมูลให้ถูกต้อง');
+        if (to===profile.userId) return alert('ไม่สามารถโอนให้ตัวเอง');
+        if (!confirm(`โอน ${amt} พ้อยต์ ให้ ${to}?`)) return;
+        const res = await fetch(CONFIG.GAS_URL,{
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'transferPoints', from:profile.userId, to, amount:amt})
+        });
+        const txt = await res.text();
+        alert(txt);
+        router();
+      });
+    }
+
+    async function initWarehouse() {
+      if (!(await ensureLIFF())) return;
+      const listEl = document.getElementById('warehouseList');
+      // Example static data; replace with real fetch if available
+      listEl.innerHTML = `
+        <li>อุปกรณ์ A: คงเหลือ 10 ชิ้น</li>
+        <li>อุปกรณ์ B: คงเหลือ 5 ชิ้น</li>
+      `;
+    }
+
+    async function initProfile() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`);
+      const uData = await uRes.json();
+      document.getElementById('profileName').value    = uData.name    || '';
+      document.getElementById('profilePhone').value   = uData.phone   || '';
+      document.getElementById('profileEmail').value   = uData.email   || '';
+      document.getElementById('profileAddress').value = uData.address || '';
+      document.getElementById('profileNote').value    = uData.note    || '';
+      document.getElementById('updateProfileBtn').addEventListener('click', async ()=>{
+        const body = {
+          action: 'updateProfile',
+          lineId: profile.userId,
+          name: document.getElementById('profileName').value.trim(),
+          phone: document.getElementById('profilePhone').value.trim(),
+          email: document.getElementById('profileEmail').value.trim(),
+          address: document.getElementById('profileAddress').value.trim(),
+          note: document.getElementById('profileNote').value.trim()
+        };
+        const res = await fetch(CONFIG.GAS_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        alert(await res.text());
+      });
+    }
+
+    async function initAddpoint() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      document.getElementById('addPointBtn').addEventListener('click', async ()=>{
+        const amt = parseInt(document.getElementById('addAmount').value,10);
+        if (isNaN(amt)||amt<=0) return alert('กรุณากรอกจำนวนให้ถูกต้อง');
+        const res = await fetch(CONFIG.GAS_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({action:'addPoint', lineId:profile.userId, amount:amt})
+        });
+        alert(await res.text());
+        router();
+      });
+    }
+
+    async function initEventDetail() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      const params = new URLSearchParams(location.hash.split('?')[1]);
+      const eventId = params.get('id');
+      const [userRes, eRes, hRes] = await Promise.all([
+        fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
+        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${profile.userId}`)
+      ]);
+      const [userData, eventData, history] = await Promise.all([userRes.json(), eRes.json(), hRes.json()]);
+      document.getElementById('lineDP').src = profile.pictureUrl || '';
+      document.getElementById('point').textContent = userData.point || 0;
+
+      if (eventData.error) {
+        document.getElementById('eventDetailTitle').textContent = 'ไม่พบกิจกรรม';
+        document.getElementById('eventDetailDesc').textContent  = eventData.error;
+        document.getElementById('joinBtn').disabled = true;
+      } else {
+        document.getElementById('eventDetailTitle').textContent = eventData.title;
+        document.getElementById('eventDetailDesc').textContent  = eventData.desc;
+        const hasJoined = history.some(i=>i.type==='event' && i.eventId===eventId);
+        const btn = document.getElementById('joinBtn');
+        if (hasJoined) {
+          btn.textContent = 'รับคะแนนแล้ว';
+          btn.disabled = true;
+        } else {
+          btn.addEventListener('click', async ()=>{
+            if (!confirm(`เข้าร่วม "${eventData.title}" และรับ ${eventData.point} พ้อยต์ ใช่หรือไม่?`)) return;
+            const res = await fetch(CONFIG.GAS_URL, {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({
+                action:'joinEvent',
+                lineId: profile.userId,
+                eventId,
+                title: eventData.title,
+                point: eventData.point
+              })
+            });
+            alert(await res.text());
+            router();
+          });
+        }
+      }
+    }
+
+    async function initRegister() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      document.getElementById('registerForm').addEventListener('submit', async e=>{
+        e.preventDefault();
+        const form = e.target;
+        const body = {
+          action: 'register',
+          lineId: profile.userId,
+          name: form.name.value.trim(),
+          phone: form.phone.value.trim(),
+          email: form.email.value.trim()
+        };
+        const res = await fetch(CONFIG.GAS_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        alert(await res.text());
+      });
+    }
+
+    async function initRedeem() {
+      if (!(await ensureLIFF())) return;
+      const profile = await liff.getProfile();
+      document.getElementById('lineDP').src = profile.pictureUrl || '';
+      const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${profile.userId}`);
+      const uData = await uRes.json();
+      document.getElementById('point').textContent = uData.point || 0;
+
+      const listEl = document.getElementById('redeemList');
+      listEl.innerHTML = `<p class="col-span-2 text-center text-gray-500">กำลังโหลด…</p>`;
+      const items = await fetch(`${CONFIG.GAS_URL}?action=getItems`).then(r=>r.json());
+      if (!items.length) {
+        listEl.innerHTML = `<p class="col-span-2 text-center text-gray-500">ไม่มีของรางวัลให้แลก</p>`;
+      } else {
+        listEl.innerHTML = items.map(item=>`
+          <li class="bg-white p-4 rounded-lg shadow text-center">
+            <img src="${item.image}" alt="${item.name}" class="h-24 mx-auto mb-2">
+            <div class="font-bold mb-1">${item.name}</div>
+            <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
+            <button onclick="redeemItem('${item.id}','${item.name}',${item.point})"
+                    class="bg-purple-700 text-white py-1 px-4 rounded">แลกเลย</button>
+          </li>
+        `).join('');
+      }
+    }
+
+    // Redeem helper
+    async function redeemItem(id,name,point) {
+      if (!confirm(`แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`)) return;
+      const profile = await liff.getProfile();
+      const res = await fetch(CONFIG.GAS_URL, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'redeemItem', lineId:profile.userId, itemId:id})
+      });
+      alert(await res.text());
+      router();
+    }
+
   </script>
 </body>
 </html>
