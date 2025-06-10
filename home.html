@@ -357,7 +357,7 @@
       try {
         const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
         const userData = await userRes.json();
-        userState.points = userData.point || 0;
+        userState.points = parseInt(userData.point || 0, 10); // Ensure points are parsed as integer
         pointValEl.textContent = userState.points; // Update global header with fetched points
       } catch (error) {
         console.error("Failed to fetch initial user points:", error);
@@ -445,9 +445,6 @@
     // --------- Init functions for each view ---------
 
     async function initDashboard() {
-      // No need to fetch profile/points again here, it's already in userState
-      // and header is updated by router().
-
       const historyListEl = document.getElementById('historyList');
       if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
@@ -510,7 +507,6 @@
     }
 
     async function initEvent() {
-      // Header updated by router()
       const eventListEl = document.getElementById('eventList');
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
@@ -538,7 +534,6 @@
     }
 
     async function initEventDetail() {
-      // Header updated by router()
       const params = new URLSearchParams(window.location.hash.split('?')[1]);
       const eventId = params.get("id");
       let eventTitle = "", eventRewardPoint = 0;
@@ -615,7 +610,6 @@
     }
 
     async function initProfile() {
-      // Header updated by router()
       const profileNameEl = document.getElementById('profileName');
       const profilePhoneEl = document.getElementById('profilePhone');
       const profileEmailEl = document.getElementById('profileEmail');
@@ -623,7 +617,6 @@
       const profileNoteEl = document.getElementById('profileNote');
       const updateBtn = document.getElementById('updateProfileBtn');
 
-      // Use userState.lineId directly, no need to fetch userInfo again
       const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
       const uData = await uRes.json();
 
@@ -654,7 +647,6 @@
     }
 
     async function initRedeem() {
-      // Header updated by router()
       const redeemListEl = document.getElementById('redeemList');
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
 
@@ -683,7 +675,7 @@
           button.addEventListener('click', async (event) => {
             const id = event.target.dataset.itemId;
             const name = event.target.dataset.itemName;
-            const point = parseInt(event.target.dataset.itemPoint, 10);
+            const point = parseInt(event.target.dataset.itemPoint, 10); // Ensure point is a number
 
             if (userState.points < point) { // Use the global userState.points
               showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
@@ -695,7 +687,7 @@
 
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
-              headers: {'Content-Type': 'application/json'},
+              // REMOVED: headers: {'Content-Type': 'application/json'}, <-- This was likely causing the TypeError for GAS
               body: JSON.stringify({action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point}) // Pass point to GAS
             });
             const text = await res.text();
@@ -710,7 +702,6 @@
     }
 
     async function initTransfer() {
-      // Header updated by router()
       const transferToEl = document.getElementById('transferTo');
       const transferAmountEl = document.getElementById('transferAmount');
       const transferBtn = document.getElementById('transferBtn');
@@ -718,7 +709,7 @@
       if (transferBtn) {
         transferBtn.onclick = async () => {
           const toId = transferToEl.value.trim();
-          const amt = parseInt(transferAmountEl.value, 10);
+          const amt = parseInt(transferAmountEl.value, 10); // Ensure amount is a number
 
           if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอกปลายทาง"); return; }
           if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนให้ถูกต้อง"); return; }
@@ -750,7 +741,6 @@
     }
 
     async function initWarehouse() {
-      // Header updated by router()
       const warehouseListEl = document.getElementById('warehouseList');
       if (warehouseListEl) warehouseListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
@@ -787,7 +777,6 @@
     }
 
     async function initAddpoint() {
-      // Header updated by router()
       const scanContainer = document.getElementById('scanContainer');
       const scanBtn = document.getElementById('scanBtn');
       const enterBtn = document.getElementById('enterBtn');
