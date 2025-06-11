@@ -793,22 +793,21 @@
       }
     }
 
-    async function initAddpoint() {
+   async function initAddpoint() {
       const scanContainer = document.getElementById('scanContainer');
       const scanBtn = document.getElementById('scanBtn');
       const enterBtn = document.getElementById('enterBtn');
       const manualInput = document.getElementById('manualCode');
 
-      // Addpoint specific state
       let scannedCode = "";
-      let eventTitle = "";
-      let eventRewardPoint = 0;
+      let codeTitle = "";
+      let codePoint = 0;
 
       async function hasReceived(code) {
         const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
         const historyList = await res.json();
         return historyList.some(item =>
-          item.type === 'event' && item.eventId === code
+          item.type === 'code' && item.eventId === code
         );
       }
 
@@ -817,62 +816,65 @@
           showAlert('ข้อผิดพลาด', 'โค้ดว่างเปล่า');
           return;
         }
-
         if (await hasReceived(code)) {
-          showAlert('คุณรับพ้อยต์แล้ว', 'คุณไม่สามารถรับซ้ำสำหรับกิจกรรมนี้');
+          showAlert('รับแล้ว', 'คุณรับโค้ดนี้ไปแล้ว');
           return;
         }
         scannedCode = code;
-        const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${code}`);
+        const eRes = await fetch(`${CONFIG.GAS_URL}?action=getCodeById&id=${code}`);
         const eData = await eRes.json();
 
         if (eData.error) {
-          showAlert('ไม่พบกิจกรรม', eData.error);
+          showAlert('ไม่พบโค้ด', eData.error);
           return;
         }
 
-        eventTitle = eData.title;
-        eventRewardPoint = eData.point;
+        codeTitle = eData.title;
+        codePoint = eData.point;
 
         if (scanContainer) {
-            scanContainer.innerHTML = `
+          scanContainer.innerHTML = `
             <div class="bg-white p-6 rounded-xl shadow mb-4">
-              <div class="font-bold text-lg mb-2">${eventTitle}</div>
+              <div class="font-bold text-lg mb-2">${codeTitle}</div>
               <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
-              <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${eventRewardPoint}</div>
+              <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
               <button id="acceptBtn"
-                      class="bg-green-500 text-white py-2 px-6 rounded-full font-bold hover:scale-105 transform transition-transform">
+                      class="bg-green-500 text-white py-2 px-6 rounded-full font-bold hover:scale-105 transform">
                 รับพ้อยต์
               </button>
             </div>`;
-            document.getElementById('acceptBtn')?.addEventListener('click', joinEventFromCode);
+          document.getElementById('acceptBtn')
+                  ?.addEventListener('click', joinCodeFromInput);
         }
       }
 
-      async function joinEventFromCode() {
-        const confirmed = await showConfirm(`ยืนยันการเข้าร่วม`, `เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`);
+      async function joinCodeFromInput() {
+        const confirmed = await showConfirm(
+          `ยืนยันการรับโค้ด`,
+          `รับ "${codeTitle}" และรับ ${codePoint} พ้อยต์ ใช่หรือไม่?`
+        );
         if (!confirmed) return;
 
         const res = await fetch(CONFIG.GAS_URL, {
           method: "POST",
           body: JSON.stringify({
-            action: "joinEvent",
+            action: "joinCode",
             lineId: userState.lineId,
-            eventId: scannedCode,
-            title: eventTitle,
-            point: eventRewardPoint
+            id: scannedCode,
+            title: codeTitle,
+            point: codePoint
           })
         });
         const text = await res.text();
         showAlert("สถานะ", text, () => {
           if (text.includes("สำเร็จ")) {
-            const acceptBtn = document.getElementById("acceptBtn");
-            if (acceptBtn) {
-              acceptBtn.textContent = "รับพ้อยต์แล้ว";
-              acceptBtn.disabled = true;
-              acceptBtn.classList.add("disabled");
+            updatePointsInHeader(userState.points + codePoint);
+            const btn = document.getElementById("acceptBtn");
+            if (btn) {
+              btn.textContent = "รับพ้อยต์แล้ว";
+              btn.disabled = true;
+              btn.classList.add("disabled");
             }
-            updatePointsInHeader(userState.points + eventRewardPoint); // Update points immediately
           }
         });
       }
@@ -895,7 +897,6 @@
         };
       }
     }
-
 
     // --- Global App Initialization ---
     async function initializeApp() {
