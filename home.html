@@ -295,6 +295,13 @@
         </button>
       </div>
     </div>
+    <!-- Loader -->
+    <div id="codeLoading" class="hidden flex justify-center items-center mt-4">
+      <svg class="animate-spin h-8 w-8 text-purple-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+    </div>
   </template>
 
 
@@ -313,6 +320,7 @@
     const alertT   = document.getElementById('customAlertTitle');
     const alertM   = document.getElementById('customAlertMessage');
     const alertBtn = document.getElementById('customAlertButton');
+    const scanContainer = document.getElementById('scanContainer');
 
     const confOvl  = document.getElementById('customConfirmOverlay');
     const confT    = document.getElementById('customConfirmTitle');
@@ -825,11 +833,11 @@ async function initProfile() {
       }
     }
 
-   async function initAddpoint() {
+  async function initAddpoint() {
       const scanContainer = document.getElementById('scanContainer');
       const scanBtn = document.getElementById('scanBtn');
       const enterBtn = document.getElementById('enterBtn');
-      const manualInput = document.getElementById('manualCode');
+      const loadingEl = document.getElementById('codeLoading');
 
       let scannedCode = "";
       let codeTitle = "";
@@ -848,67 +856,94 @@ async function initProfile() {
           showAlert('ข้อผิดพลาด', 'โค้ดว่างเปล่า');
           return;
         }
-        if (await hasReceived(code)) {
-          showAlert('รับแล้ว', 'คุณรับโค้ดนี้ไปแล้ว');
-          return;
-        }
-        scannedCode = code;
-        const eRes = await fetch(`${CONFIG.GAS_URL}?action=getCodeById&id=${code}`);
-        const eData = await eRes.json();
+        // แสดง loader & ปิดปุ่ม
+        loadingEl.classList.remove('hidden');
+        scanBtn.disabled = true;
+        enterBtn.disabled = true;
 
-        if (eData.error) {
-          showAlert('ไม่พบโค้ด', eData.error);
-          return;
-        }
+        try {
+          if (await hasReceived(code)) {
+            showAlert('รับแล้ว', 'คุณรับโค้ดนี้ไปแล้ว');
+            return;
+          }
+          scannedCode = code;
+          const eRes = await fetch(`${CONFIG.GAS_URL}?action=getCodeById&id=${code}`);
+          const eData = await eRes.json();
 
-        codeTitle = eData.title;
-        codePoint = eData.point;
+          if (eData.error) {
+            showAlert('ไม่พบโค้ด', eData.error);
+            return;
+          }
 
-        if (scanContainer) {
-          scanContainer.innerHTML = `
-            <div class="bg-white p-6 rounded-xl shadow mb-4">
-              <div class="font-bold text-lg mb-2">${codeTitle}</div>
-              <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
-              <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
-              <button id="acceptBtn"
-                      class="bg-green-500 text-white py-2 px-6 rounded-full font-bold hover:scale-105 transform">
-                รับพ้อยต์
-              </button>
-            </div>`;
-          document.getElementById('acceptBtn')
-                  ?.addEventListener('click', joinCodeFromInput);
+          codeTitle = eData.title;
+          codePoint = eData.point;
+
+          if (scanContainer) {
+            scanContainer.innerHTML = `
+              <div class="bg-white p-6 rounded-xl shadow mb-4">
+                <div class="font-bold text-lg mb-2">${codeTitle}</div>
+                <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
+                <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
+                <button id="acceptBtn"
+                        class="bg-green-500 text-white py-2 px-6 rounded-full font-bold hover:scale-105 transform">
+                  รับพ้อยต์
+                </button>
+              </div>`;
+            document.getElementById('acceptBtn')
+                    ?.addEventListener('click', joinCodeFromInput);
+          }
+        } catch (e) {
+          console.error(e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถค้นหาโค้ดได้');
+        } finally {
+          // ซ่อน loader & เปิดปุ่ม
+          loadingEl.classList.add('hidden');
+          scanBtn.disabled = false;
+          enterBtn.disabled = false;
         }
       }
 
       async function joinCodeFromInput() {
-        const confirmed = await showConfirm(
-          `ยืนยันการรับโค้ด`,
-          `รับ "${codeTitle}" และรับ ${codePoint} พ้อยต์ ใช่หรือไม่?`
-        );
-        if (!confirmed) return;
+        // แสดง loader & ปิดปุ่มรับโค้ด
+        loadingEl.classList.remove('hidden');
+        enterBtn.disabled = true;
+        try {
+          const confirmed = await showConfirm(
+            `ยืนยันการรับโค้ด`,
+            `รับ "${codeTitle}" และรับ ${codePoint} พ้อยต์ ใช่หรือไม่?`
+          );
+          if (!confirmed) return;
 
-        const res = await fetch(CONFIG.GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "joinCode",
-            lineId: userState.lineId,
-            id: scannedCode,
-            title: codeTitle,
-            point: codePoint
-          })
-        });
-        const text = await res.text();
-        showAlert("สถานะ", text, () => {
-          if (text.includes("สำเร็จ")) {
-            updatePointsInHeader(userState.points + codePoint);
-            const btn = document.getElementById("acceptBtn");
-            if (btn) {
-              btn.textContent = "รับพ้อยต์แล้ว";
-              btn.disabled = true;
-              btn.classList.add("disabled");
+          const res = await fetch(CONFIG.GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "joinCode",
+              lineId: userState.lineId,
+              id: scannedCode,
+              title: codeTitle,
+              point: codePoint
+            })
+          });
+          const text = await res.text();
+          showAlert("สถานะ", text, () => {
+            if (text.includes("สำเร็จ")) {
+              updatePointsInHeader(userState.points + codePoint);
+              const btn = document.getElementById("acceptBtn");
+              if (btn) {
+                btn.textContent = "รับพ้อยต์แล้ว";
+                btn.disabled = true;
+                btn.classList.add("disabled");
+              }
             }
-          }
-        });
+          });
+        } catch (e) {
+          console.error(e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถรับโค้ดได้');
+        } finally {
+          // ซ่อน loader & เปิดปุ่มรับโค้ด
+          loadingEl.classList.add('hidden');
+          enterBtn.disabled = false;
+        }
       }
 
       if (scanBtn) {
@@ -929,6 +964,7 @@ async function initProfile() {
         };
       }
     }
+  
 
     // --- Global App Initialization ---
     async function initializeApp() {
