@@ -1,47 +1,90 @@
-<html>
+
+<!DOCTYPE html>
+<html lang="th">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIFF Form</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f0f0f0; }
+    label { display: block; margin-top: 1rem; }
+    input, textarea, button {
+      width: 100%; padding: 0.75rem; margin-top: 0.25rem; border: 1px solid #ccc; border-radius: 6px;
+    }
+    button { background-color: #06C755; color: white; font-weight: bold; border: none; cursor: pointer; }
+    button:hover { background-color: #04a046; }
+  </style>
 </head>
 <body>
-  <form id="myForm">
-    <input id="name" placeholder="ชื่อ" />
-    <input id="message" placeholder="ข้อความ" />
-    <button type="submit">ส่ง</button>
+
+  <h2>ส่งข้อความผ่าน LINE LIFF</h2>
+
+  <form id="form">
+    <label>
+      ชื่อ:
+      <input type="text" id="name" required />
+    </label>
+
+    <label>
+      ข้อความ:
+      <textarea id="message" rows="4" required></textarea>
+    </label>
+
+    <button type="submit">ส่งข้อมูล</button>
   </form>
 
   <script>
-   async function main() {
-  await liff.init({ liffId: "2007514355-Jkv9GPl2" });
+    async function init() {
+      try {
+        await liff.init({ liffId: "2007514355-Jkv9GPl2" });
 
-  if (!liff.isLoggedIn()) {
-    liff.login(); // จะ redirect อัตโนมัติ
-    return; // รอให้ login เสร็จก่อน
-  }
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
 
-  const profile = await liff.getProfile();
-  const userId = profile.userId;
+        const profile = await liff.getProfile();
+        const userId = profile.userId;
 
-  document.getElementById("myForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = document.getElementById("name").value;
-    const message = document.getElementById("message").value;
+        document.getElementById("form").addEventListener("submit", async (e) => {
+          e.preventDefault();
 
-    await fetch("https://submitform-o6ve32s2qa-uc.a.run.app", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-        // ถ้า API ต้องใช้ access_token: ใส่เพิ่มตรงนี้
-        // "Authorization": `Bearer ${liff.getAccessToken()}`
-      },
-      body: JSON.stringify({ userId, name, message }),
-    });
+          const name = document.getElementById("name").value;
+          const message = document.getElementById("message").value;
 
-    alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
-    liff.closeWindow();
-  });
-}
-main();
+          const payload = {
+            userId,
+            name,
+            message
+          };
 
+          try {
+            const response = await fetch("https://submitform-o6ve32s2qa-uc.a.run.app", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+              alert("✅ ส่งข้อมูลเรียบร้อยแล้ว");
+              liff.closeWindow();
+            } else {
+              alert("❌ ส่งข้อมูลไม่สำเร็จ: " + response.status);
+            }
+          } catch (err) {
+            alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+            console.error(err);
+          }
+        });
+      } catch (err) {
+        console.error("LIFF Init Error:", err);
+      }
+    }
+
+    init();
   </script>
+
 </body>
 </html>
+
