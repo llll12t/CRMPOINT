@@ -10,28 +10,38 @@
   </form>
 
   <script>
-    async function main() {
-      await liff.init({ liffId: "2007514355-94vaVQb3" });
-      const profile = await liff.getProfile();
-      const userId = profile.userId;
+   async function main() {
+  await liff.init({ liffId: "2007514355-94vaVQb3" });
 
-      document.getElementById("myForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const name = document.getElementById("name").value;
-        const message = document.getElementById("message").value;
+  if (!liff.isLoggedIn()) {
+    liff.login(); // จะ redirect อัตโนมัติ
+    return; // รอให้ login เสร็จก่อน
+  }
 
-        await fetch("https://sendlinemessage-o6ve32s2qa-uc.a.run.app/submitForm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, name, message }),
-        });
+  const profile = await liff.getProfile();
+  const userId = profile.userId;
 
-        alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
-        liff.closeWindow();
-      });
-    }
+  document.getElementById("myForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value;
+    const message = document.getElementById("message").value;
 
-    main();
+    await fetch("https://sendlinemessage-o6ve32s2qa-uc.a.run.app/submitForm", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+        // ถ้า API ต้องใช้ access_token: ใส่เพิ่มตรงนี้
+        // "Authorization": `Bearer ${liff.getAccessToken()}`
+      },
+      body: JSON.stringify({ userId, name, message }),
+    });
+
+    alert("ส่งข้อมูลเรียบร้อยแล้ว ✅");
+    liff.closeWindow();
+  });
+}
+main();
+
   </script>
 </body>
 </html>
