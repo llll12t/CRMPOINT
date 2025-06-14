@@ -417,6 +417,24 @@
 
         userState.points = parseInt(userData.point || 0, 10); // Ensure points are parsed as integer
         pointValEl.textContent = userState.points; // Update global header with fetched points
+
+        // NEW: Preload common data that doesn't change frequently or depends on user actions
+        // ทำการ preload ควบคู่ไปกับการ fetch ข้อมูลผู้ใช้
+        try {
+            console.log("Preloading initial common data...");
+            const [eventsRes, redeemRes] = await Promise.all([
+                fetch(`${CONFIG.GAS_URL}?action=getEvents`),
+                fetch(`${CONFIG.GAS_URL}?action=getItems`)
+            ]);
+
+            dataCache.events = await eventsRes.json();
+            dataCache.redeemItems = await redeemRes.json();
+            console.log("Initial data preloaded successfully.");
+        } catch (preloadError) {
+            console.warn("Failed to preload some initial data. Views will fetch on demand.", preloadError);
+            // ไม่ต้องหยุดการทำงานหลัก ถ้า preload ไม่สำเร็จ เพราะแต่ละหน้าจะ fetch เองอยู่ดี
+        }
+
       } catch (error) {
         console.error("Failed to fetch initial user points or check registration:", error);
         pointValEl.textContent = 'N/A'; // Indicate error
