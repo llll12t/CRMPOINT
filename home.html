@@ -625,7 +625,7 @@
         if (historyListEl) {
           const latest10 = history.reverse().slice(0, 10);
           if (latest10.length === 0) {
-            historyListEl.innerHTML = `<li class="text-center text-gray-500 py-4">ไม่มีประวัติการทำรายการ</li>`;
+            historyListEl.innerHTML = `<li class="text-center text-gray-100 py-4">ไม่มีประวัติการทำรายการ</li>`;
           }
           else {
             historyListEl.innerHTML = latest10.map(item => {
@@ -684,10 +684,7 @@
                 <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
                 <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
               </div>
-              <a href="#event-detail?id=${e.id}"
-                 class="link link-hover text-black"> <!-- Changed to DaisyUI link link-hover text-black -->
-                ดูรายละเอียด
-              </a>
+              <a href="#event-detail?id=${e.id}" class="btn btn-neutral">  ดูรายละเอียด </a>
             </div>
           `).join('');
         }
@@ -894,7 +891,7 @@
 
       if (redeemListEl) {
         if (!items.length) {
-          redeemListEl.innerHTML = `<li class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลก</li>`;
+          redeemListEl.innerHTML = `<li class="col-span-2 text-center text-gray-100 py-4">ไม่มีของรางวัลให้แลก</li>`;
           return;
         }
         redeemListEl.innerHTML = items.map(item => `
@@ -1008,7 +1005,7 @@
         const ownedItems = allHistory.filter(i => i.type === 'redeem'); // Do not reverse here, group first
 
         if (!ownedItems.length) {
-          warehouseListEl.innerHTML = '<li class="text-center text-gray-500 py-4">ยังไม่มีของรางวัลในคลังของคุณ</li>';
+          warehouseListEl.innerHTML = '<li class="text-center text-gray-100 py-4">ยังไม่มีของรางวัลในคลังของคุณ</li>';
           return;
         }
 
