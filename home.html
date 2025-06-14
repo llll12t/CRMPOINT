@@ -318,19 +318,19 @@
       profile: null,
       lineId: "",
       points: 0,
-      pointsChanged: false, // Flag to indicate if points have changed since last render
+      pointsChanged: true, // NEW: Start as true to force initial history load
     };
 
-    // NEW: Global Data Cache - เก็บข้อมูลที่สามารถนำกลับมาใช้ซ้ำได้โดยไม่ต้อง fetch ใหม่
+    // Global Data Cache
     const dataCache = {
-      events: null, // สำหรับ initEvent (รายการกิจกรรมทั้งหมด)
-      redeemItems: null, // สำหรับ initRedeem (รายการของรางวัลทั้งหมด)
-      eventDetails: {}, // สำหรับ initEventDetail, เก็บเป็น object {eventId: eventData}
-      codeDetails: {}, // สำหรับ initAddpoint, เก็บเป็น object {codeId: codeData}
-      // history: null, // ไม่ควร cache history เพราะเปลี่ยนตลอด
+      events: null,
+      redeemItems: null,
+      eventDetails: {},
+      codeDetails: {},
+      history: null, // NEW: Cache for history data
     };
 
-    // Common Alert & Confirm Dialogs (references to elements are global now)
+    // Common Alert & Confirm Dialogs
     const alertDialog = document.getElementById('customAlertDialog');
     const alertT = document.getElementById('customAlertTitle');
     const alertM = document.getElementById('customAlertMessage');
@@ -342,7 +342,7 @@
     const okBtn = document.getElementById('customConfirmConfirmButton');
     const noBtn = document.getElementById('customConfirmCancelButton');
 
-    // Global Header Elements (MOVED HERE)
+    // Global Header Elements
     const pageTitleEl = document.getElementById('pageTitle');
     const pointValEl = document.getElementById('pointVal');
     const dpEl = document.getElementById('lineDisplayPicture');
@@ -410,9 +410,8 @@
 
         userState.points = parseInt(userData.point || 0, 10);
         pointValEl.textContent = userState.points;
+        userState.pointsChanged = true; // Force history load on initial app start
 
-        // NEW: Preload common data that doesn't change frequently.
-        // ทำการ preload ควบคู่ไปกับการ fetch ข้อมูลผู้ใช้ เพื่อให้เมื่อโหลดหน้า event หรือ redeem ครั้งแรกจะเร็วขึ้น
         console.log("Preloading initial common data...");
         try {
           const [eventsRes, redeemRes] = await Promise.all([
@@ -454,7 +453,7 @@
       const appDiv = document.getElementById('app');
 
       pageTitleEl.textContent = route.title;
-      pointValEl.textContent = userState.points;
+      pointValEl.textContent = userState.points; // Update header on every route change
 
       appDiv.innerHTML = '';
       const template = document.getElementById(route.tpl);
@@ -472,14 +471,9 @@
         console.error(`Error initializing view ${route.tpl}:`, error);
         showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลหน้านี้ได้ กรุณาลองใหม่อีกครั้ง');
       }
-
-      // Reset pointsChanged flag after routing is complete
-      // หากมีการเปลี่ยนคะแนน หน้าที่ต้องแสดงข้อมูลที่อิงจากคะแนน/ประวัติ จะต้องโหลดใหม่ใน init function ของหน้านั้นๆ
-      userState.pointsChanged = false;
     }
 
     // --- Common Helper Functions ---
-
     function generateListSkeleton(count) {
       return Array.from({ length: count }).map(_ => `
         <li class="flex justify-between items-center animate-pulse py-3">
@@ -506,14 +500,16 @@
     }
 
     /**
-     * Updates the global header with user points.
-     * This function should be called after any action that changes points.
-     * @param {number} newPoints - The new point value to display.
+     * Updates the global header and sets the pointsChanged flag.
+     * This function is the single source of truth for point updates.
+     * @param {number} newPoints - The new TOTAL point value from the server.
      */
     function updatePointsInHeader(newPoints) {
-      userState.points = newPoints;
-      pointValEl.textContent = userState.points;
-      userState.pointsChanged = true;
+      if (userState.points !== newPoints) {
+        userState.points = newPoints;
+        pointValEl.textContent = userState.points;
+        userState.pointsChanged = true; // Set flag to true
+      }
     }
 
     // --------- Init functions for each view ---------
@@ -524,17 +520,11 @@
       const todayDateEl = document.getElementById('todayDate');
       const checkinBtn = document.getElementById('checkinBtn');
 
-      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5);
-
+      // Part 1: Handle Check-in (always fetched)
       try {
-        // ALWAYS re-fetch check-in status and history for Dashboard as they change frequently
-        const [checkRes, histRes] = await Promise.all([
-          fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`),
-          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
-        ]);
-        const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
+        const checkRes = await fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`);
+        const checkData = await checkRes.json();
 
-        // Check-in Logic
         if (checkinBox && todayDateEl && checkinBtn) {
           if (!checkData.checkedInToday) {
             checkinBox.classList.remove('hidden');
@@ -546,11 +536,11 @@
                   method: 'POST',
                   body: JSON.stringify({ action: "dailyCheckin", lineId: userState.lineId })
                 });
-                const text = await res.text();
-                showAlert('เช็คอินสำเร็จ', text, () => {
-                  if (text.includes("สำเร็จ")) {
-                    updatePointsInHeader(userState.points + 1); // Update points
-                    router(); // Re-render dashboard to hide checkin button and update history
+                const data = await res.json(); // MODIFIED: Expect JSON response
+                showAlert('สถานะเช็คอิน', data.message, () => {
+                  if (data.status === 'success' && data.newTotalPoints !== undefined) {
+                    updatePointsInHeader(data.newTotalPoints); // MODIFIED: Update from server value
+                    initDashboard(); // Re-render the dashboard
                   }
                 });
               } catch (e) {
@@ -564,44 +554,65 @@
             checkinBox.classList.add('hidden');
           }
         }
-
-        // History Logic
-        if (historyListEl) {
-          const latest10 = history.reverse().slice(0, 10);
-          if (latest10.length === 0) {
-            historyListEl.innerHTML = `<li class="text-center text-gray-500 py-4">ไม่มีประวัติการทำรายการ</li>`;
-          }
-          else {
-            historyListEl.innerHTML = latest10.map(item => {
-              const isDebit = ['redeem', 'transfer_out'].includes(item.type);
-              const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-              const sign = isDebit ? '-' : '+';
-              return `
-                <li class="flex justify-between items-center">
-                  <div>
-                    <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
-                    <div class="text-xs text-gray-400 mt-1">${item.date}</div>
-                  </div>
-                  <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
-                    ${sign} ${item.amount}
-                  </div>
-                </li>`;
-            }).join("");
-          }
-        }
       } catch (error) {
-        console.error("Error in initDashboard:", error);
-        if (historyListEl) historyListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</li>`;
+        console.error("Error fetching checkin status:", error);
         if (checkinBox) checkinBox.classList.add('hidden');
       }
+
+      // Part 2: Handle History (conditional loading)
+      if (userState.pointsChanged || !dataCache.history) {
+        console.log("Points changed or no cache. Fetching new history...");
+        if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5);
+
+        try {
+          const histRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
+          const historyData = await histRes.json();
+          dataCache.history = historyData; // Save to cache
+          userState.pointsChanged = false; // Reset the flag
+          renderHistory();
+        } catch (error) {
+          console.error("Error fetching history:", error);
+          if (historyListEl) historyListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดประวัติ</li>`;
+        }
+      } else {
+        console.log("Using cached history.");
+        renderHistory();
+      }
+
+      // Helper function to render history from cache
+      function renderHistory() {
+        if (!historyListEl) return;
+        const historyToDisplay = dataCache.history || [];
+        const latest10 = [...historyToDisplay].reverse().slice(0, 10);
+
+        if (latest10.length === 0) {
+          historyListEl.innerHTML = `<li class="text-center text-gray-500 py-4">ไม่มีประวัติการทำรายการ</li>`;
+        } else {
+          historyListEl.innerHTML = latest10.map(item => {
+            const isDebit = ['redeem', 'transfer_out'].includes(item.type);
+            const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+            const sign = isDebit ? '-' : '+';
+            return `
+              <li class="flex justify-between items-center">
+                <div>
+                  <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
+                  <div class="text-xs text-gray-400 mt-1">${item.date}</div>
+                </div>
+                <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
+                  ${sign} ${item.amount}
+                </div>
+              </li>`;
+          }).join("");
+        }
+      }
     }
+
 
     async function initEvent() {
       const eventListEl = document.getElementById('eventList');
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5);
 
       let events;
-      // NEW: Check dataCache first
       if (dataCache.events) {
         events = dataCache.events;
         console.log("initEvent: Loading events from cache.");
@@ -610,7 +621,7 @@
           console.log("initEvent: Fetching events from API.");
           const eventsRes = await fetch(`${CONFIG.GAS_URL}?action=getEvents`);
           events = await eventsRes.json();
-          dataCache.events = events; // Store in cache
+          dataCache.events = events;
         } catch (error) {
           console.error("Error fetching events:", error);
           if (eventListEl) eventListEl.innerHTML = `<div class="text-center text-red-500 py-8">เกิดข้อผิดพลาดในการโหลดกิจกรรม</div>`;
@@ -660,17 +671,14 @@
       }
 
       let eventData;
-      // NEW: Check dataCache.eventDetails first
       if (dataCache.eventDetails[eventId]) {
         eventData = dataCache.eventDetails[eventId];
-        console.log(`initEventDetail: Loading event detail for ${eventId} from cache.`);
       } else {
         try {
-          console.log(`initEventDetail: Fetching event detail for ${eventId} from API.`);
           const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`);
           eventData = await eRes.json();
           if (!eventData.error) {
-            dataCache.eventDetails[eventId] = eventData; // Store in cache if no error
+            dataCache.eventDetails[eventId] = eventData;
           }
         } catch (error) {
           console.error("Error fetching event detail:", error);
@@ -683,14 +691,12 @@
         }
       }
 
-      // ALWAYS re-fetch history for join status (because history can change)
       let historyList = [];
       try {
         const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
         historyList = await hRes.json();
       } catch (error) {
         console.error("Error fetching history for event detail:", error);
-        // Do not block rendering, but join status might be inaccurate
       }
 
       if (eventData.error) {
@@ -728,12 +734,12 @@
                     point: eventRewardPoint
                   })
                 });
-                const text = await res.text();
-                showAlert("สถานะ", text, () => {
-                  if (text.includes("สำเร็จ")) {
+                const data = await res.json(); // MODIFIED: Expect JSON
+                showAlert("สถานะ", data.message, () => {
+                  if (data.status === 'success' && data.newTotalPoints !== undefined) {
                     if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
                     disableJoinBtn();
-                    updatePointsInHeader(userState.points + eventRewardPoint);
+                    updatePointsInHeader(data.newTotalPoints); // MODIFIED: Update from server value
                   }
                 });
               } catch (e) {
@@ -751,6 +757,7 @@
     }
 
     async function initProfile() {
+      // This function remains unchanged as it doesn't directly modify points.
       const profileIdEl = document.getElementById('profileId');
       const profileLevelEl = document.getElementById('profileLevel');
       const profileNameEl = document.getElementById('profileName');
@@ -760,7 +767,6 @@
       const profileNoteEl = document.getElementById('profileNote');
       const updateBtn = document.getElementById('updateProfileBtn');
 
-      // ALWAYS re-fetch profile info, as it can be updated by the user
       try {
         const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
         const uData = await uRes.json();
@@ -790,6 +796,7 @@
                 method: 'POST',
                 body: JSON.stringify(body)
               });
+              // Profile update doesn't change points, so a simple text alert is fine.
               showAlert("สถานะ", await res.text());
             } catch (e) {
               console.error("Update profile failed:", e);
@@ -812,16 +819,13 @@
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4);
 
       let items;
-      // NEW: Check dataCache first
       if (dataCache.redeemItems) {
         items = dataCache.redeemItems;
-        console.log("initRedeem: Loading redeem items from cache.");
       } else {
         try {
-          console.log("initRedeem: Fetching redeem items from API.");
           const itemsRes = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
           items = await itemsRes.json();
-          dataCache.redeemItems = items; // Store in cache
+          dataCache.redeemItems = items;
         } catch (error) {
           console.error("Error fetching redeem items:", error);
           if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
@@ -867,17 +871,18 @@
                 method: 'POST',
                 body: JSON.stringify({ action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point })
               });
-              const text = await res.text();
-              showAlert("สถานะ", text, () => {
-                if (text.includes("สำเร็จ")) {
-                  updatePointsInHeader(userState.points - point);
+              const data = await res.json(); // MODIFIED: Expect JSON
+              showAlert("สถานะ", data.message, () => {
+                if (data.status === 'success' && data.newTotalPoints !== undefined) {
+                  updatePointsInHeader(data.newTotalPoints); // MODIFIED: Update from server value
                   btn.textContent = "แลกแล้ว";
+                } else {
+                   btn.disabled = false; // Re-enable button if failed
                 }
               });
             } catch (e) {
               console.error("Redeem failed:", e);
               showAlert('ข้อผิดพลาด', 'ไม่สามารถแลกของรางวัลได้ กรุณาลองใหม่');
-            } finally {
               btn.disabled = false;
             }
           });
@@ -909,10 +914,10 @@
               method: 'POST',
               body: JSON.stringify({ action: 'transferPoints', from: userState.lineId, to: toId, amount: amt })
             });
-            const txt = await res.text();
-            showAlert("สถานะการโอน", txt, () => {
-              if (/สำเร็จ|เรียบร้อย/.test(txt)) {
-                updatePointsInHeader(userState.points - amt);
+            const data = await res.json(); // MODIFIED: Expect JSON
+            showAlert("สถานะการโอน", data.message, () => {
+              if (data.status === 'success' && data.newTotalPoints !== undefined) {
+                updatePointsInHeader(data.newTotalPoints); // MODIFIED: Update from server value
                 if (transferToEl) transferToEl.value = '';
                 if (transferAmountEl) transferAmountEl.value = '';
               }
@@ -931,37 +936,43 @@
       const warehouseListEl = document.getElementById('warehouseList');
       if (warehouseListEl) warehouseListEl.innerHTML = generateListSkeleton(5);
 
-      // ALWAYS re-fetch warehouse items because they depend on redemption history,
-      // which changes when points change (redeem action)
-      try {
-        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
-        const allHistory = await res.json();
-        const ownedItems = allHistory.filter(i => i.type === 'redeem');
-
-        if (!ownedItems.length) {
-          warehouseListEl.innerHTML = '<li class="text-center text-gray-500 py-4">ยังไม่มีของรางวัลในคลังของคุณ</li>';
+      // Warehouse content depends on history. We check if history needs to be refreshed.
+      // Same logic as in initDashboard
+      if (userState.pointsChanged || !dataCache.history) {
+        try {
+          const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
+          dataCache.history = await res.json(); // Update the cache
+          userState.pointsChanged = false; // Reset flag after fetching
+        } catch (e) {
+          console.error("Error in initWarehouse:", e);
+          showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดคลังของรางวัลได้");
+          if (warehouseListEl) warehouseListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดคลังของรางวัล</li>`;
           return;
         }
-
-        const itemCounts = {};
-        ownedItems.forEach(item => {
-          itemCounts[item.detail] = (itemCounts[item.detail] || 0) + 1;
-        });
-
-        warehouseListEl.innerHTML = Object.entries(itemCounts).map(([name, count]) => `
-          <li class="bg-white rounded p-4 shadow-sm flex justify-between items-center transform hover:scale-105 transition-transform">
-            <div>
-              <div class="font-semibold text-gray-800 text-sm">${name}</div>
-              <div class="text-xs text-gray-500 mt-1">จำนวน: ${count} ชิ้น</div>
-            </div>
-          </li>
-        `).join('');
-
-      } catch (e) {
-        console.error("Error in initWarehouse:", e);
-        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดคลังของรางวัลได้");
-        if (warehouseListEl) warehouseListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดคลังของรางวัล</li>`;
       }
+      
+      // Now render from the (possibly updated) cache
+      const allHistory = dataCache.history || [];
+      const ownedItems = allHistory.filter(i => i.type === 'redeem');
+
+      if (!ownedItems.length) {
+        warehouseListEl.innerHTML = '<li class="text-center text-gray-500 py-4">ยังไม่มีของรางวัลในคลังของคุณ</li>';
+        return;
+      }
+
+      const itemCounts = {};
+      ownedItems.forEach(item => {
+        itemCounts[item.detail] = (itemCounts[item.detail] || 0) + 1;
+      });
+
+      warehouseListEl.innerHTML = Object.entries(itemCounts).map(([name, count]) => `
+        <li class="bg-white rounded p-4 shadow-sm flex justify-between items-center transform hover:scale-105 transition-transform">
+          <div>
+            <div class="font-semibold text-gray-800 text-sm">${name}</div>
+            <div class="text-xs text-gray-500 mt-1">จำนวน: ${count} ชิ้น</div>
+          </div>
+        </li>
+      `).join('');
     }
 
     async function initAddpoint() {
@@ -975,17 +986,16 @@
       let codePoint = 0;
 
       async function hasReceived(code) {
-        // ALWAYS re-fetch history to check if code has been received
         try {
           const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
           const historyList = await res.json();
           return historyList.some(item =>
-            item.type === 'code' && item.eventId === code // eventId for codes is the code itself
+            item.type === 'code' && item.eventId === code
           );
         } catch (e) {
           console.error("Failed to check history for code:", e);
           showAlert('ข้อผิดพลาด', 'ไม่สามารถตรวจสอบประวัติการรับโค้ดได้');
-          return true; // Assume received to prevent re-processing on network error
+          return true;
         }
       }
 
@@ -1001,17 +1011,14 @@
         scannedCode = code;
 
         let codeData;
-        // NEW: Check dataCache.codeDetails first
         if (dataCache.codeDetails[code]) {
             codeData = dataCache.codeDetails[code];
-            console.log(`initAddpoint: Loading code detail for ${code} from cache.`);
         } else {
             try {
-                console.log(`initAddpoint: Fetching code detail for ${code} from API.`);
                 const eRes = await fetch(`${CONFIG.GAS_URL}?action=getCodeById&id=${code}`);
                 codeData = await eRes.json();
                 if (!codeData.error) {
-                    dataCache.codeDetails[code] = codeData; // Store in cache if no error
+                    dataCache.codeDetails[code] = codeData;
                 }
             } catch (error) {
                 console.error("Error fetching code detail:", error);
@@ -1020,7 +1027,6 @@
             }
         }
         
-
         if (codeData.error) {
           showAlert('ไม่พบโค้ด', codeData.error);
           return;
@@ -1035,27 +1041,19 @@
               <div class="font-bold text-lg mb-2">${codeTitle}</div>
               <div class="text-sm text-gray-700 mb-4">${codeData.desc}</div>
               <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
-              <button id="acceptBtn"
-                      class="btn btn-neutral">
-                รับพ้อยต์
-              </button>
+              <button id="acceptBtn" class="btn btn-neutral">รับพ้อยต์</button>
             </div>`;
-          document.getElementById('acceptBtn')
-            ?.addEventListener('click', joinCodeFromInput);
+          document.getElementById('acceptBtn')?.addEventListener('click', joinCodeFromInput);
         }
       }
 
       async function joinCodeFromInput() {
         const btn = document.getElementById("acceptBtn");
-        const confirmed = await showConfirm(
-          `ยืนยันการรับโค้ด`,
-          `รับ "${codeTitle}" และรับ ${codePoint} พ้อยต์ ใช่หรือไม่?`
-        );
+        const confirmed = await showConfirm(`ยืนยันการรับโค้ด`, `รับ "${codeTitle}" และรับ ${codePoint} พ้อยต์ ใช่หรือไม่?`);
         if (!confirmed) return;
 
-        if (btn) {
-          btn.disabled = true;
-        }
+        if (btn) btn.disabled = true;
+        
         try {
           const res = await fetch(CONFIG.GAS_URL, {
             method: "POST",
@@ -1067,20 +1065,19 @@
               point: codePoint
             })
           });
-          const text = await res.text();
-          showAlert("สถานะ", text, () => {
-            if (text.includes("สำเร็จ")) {
-              updatePointsInHeader(userState.points + codePoint);
+          const data = await res.json(); // MODIFIED: Expect JSON
+          showAlert("สถานะ", data.message, () => {
+            if (data.status === 'success' && data.newTotalPoints !== undefined) {
+              updatePointsInHeader(data.newTotalPoints); // MODIFIED: Update from server value
               if (btn) btn.textContent = "รับพ้อยต์แล้ว";
+            } else {
+              if (btn) btn.disabled = false;
             }
           });
         } catch (e) {
           console.error("Join code failed:", e);
           showAlert('ข้อผิดพลาด', 'ไม่สามารถรับพ้อยต์ได้ กรุณาลองใหม่');
-        } finally {
-          if (btn) {
-            btn.disabled = false;
-          }
+          if (btn) btn.disabled = false;
         }
       }
 
