@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th" data-theme="light"> <!-- Added data-theme="light" here -->
+
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -15,46 +16,76 @@
   <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Kanit', sans-serif; }
+
+    body {
+      font-family: 'Kanit', sans-serif;
+    }
+
     /* The 'hidden' class is typically handled by JS, but if Tailwind is overriding, keep this */
-    .hidden { display: none !important; } 
+    .hidden {
+      display: none !important;
+    }
 
     /* Animations - Keep custom animations unless DaisyUI provides equivalent */
     @keyframes pulseCustom {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50%      { transform: scale(1.02); opacity: 0.6; }
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.02);
+        opacity: 0.6;
+      }
     }
-    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+
+    .pulse-custom {
+      animation: pulseCustom 1.2s ease-in-out infinite;
+    }
 
     @keyframes pulse-opacity {
-      0%, 100% { opacity: 0.5; }
-      50%      { opacity: 1; }
-    }
-    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
 
-    /* For disabled buttons, DaisyUI's `btn:disabled` styling is usually sufficient. 
-       Removing custom 'disabled' class if it conflicts. */
-    /* .disabled { opacity: 0.6; cursor: not-allowed; } */
+      0%,
+      100% {
+        opacity: 0.5;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .loading-card-animation {
+      animation: pulse-opacity 1.5s infinite ease-in-out;
+    }
   </style>
 </head>
+
 <body class="bg-white p-4"> <!-- Changed bg-gray-50 to bg-white -->
 
   <!-- GLOBAL HEADER (Shared across all views - MOVED OUT OF TEMPLATES) -->
   <div class="flex justify-between items-center mb-6">
-    <h2 id="pageTitle" class="text-xl font-bold text-black">กำลังโหลด...</h2> <!-- Changed text-gray-800 to text-black -->
+    <h2 id="pageTitle" class="text-xl font-bold text-black">กำลังโหลด...</h2>
+    <!-- Changed text-gray-800 to text-black -->
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
       <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
         <!-- Changed stroke="#ffffff" to stroke="currentColor" -->
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
-          <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="1.5"></path>
-          <path d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path
+            d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+            stroke="currentColor" stroke-width="1.5"></path>
+          <path
+            d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
         </svg>
       </div>
       <div id="pointVal" class="font-bold text-black text-lg px-2">0</div> <!-- Changed text-gray-800 to text-black -->
       <img id="lineDisplayPicture"
-           src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
-           alt="LINE DP"
-           class="w-10 h-10 rounded-full object-cover border-2 border-black"> <!-- Changed border-purple-900 to border-black -->
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png"
+        alt="LINE DP" class="w-10 h-10 rounded-full object-cover border-2 border-black">
+      <!-- Changed border-purple-900 to border-black -->
     </div>
   </div>
 
@@ -71,7 +102,7 @@
       <h3 id="customAlertTitle" class="font-bold text-lg mb-3"></h3>
       <p id="customAlertMessage" class="py-4 whitespace-pre-line"></p>
       <div class="modal-action justify-center">
-        <button id="customAlertButton" class="btn btn-primary w-full">ตกลง</button>
+        <button id="customAlertButton" class="btn btn-neutral w-full">ตกลง</button>
       </div>
     </div>
   </dialog>
@@ -82,7 +113,7 @@
       <p id="customConfirmMessage" class="py-4"></p>
       <div class="modal-action justify-around">
         <button id="customConfirmCancelButton" class="btn btn-outline btn-neutral">ยกเลิก</button>
-        <button id="customConfirmConfirmButton" class="btn btn-primary">ยืนยัน</button>
+        <button id="customConfirmConfirmButton" class="btn btn-neutral">ยืนยัน</button>
       </div>
     </div>
   </dialog>
@@ -90,33 +121,65 @@
   <!-- Template: Dashboard (Main Menu) -->
   <template id="view-dashboard">
     <!-- Menus (Visual links within dashboard) -->
-    <div class="bg-black rounded-2xl p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6"> <!-- Changed bg-purple-900 to bg-black -->
-      <a href="#event" class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform"> <!-- Changed text-purple-900 to text-black -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+    <div class="bg-black rounded-2xl p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6">
+      <!-- Changed bg-purple-900 to bg-black -->
+      <a href="#event"
+        class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <!-- Changed text-purple-900 to text-black -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
         <span>กิจกรรม</span>
       </a>
-      <a href="#warehouse" class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform"> <!-- Changed text-purple-900 to text-black -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+      <a href="#warehouse"
+        class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <!-- Changed text-purple-900 to text-black -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
         <span>คลัง</span>
       </a>
-      <a href="#addpoint" class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform"> <!-- Changed text-purple-900 to text-black -->
-       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6" fill="none">
-          <path d="M2.5 8.18677C2.60406 6.08705 2.91537 4.77792 3.84664 3.84664C4.77792 2.91537 6.08705 2.60406 8.18677 2.5M21.5 8.18677C21.3959 6.08705 21.0846 4.77792 20.1534 3.84664C19.2221 2.91537 17.9129 2.60406 15.8132 2.5M15.8132 21.5C17.9129 21.3959 19.2221 21.0846 20.1534 20.1534C21.0846 19.2221 21.3959 17.9129 21.5 15.8132M8.18676 21.5C6.08705 21.3959 4.77792 21.0846 3.84664 20.1534C2.91537 19.2221 2.60406 17.9129 2.5 15.8132" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      <a href="#addpoint"
+        class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <!-- Changed text-purple-900 to text-black -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6" fill="none">
+          <path
+            d="M2.5 8.18677C2.60406 6.08705 2.91537 4.77792 3.84664 3.84664C4.77792 2.91537 6.08705 2.60406 8.18677 2.5M21.5 8.18677C21.3959 6.08705 21.0846 4.77792 20.1534 3.84664C19.2221 2.91537 17.9129 2.60406 15.8132 2.5M15.8132 21.5C17.9129 21.3959 19.2221 21.0846 20.1534 20.1534C21.0846 19.2221 21.3959 17.9129 21.5 15.8132M8.18676 21.5C6.08705 21.3959 4.77792 21.0846 3.84664 20.1534C2.91537 19.2221 2.60406 17.9129 2.5 15.8132"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
           <path d="M2.49986 12H21.4999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
-          <path d="M6 12C6 8.68629 8.68629 6 12 6C12 7.65685 13.3431 9 15 9C15.6755 9 16.2989 8.77672 16.8004 8.39993C17.5536 9.40273 18 10.6492 18 12M17.1973 15C16.1599 16.7934 14.2208 18 12 18C9.77915 18 7.84012 16.7934 6.80269 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-      </svg>
+          <path
+            d="M6 12C6 8.68629 8.68629 6 12 6C12 7.65685 13.3431 9 15 9C15.6755 9 16.2989 8.77672 16.8004 8.39993C17.5536 9.40273 18 10.6492 18 12M17.1973 15C16.1599 16.7934 14.2208 18 12 18C9.77915 18 7.84012 16.7934 6.80269 15"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
         <span>สแกนรับ</span>
       </a>
-      <a href="#transfer" class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform"> <!-- Changed text-purple-900 to text-black -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+      <a href="#transfer"
+        class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <!-- Changed text-purple-900 to text-black -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
         <span>โอนพ้อย</span>
       </a>
-      <a href="#redeem" class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform"> <!-- Changed text-purple-900 to text-black -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></svg>
+      <a href="#redeem"
+        class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <!-- Changed text-purple-900 to text-black -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+        </svg>
         <span>แลกพ้อย</span>
       </a>
-      <a href="#profile" class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform"> <!-- Changed text-purple-900 to text-black -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+      <a href="#profile"
+        class="bg-white text-black p-3 rounded-xl flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <!-- Changed text-purple-900 to text-black -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
         <span>ข้อมูลส่วนตัว</span>
       </a>
     </div>
@@ -130,8 +193,7 @@
       <div class="bg-yellow-400 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold text-sm">
         +1
       </div>
-      <button id="checkinBtn"
-              class="btn btn-primary btn-sm"> <!-- Changed to DaisyUI btn btn-primary btn-sm -->
+      <button id="checkinBtn" class="btn btn-neutral btn-sm"> <!-- Changed to DaisyUI btn btn-neutral btn-sm -->
         เช็คอิน
       </button>
     </div>
@@ -178,11 +240,11 @@
       <div id="card" class="bg-white p-6 rounded-xl shadow-md text-gray-800 mb-6 hidden">
         <div class="flex justify-between items-start mb-3">
           <div class="font-bold text-lg" id="eventDetailTitle">–</div>
-          <div class="bg-yellow-400 text-black font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div> <!-- Changed text-gray-800 to text-black -->
+          <div class="bg-yellow-400 text-black font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
+          <!-- Changed text-gray-800 to text-black -->
         </div>
         <div class="text-sm text-gray-700 mb-6 leading-relaxed" id="eventDetailDesc">...</div>
-        <button id="joinBtn"
-                class="btn btn-primary w-full"> <!-- Changed to DaisyUI btn btn-primary -->
+        <button id="joinBtn" class="btn btn-neutral w-full"> <!-- Changed to DaisyUI btn btn-neutral -->
           เข้าร่วม
         </button>
       </div>
@@ -194,41 +256,40 @@
     <div class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Profile ID</label>
-        <input id="profileId" readonly
-               class="input input-bordered input-primary w-full cursor-not-allowed" /> <!-- Added input input-bordered input-primary -->
+        <input id="profileId" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+        <!-- Added input input-bordered input-neutral -->
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">ระดับ</label>
-        <input id="profileLevel" readonly
-               class="input input-bordered input-primary w-full cursor-not-allowed" /> <!-- Added input input-bordered input-primary -->
+        <input id="profileLevel" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+        <!-- Added input input-bordered input-neutral -->
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
-        <input id="profileName"
-               class="input input-bordered input-primary w-full" /> <!-- Added input input-bordered input-primary -->
+        <input id="profileName" class="input input-bordered input-neutral w-full" />
+        <!-- Added input input-bordered input-neutral -->
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
-        <input id="profilePhone"
-               class="input input-bordered input-primary w-full" /> <!-- Added input input-bordered input-primary -->
+        <input id="profilePhone" class="input input-bordered input-neutral w-full" />
+        <!-- Added input input-bordered input-neutral -->
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-        <input id="profileEmail"
-               class="input input-bordered input-primary w-full" /> <!-- Added input input-bordered input-primary -->
+        <input id="profileEmail" class="input input-bordered input-neutral w-full" />
+        <!-- Added input input-bordered input-neutral -->
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
-        <input id="profileAddress"
-               class="input input-bordered input-primary w-full" /> <!-- Added input input-bordered input-primary -->
+        <input id="profileAddress" class="input input-bordered input-neutral w-full" />
+        <!-- Added input input-bordered input-neutral -->
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
-        <input id="profileNote"
-               class="input input-bordered input-primary w-full" /> <!-- Added input input-bordered input-primary -->
+        <input id="profileNote" class="input input-bordered input-neutral w-full" />
+        <!-- Added input input-bordered input-neutral -->
       </div>
-      <button id="updateProfileBtn"
-              class="btn btn-primary w-full"> <!-- Changed to DaisyUI btn btn-primary -->
+      <button id="updateProfileBtn" class="btn btn-neutral w-full"> <!-- Changed to DaisyUI btn btn-neutral -->
         อัปเดตข้อมูล
       </button>
     </div>
@@ -248,10 +309,10 @@
     <!-- Form -->
     <div class="space-y-4 mb-6">
       <input id="transferTo" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง" type="text"
-             class="input input-bordered input-primary w-full"> <!-- Added input input-bordered input-primary -->
+        class="input input-bordered input-neutral w-full"> <!-- Added input input-bordered input-neutral -->
       <input id="transferAmount" placeholder="จำนวนพ้อยที่ต้องการโอน" type="number"
-             class="input input-bordered input-primary w-full"> <!-- Added input input-bordered input-primary -->
-      <button id="transferBtn" class="btn btn-primary w-full"> <!-- Changed to DaisyUI btn btn-primary -->
+        class="input input-bordered input-neutral w-full"> <!-- Added input input-bordered input-neutral -->
+      <button id="transferBtn" class="btn btn-neutral w-full"> <!-- Changed to DaisyUI btn btn-neutral -->
         โอนพ้อย
       </button>
     </div>
@@ -276,15 +337,13 @@
   <template id="view-addpoint">
     <!-- Scan & Manual Input -->
     <div id="scanContainer" class="space-y-4 mb-6">
-      <button id="scanBtn"
-              class="btn btn-primary w-full"> <!-- Changed to DaisyUI btn btn-primary -->
+      <button id="scanBtn" class="btn btn-neutral w-full"> <!-- Changed to DaisyUI btn btn-neutral -->
         สแกน QR Code
       </button>
       <div class="flex space-x-2">
         <input id="manualCode" type="text" placeholder="กรอกโค้ดที่นี่"
-               class="input input-bordered input-primary flex-1"> <!-- Added input input-bordered input-primary -->
-        <button id="enterBtn"
-                class="btn btn-primary"> <!-- Changed bg-green-500 to btn btn-primary -->
+          class="input input-bordered input-neutral flex-1"> <!-- Added input input-bordered input-neutral -->
+        <button id="enterBtn" class="btn btn-neutral"> <!-- Changed bg-green-500 to btn btn-neutral -->
           รับโค้ด
         </button>
       </div>
@@ -296,10 +355,10 @@
     // Global LIFF status and user info
     let liffInitialized = false;
     const userState = {
-        profile: null,
-        lineId: "",
-        points: 0,
-        pointsChanged: false, // NEW: Flag to indicate if points have changed since last render
+      profile: null,
+      lineId: "",
+      points: 0,
+      pointsChanged: false, // NEW: Flag to indicate if points have changed since last render
     };
 
     // NEW: Global Data Cache
@@ -307,23 +366,23 @@
     // ข้อมูลที่ควร cache: รายการกิจกรรม (ถ้าไม่ค่อยเปลี่ยน), รายการของรางวัล
     // ข้อมูลที่ไม่ควร cache: ประวัติ (เพราะเปลี่ยนตลอด), สถานะเช็คอิน (เปลี่ยนทุกวัน), ข้อมูลโปรไฟล์ (ผู้ใช้อาจแก้ไข)
     const dataCache = {
-        events: null, // สำหรับ initEvent
-        redeemItems: null, // สำหรับ initRedeem
-        eventDetails: {}, // สำหรับ initEventDetail, เก็บเป็น object {eventId: eventData}
+      events: null, // สำหรับ initEvent
+      redeemItems: null, // สำหรับ initRedeem
+      eventDetails: {}, // สำหรับ initEventDetail, เก็บเป็น object {eventId: eventData}
     };
 
     // Common Alert & Confirm Dialogs (references to elements are global now)
     // Updated to reference DaisyUI dialog elements
     const alertDialog = document.getElementById('customAlertDialog');
-    const alertT      = document.getElementById('customAlertTitle');
-    const alertM      = document.getElementById('customAlertMessage');
-    const alertBtn    = document.getElementById('customAlertButton');
+    const alertT = document.getElementById('customAlertTitle');
+    const alertM = document.getElementById('customAlertMessage');
+    const alertBtn = document.getElementById('customAlertButton');
 
     const confirmDialog = document.getElementById('customConfirmDialog');
-    const confT         = document.getElementById('customConfirmTitle');
-    const confM         = document.getElementById('customConfirmMessage');
-    const okBtn         = document.getElementById('customConfirmConfirmButton');
-    const noBtn         = document.getElementById('customConfirmCancelButton');
+    const confT = document.getElementById('customConfirmTitle');
+    const confM = document.getElementById('customConfirmMessage');
+    const okBtn = document.getElementById('customConfirmConfirmButton');
+    const noBtn = document.getElementById('customConfirmCancelButton');
 
     // Global Header Elements (MOVED HERE)
     const pageTitleEl = document.getElementById('pageTitle');
@@ -336,7 +395,7 @@
       alertT.textContent = title;
       alertM.textContent = message;
       alertDialog.showModal(); // Show the modal
-      
+
       const hide = () => {
         alertDialog.close(); // Close the modal
         alertBtn.removeEventListener('click', hide);
@@ -390,9 +449,9 @@
 
         // --- เพิ่มโค้ดการตรวจสอบการลงทะเบียนที่นี่ ---
         if (!userData || !userData.name || userData.isRegistered === false) {
-            console.log("User not registered. Redirecting to register.html");
-            window.location.href = 'register.html';
-            return false; // หยุดการทำงานของฟังก์ชันนี้
+          console.log("User not registered. Redirecting to register.html");
+          window.location.href = 'register.html';
+          return false; // หยุดการทำงานของฟังก์ชันนี้
         }
         // --- สิ้นสุดการตรวจสอบการลงทะเบียน ---
 
@@ -402,18 +461,18 @@
         // NEW: Preload common data that doesn't change frequently or depends on user actions
         // ทำการ preload ควบคู่ไปกับการ fetch ข้อมูลผู้ใช้
         try {
-            console.log("Preloading initial common data...");
-            const [eventsRes, redeemRes] = await Promise.all([
-                fetch(`${CONFIG.GAS_URL}?action=getEvents`),
-                fetch(`${CONFIG.GAS_URL}?action=getItems`)
-            ]);
+          console.log("Preloading initial common data...");
+          const [eventsRes, redeemRes] = await Promise.all([
+            fetch(`${CONFIG.GAS_URL}?action=getEvents`),
+            fetch(`${CONFIG.GAS_URL}?action=getItems`)
+          ]);
 
-            dataCache.events = await eventsRes.json();
-            dataCache.redeemItems = await redeemRes.json();
-            console.log("Initial data preloaded successfully.");
+          dataCache.events = await eventsRes.json();
+          dataCache.redeemItems = await redeemRes.json();
+          console.log("Initial data preloaded successfully.");
         } catch (preloadError) {
-            console.warn("Failed to preload some initial data. Views will fetch on demand.", preloadError);
-            // ไม่ต้องหยุดการทำงานหลัก ถ้า preload ไม่สำเร็จ เพราะแต่ละหน้าจะ fetch เองอยู่ดี
+          console.warn("Failed to preload some initial data. Views will fetch on demand.", preloadError);
+          // ไม่ต้องหยุดการทำงานหลัก ถ้า preload ไม่สำเร็จ เพราะแต่ละหน้าจะ fetch เองอยู่ดี
         }
 
       } catch (error) {
@@ -429,14 +488,14 @@
     // --- Router Setup ---
     const routes = {
       '#dashboard': { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard },
-      '#event':     { title: 'กิจกรรม', tpl: 'view-event',     init: initEvent     },
-      '#event-detail':{ title: 'รายละเอียดกิจกรรม', tpl: 'view-event-detail', init: initEventDetail },
-      '#profile':   { title: 'โปรไฟล์ของคุณ', tpl: 'view-profile',   init: initProfile   },
-      '#redeem':    { title: 'ร้านค้าแลกของรางวัล', tpl: 'view-redeem',    init: initRedeem    },
-      '#transfer':  { title: 'โอนพ้อยให้เพื่อน', tpl: 'view-transfer',  init: initTransfer  },
+      '#event': { title: 'กิจกรรม', tpl: 'view-event', init: initEvent },
+      '#event-detail': { title: 'รายละเอียดกิจกรรม', tpl: 'view-event-detail', init: initEventDetail },
+      '#profile': { title: 'โปรไฟล์ของคุณ', tpl: 'view-profile', init: initProfile },
+      '#redeem': { title: 'ร้านค้าแลกของรางวัล', tpl: 'view-redeem', init: initRedeem },
+      '#transfer': { title: 'โอนพ้อยให้เพื่อน', tpl: 'view-transfer', init: initTransfer },
       '#warehouse': { title: 'คลังของรางวัล', tpl: 'view-warehouse', init: initWarehouse },
-      '#addpoint':  { title: 'สแกน/กรอกโค้ดเพื่อรับรางวัล', tpl: 'view-addpoint',  init: initAddpoint  },
-      '':           { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard } // Default route
+      '#addpoint': { title: 'สแกน/กรอกโค้ดเพื่อรับรางวัล', tpl: 'view-addpoint', init: initAddpoint },
+      '': { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard } // Default route
     };
 
     async function router() {
@@ -471,10 +530,10 @@
       // NEW: Reset pointsChanged flag after routing is complete
       // และล้าง cache ของข้อมูลที่ควรจะ re-fetch ถ้าพ้อยต์เปลี่ยน
       if (userState.pointsChanged) {
-          // ถ้าพ้อยต์เปลี่ยน หน้าเหล่านี้ควรโหลดข้อมูลใหม่
-          dataCache.history = null; // ถ้ามี cache history ในอนาคต
-          // อาจจะต้องล้าง cache ของ eventDetails ที่เกี่ยวข้องกับประวัติการเข้าร่วม
-          // หรือแค่ force re-fetch ประวัติใน initEventDetail
+        // ถ้าพ้อยต์เปลี่ยน หน้าเหล่านี้ควรโหลดข้อมูลใหม่
+        dataCache.history = null; // ถ้ามี cache history ในอนาคต
+        // อาจจะต้องล้าง cache ของ eventDetails ที่เกี่ยวข้องกับประวัติการเข้าร่วม
+        // หรือแค่ force re-fetch ประวัติใน initEventDetail
       }
       userState.pointsChanged = false; // Reset the flag
     }
@@ -483,11 +542,11 @@
 
     // Skeleton generator for lists
     function generateListSkeleton(count) {
-      return Array.from({length: count}).map(_=>`
+      return Array.from({ length: count }).map(_ => `
         <li class="flex justify-between items-center animate-pulse py-3">
           <div class="space-y-2 flex-1">
-            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
-            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*30)}% mt-1"></div>
+            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random() * 40)}%"></div>
+            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random() * 30)}% mt-1"></div>
           </div>
           <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
         </li>`).join("");
@@ -500,8 +559,8 @@
         html += `
           <li class="bg-white p-4 rounded-xl shadow-sm loading-card-animation">
             <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
-            <div class="h-4 bg-gray-200 rounded w-${30 + Math.random()*50}% mb-2"></div>
-            <div class="h-3 bg-gray-200 rounded w-${20 + Math.random()*40}% mb-3"></div>
+            <div class="h-4 bg-gray-200 rounded w-${30 + Math.random() * 50}% mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-${20 + Math.random() * 40}% mb-3"></div>
             <div class="h-8 bg-gray-200 rounded-full w-full"></div>
           </li>`;
       }
@@ -542,7 +601,7 @@
         if (checkinBox && todayDateEl && checkinBtn) {
           if (!checkData.checkedInToday) {
             checkinBox.classList.remove('hidden');
-            todayDateEl.textContent = new Date().getDate().toString().padStart(2,"0");
+            todayDateEl.textContent = new Date().getDate().toString().padStart(2, "0");
             checkinBtn.onclick = async () => {
               checkinBtn.disabled = true; // Disable button immediately
               // checkinBtn.classList.add('disabled'); // Removed custom disabled class
@@ -609,19 +668,19 @@
       let events;
       // NEW: Check cache first for events
       if (dataCache.events) {
-          events = dataCache.events;
-          console.log("Loading events from cache.");
+        events = dataCache.events;
+        console.log("Loading events from cache.");
       } else {
-          try {
-              console.log("Fetching events from API.");
-              const eventsRes = await fetch(`${CONFIG.GAS_URL}?action=getEvents`);
-              events = await eventsRes.json();
-              dataCache.events = events; // Store in cache
-          } catch (error) {
-              console.error("Error fetching events:", error);
-              if (eventListEl) eventListEl.innerHTML = `<div class="text-center text-red-500 py-8">เกิดข้อผิดพลาดในการโหลดกิจกรรม</div>`;
-              return;
-          }
+        try {
+          console.log("Fetching events from API.");
+          const eventsRes = await fetch(`${CONFIG.GAS_URL}?action=getEvents`);
+          events = await eventsRes.json();
+          dataCache.events = events; // Store in cache
+        } catch (error) {
+          console.error("Error fetching events:", error);
+          if (eventListEl) eventListEl.innerHTML = `<div class="text-center text-red-500 py-8">เกิดข้อผิดพลาดในการโหลดกิจกรรม</div>`;
+          return;
+        }
       }
 
       if (eventListEl) {
@@ -669,25 +728,25 @@
       let eventData;
       // NEW: Check cache first for event detail
       if (dataCache.eventDetails[eventId]) {
-          eventData = dataCache.eventDetails[eventId];
-          console.log(`Loading event detail for ${eventId} from cache.`);
+        eventData = dataCache.eventDetails[eventId];
+        console.log(`Loading event detail for ${eventId} from cache.`);
       } else {
-          try {
-              console.log(`Fetching event detail for ${eventId} from API.`);
-              const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`);
-              eventData = await eRes.json();
-              if (!eventData.error) {
-                dataCache.eventDetails[eventId] = eventData; // Store in cache if no error
-              }
-          } catch (error) {
-              console.error("Error fetching event detail:", error);
-              if (titleEl) titleEl.textContent = "เกิดข้อผิดพลาด";
-              if (descEl) descEl.textContent = "ไม่สามารถโหลดรายละเอียดกิจกรรมได้";
-              disableJoinBtn();
-              if (cardSkeleton) cardSkeleton.classList.add("hidden");
-              if (card) card.classList.remove("hidden");
-              return;
+        try {
+          console.log(`Fetching event detail for ${eventId} from API.`);
+          const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`);
+          eventData = await eRes.json();
+          if (!eventData.error) {
+            dataCache.eventDetails[eventId] = eventData; // Store in cache if no error
           }
+        } catch (error) {
+          console.error("Error fetching event detail:", error);
+          if (titleEl) titleEl.textContent = "เกิดข้อผิดพลาด";
+          if (descEl) descEl.textContent = "ไม่สามารถโหลดรายละเอียดกิจกรรมได้";
+          disableJoinBtn();
+          if (cardSkeleton) cardSkeleton.classList.add("hidden");
+          if (card) card.classList.remove("hidden");
+          return;
+        }
       }
 
       // NEW: Always re-fetch history for join status (because history can change)
@@ -759,23 +818,23 @@
       if (card) card.classList.remove("hidden");
     }
 
-async function initProfile() {
-      const profileIdEl      = document.getElementById('profileId');
-      const profileLevelEl   = document.getElementById('profileLevel');
-      const profileNameEl    = document.getElementById('profileName');
-      const profilePhoneEl   = document.getElementById('profilePhone');
-      const profileEmailEl   = document.getElementById('profileEmail');
+    async function initProfile() {
+      const profileIdEl = document.getElementById('profileId');
+      const profileLevelEl = document.getElementById('profileLevel');
+      const profileNameEl = document.getElementById('profileName');
+      const profilePhoneEl = document.getElementById('profilePhone');
+      const profileEmailEl = document.getElementById('profileEmail');
       const profileAddressEl = document.getElementById('profileAddress');
-      const profileNoteEl    = document.getElementById('profileNote');
-      const updateBtn        = document.getElementById('updateProfileBtn');
+      const profileNoteEl = document.getElementById('profileNote');
+      const updateBtn = document.getElementById('updateProfileBtn');
 
       // NEW: Always re-fetch profile info, as it can be updated by the user
       try {
-        const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+        const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
         const uData = await uRes.json();
 
-        if (profileIdEl) profileIdEl.value      = uData.id      || '';
-        if (profileLevelEl) profileLevelEl.value   = uData.level   || '';
+        if (profileIdEl) profileIdEl.value = uData.id || '';
+        if (profileLevelEl) profileLevelEl.value = uData.level || '';
         if (profileNameEl) profileNameEl.value = uData.name || '';
         if (profilePhoneEl) profilePhoneEl.value = uData.phone || '';
         if (profileEmailEl) profileEmailEl.value = uData.email || '';
@@ -826,19 +885,19 @@ async function initProfile() {
       let items;
       // NEW: Check cache first for redeem items
       if (dataCache.redeemItems) {
-          items = dataCache.redeemItems;
-          console.log("Loading redeem items from cache.");
+        items = dataCache.redeemItems;
+        console.log("Loading redeem items from cache.");
       } else {
-          try {
-              console.log("Fetching redeem items from API.");
-              const itemsRes = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
-              items = await itemsRes.json();
-              dataCache.redeemItems = items; // Store in cache
-          } catch (error) {
-              console.error("Error fetching redeem items:", error);
-              if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
-              return;
-          }
+        try {
+          console.log("Fetching redeem items from API.");
+          const itemsRes = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
+          items = await itemsRes.json();
+          dataCache.redeemItems = items; // Store in cache
+        } catch (error) {
+          console.error("Error fetching redeem items:", error);
+          if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
+          return;
+        }
       }
 
 
@@ -853,7 +912,7 @@ async function initProfile() {
             <div class="font-bold mb-1">${item.name}</div>
             <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
             <button data-item-id="${item.id}" data-item-name="${item.name}" data-item-point="${item.point}"
-                    class="redeem-btn btn btn-primary btn-sm"> <!-- Changed to DaisyUI btn btn-primary btn-sm -->
+                    class="redeem-btn btn btn-neutral btn-sm"> <!-- Changed to DaisyUI btn btn-neutral btn-sm -->
               แลกเลย
             </button>
           </li>
@@ -880,7 +939,7 @@ async function initProfile() {
             try {
               const res = await fetch(CONFIG.GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point}) // Pass point to GAS
+                body: JSON.stringify({ action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point }) // Pass point to GAS
               });
               const text = await res.text();
               showAlert("สถานะ", text, () => {
@@ -984,7 +1043,7 @@ async function initProfile() {
       }
     }
 
-   async function initAddpoint() {
+    async function initAddpoint() {
       const scanContainer = document.getElementById('scanContainer');
       const scanBtn = document.getElementById('scanBtn');
       const enterBtn = document.getElementById('enterBtn');
@@ -1039,12 +1098,12 @@ async function initProfile() {
                 <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
                 <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
                 <button id="acceptBtn"
-                        class="btn btn-primary"> <!-- Changed bg-green-500 to btn btn-primary -->
+                        class="btn btn-neutral"> <!-- Changed bg-green-500 to btn btn-neutral -->
                   รับพ้อยต์
                 </button>
               </div>`;
             document.getElementById('acceptBtn')
-                    ?.addEventListener('click', joinCodeFromInput);
+              ?.addEventListener('click', joinCodeFromInput);
           }
         } catch (e) {
           console.error("Process code failed:", e);
@@ -1131,4 +1190,5 @@ async function initProfile() {
     initializeApp();
   </script>
 </body>
+
 </html>
