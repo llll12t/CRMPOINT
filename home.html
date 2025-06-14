@@ -34,7 +34,13 @@
     .alert-fade-enter-active, .alert-fade-leave-active {
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
-    .alert-fade-enter, .alert-fade-leave-to {
+    /* Initial state for enter */
+    .alert-fade-enter {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    /* Final state for leave */
+    .alert-fade-leave-to {
       opacity: 0;
       transform: translateY(10px);
     }
@@ -253,7 +259,7 @@
   <template id="view-transfer">
     <!-- Form -->
     <div class="space-y-4 mb-6">
-      <input id="transferTo" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง"
+      <input id="transferTo" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง" type="text"
              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
       <input id="transferAmount" placeholder="จำนวนพ้อยที่ต้องการโอน" type="number"
              class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 shadow-sm">
@@ -330,6 +336,7 @@
       alertT.textContent = title;
       alertM.textContent = message;
       alertOvl.classList.remove('hidden');
+      // Force reflow to ensure transition plays
       requestAnimationFrame(() => alertOvl.querySelector('div').classList.remove('alert-fade-enter'));
       const hide = () => {
         alertOvl.querySelector('div').classList.add('alert-fade-leave-to');
@@ -337,7 +344,7 @@
           alertOvl.classList.add('hidden');
           alertOvl.querySelector('div').classList.remove('alert-fade-leave-to');
           cb && cb();
-        }, 300);
+        }, 300); // Match transition duration
         alertBtn.removeEventListener('click', hide);
       };
       alertBtn.addEventListener('click', hide);
@@ -348,6 +355,7 @@
         confT.textContent = title;
         confM.textContent = message;
         confOvl.classList.remove('hidden');
+        // Force reflow to ensure transition plays
         requestAnimationFrame(() => confOvl.querySelector('div').classList.remove('alert-fade-enter'));
         const onOk = () => { cleanup(); res(true); };
         const onNo = () => { cleanup(); res(false); };
@@ -356,7 +364,7 @@
           setTimeout(() => {
             confOvl.classList.add('hidden');
             confOvl.querySelector('div').classList.remove('alert-fade-leave-to');
-          }, 300);
+          }, 300); // Match transition duration
           okBtn.removeEventListener('click', onOk);
           noBtn.removeEventListener('click', onNo);
         }
@@ -379,20 +387,17 @@
       userState.profile = await liff.getProfile();
       userState.lineId = userState.profile.userId;
 
-      // Fetch initial user points once
-      pointValEl.textContent = '…'; // Show loading state for points
+      // Update global header with display picture
       dpEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
       dpEl.alt = `รูปโปรไฟล์ของ ${userState.profile.displayName}`;
 
+      // Fetch initial user points and registration status
+      pointValEl.textContent = '…'; // Show loading state for points
       try {
         const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
         const userData = await userRes.json();
 
         // --- เพิ่มโค้ดการตรวจสอบการลงทะเบียนที่นี่ ---
-        // สมมติว่า `userData` จะไม่มี `name` หรือมี property `isRegistered: false`
-        // หากผู้ใช้ยังไม่ได้ลงทะเบียน (เช่น `userData.name` เป็นค่าว่างหรือ undefined)
-        // หรือถ้า GAS ส่ง `userData.isRegistered === false`
-        // ให้เปลี่ยนเส้นทางไปที่ register.html
         if (!userData || !userData.name || userData.isRegistered === false) {
             console.log("User not registered. Redirecting to register.html");
             window.location.href = 'register.html';
@@ -405,9 +410,8 @@
       } catch (error) {
         console.error("Failed to fetch initial user points or check registration:", error);
         pointValEl.textContent = 'N/A'; // Indicate error
-        // หากเกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้ (เช่น เครือข่ายมีปัญหา)
-        // คุณอาจต้องการพิจารณาว่าจะให้ redirect ไปที่ register.html ด้วยหรือไม่
-        // แต่ในกรณีนี้ สมมติว่านี่คือปัญหาการเชื่อมต่อมากกว่าการไม่ลงทะเบียน
+        // If there's an error fetching user data, assume it's a network issue or backend problem,
+        // rather than unregistered. We won't redirect to register.html here.
         return false;
       }
       return true; // LIFF initialized and user info fetched successfully
@@ -447,7 +451,13 @@
       }
 
       // Initialize the view's specific logic
-      route.init();
+      // Wrap in try-catch to prevent breaking if an init function fails
+      try {
+        await route.init();
+      } catch (error) {
+        console.error(`Error initializing view ${route.tpl}:`, error);
+        showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลหน้านี้ได้ กรุณาลองใหม่อีกครั้ง');
+      }
     }
 
     // --- Common Helper Functions ---
@@ -455,10 +465,10 @@
     // Skeleton generator for lists
     function generateListSkeleton(count) {
       return Array.from({length: count}).map(_=>`
-        <li class="flex justify-between items-center animate-pulse">
+        <li class="flex justify-between items-center animate-pulse py-3">
           <div class="space-y-2 flex-1">
             <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*40)}%"></div>
-            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*30)}%"></div>
+            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random()*30)}% mt-1"></div>
           </div>
           <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
         </li>`).join("");
@@ -493,63 +503,79 @@
 
     async function initDashboard() {
       const historyListEl = document.getElementById('historyList');
-      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
-
-      const [checkRes, histRes] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
-      ]);
-      const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
-
-      // Check-in
       const checkinBox = document.getElementById('checkinBox');
       const todayDateEl = document.getElementById('todayDate');
       const checkinBtn = document.getElementById('checkinBtn');
 
-      if (checkinBox && todayDateEl && checkinBtn) {
-        if (!checkData.checkedInToday) {
-          checkinBox.classList.remove('hidden');
-          todayDateEl.textContent = new Date().getDate().toString().padStart(2,"0");
-          checkinBtn.onclick = async () => {
-            const res = await fetch(CONFIG.GAS_URL, {
-              method: 'POST',
-              body: JSON.stringify({ action: "dailyCheckin", lineId: userState.lineId })
-            });
-            const text = await res.text();
-            showAlert('เช็คอินสำเร็จ', text, () => {
-              if (text.includes("สำเร็จ")) {
-                updatePointsInHeader(userState.points + 1); // Optimistic update
-                router(); // Re-render dashboard to hide checkin button and update history
-              }
-            });
-          };
-        } else {
-          checkinBox.classList.add('hidden');
-        }
-      }
+      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
-      // History
-      if (historyListEl) {
-        const latest10 = history.reverse().slice(0, 10);
-        if (latest10.length === 0) {
-          historyListEl.innerHTML = `<li class="text-center text-gray-500 py-4">ไม่มีประวัติการทำรายการ</li>`;
-        } else {
-          historyListEl.innerHTML = latest10.map(item => {
-            const isDebit = ['redeem', 'transfer_out'].includes(item.type);
-            const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-            const sign = isDebit ? '-' : '+';
-            return `
-              <li class="flex justify-between items-center">
-                <div>
-                  <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
-                  <div class="text-xs text-gray-400 mt-1">${item.date}</div>
-                </div>
-                <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
-                  ${sign} ${item.amount}
-                </div>
-              </li>`;
-          }).join("");
+      try {
+        const [checkRes, histRes] = await Promise.all([
+          fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`),
+          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
+        ]);
+        const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
+
+        // Check-in
+        if (checkinBox && todayDateEl && checkinBtn) {
+          if (!checkData.checkedInToday) {
+            checkinBox.classList.remove('hidden');
+            todayDateEl.textContent = new Date().getDate().toString().padStart(2,"0");
+            checkinBtn.onclick = async () => {
+              checkinBtn.disabled = true; // Disable button immediately
+              checkinBtn.classList.add('disabled');
+              try {
+                const res = await fetch(CONFIG.GAS_URL, {
+                  method: 'POST',
+                  body: JSON.stringify({ action: "dailyCheckin", lineId: userState.lineId })
+                });
+                const text = await res.text();
+                showAlert('เช็คอินสำเร็จ', text, () => {
+                  if (text.includes("สำเร็จ")) {
+                    updatePointsInHeader(userState.points + 1); // Optimistic update
+                    router(); // Re-render dashboard to hide checkin button and update history
+                  }
+                });
+              } catch (e) {
+                console.error("Check-in failed:", e);
+                showAlert('ข้อผิดพลาด', 'ไม่สามารถเช็คอินได้ กรุณาลองใหม่');
+              } finally {
+                checkinBtn.disabled = false; // Re-enable if needed, though router() will re-render
+                checkinBtn.classList.remove('disabled');
+              }
+            };
+          } else {
+            checkinBox.classList.add('hidden');
+          }
         }
+
+        // History
+        if (historyListEl) {
+          const latest10 = history.reverse().slice(0, 10);
+          if (latest10.length === 0) {
+            historyListEl.innerHTML = `<li class="text-center text-gray-500 py-4">ไม่มีประวัติการทำรายการ</li>`;
+          } else {
+            historyListEl.innerHTML = latest10.map(item => {
+              const isDebit = ['redeem', 'transfer_out'].includes(item.type);
+              const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+              const sign = isDebit ? '-' : '+';
+              return `
+                <li class="flex justify-between items-center">
+                  <div>
+                    <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
+                    <div class="text-xs text-gray-400 mt-1">${item.date}</div>
+                  </div>
+                  <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
+                    ${sign} ${item.amount}
+                  </div>
+                </li>`;
+            }).join("");
+          }
+        }
+      } catch (error) {
+        console.error("Error in initDashboard:", error);
+        if (historyListEl) historyListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</li>`;
+        if (checkinBox) checkinBox.classList.add('hidden'); // Hide checkin section on error
       }
     }
 
@@ -557,26 +583,31 @@
       const eventListEl = document.getElementById('eventList');
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
-      const eventsRes = await fetch(`${CONFIG.GAS_URL}?action=getEvents`);
-      const events = await eventsRes.json();
+      try {
+        const eventsRes = await fetch(`${CONFIG.GAS_URL}?action=getEvents`);
+        const events = await eventsRes.json();
 
-      if (eventListEl) {
-        if (!events.length) {
-          eventListEl.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
-        } else {
-          eventListEl.innerHTML = events.map(e => `
-            <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
-              <div>
-                <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
-                <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
+        if (eventListEl) {
+          if (!events.length) {
+            eventListEl.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
+          } else {
+            eventListEl.innerHTML = events.map(e => `
+              <div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
+                <div>
+                  <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
+                  <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
+                </div>
+                <a href="#event-detail?id=${e.id}"
+                   class="text-sm font-medium text-purple-700 hover:text-purple-900">
+                  ดูรายละเอียด
+                </a>
               </div>
-              <a href="#event-detail?id=${e.id}"
-                 class="text-sm font-medium text-purple-700 hover:text-purple-900">
-                ดูรายละเอียด
-              </a>
-            </div>
-          `).join('');
+            `).join('');
+          }
         }
+      } catch (error) {
+        console.error("Error in initEvent:", error);
+        if (eventListEl) eventListEl.innerHTML = `<div class="text-center text-red-500 py-8">เกิดข้อผิดพลาดในการโหลดกิจกรรม</div>`;
       }
     }
 
@@ -595,65 +626,83 @@
       if (cardSkeleton) cardSkeleton.classList.remove('hidden');
       if (card) card.classList.add('hidden');
 
-      function disableJoin() {
+      function disableJoinBtn() {
         if (joinBtn) {
           joinBtn.disabled = true;
           joinBtn.classList.add("disabled");
         }
       }
 
-      const [eRes, hRes] = await Promise.all([
-        fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
-        fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
-      ]);
-      const [eventData, historyList] = await Promise.all([eRes.json(), hRes.json()]);
+      try {
+        const [eRes, hRes] = await Promise.all([
+          fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`),
+          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
+        ]);
+        const [eventData, historyList] = await Promise.all([eRes.json(), hRes.json()]);
 
-      if (eventData.error) {
-        if (titleEl) titleEl.textContent = "ไม่พบกิจกรรม";
-        if (descEl) descEl.textContent = eventData.error;
-        disableJoin();
-      } else {
-        eventTitle = eventData.title;
-        eventRewardPoint = eventData.point;
-        if (titleEl) titleEl.textContent = eventTitle;
-        if (eventPointEl) eventPointEl.textContent = `${eventRewardPoint}+`;
-        if (descEl) descEl.textContent = eventData.desc;
-
-        const hasJoined = historyList.some(item =>
-          item.type === 'event' && item.eventId === eventId
-        );
-        if (hasJoined) {
-          if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
-          disableJoin();
+        if (eventData.error) {
+          if (titleEl) titleEl.textContent = "ไม่พบกิจกรรม";
+          if (descEl) descEl.textContent = eventData.error;
+          disableJoinBtn();
         } else {
-          if (joinBtn) {
-            joinBtn.onclick = async () => {
-              const confirmed = await showConfirm(`ยืนยันการเข้าร่วม`, `เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`);
-              if (!confirmed) return;
-              const res = await fetch(CONFIG.GAS_URL, {
-                method: "POST",
-                body: JSON.stringify({
-                  action: "joinEvent",
-                  lineId: userState.lineId,
-                  eventId,
-                  title: eventTitle,
-                  point: eventRewardPoint
-                })
-              });
-              const text = await res.text();
-              showAlert("สถานะ", text, () => {
-                if (text.includes("สำเร็จ")) {
-                  if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
-                  disableJoin();
-                  updatePointsInHeader(userState.points + eventRewardPoint); // Update points immediately
+          eventTitle = eventData.title;
+          eventRewardPoint = eventData.point;
+          if (titleEl) titleEl.textContent = eventTitle;
+          if (eventPointEl) eventPointEl.textContent = `${eventRewardPoint}+`;
+          if (descEl) descEl.textContent = eventData.desc;
+
+          const hasJoined = historyList.some(item =>
+            item.type === 'event' && item.eventId === eventId
+          );
+          if (hasJoined) {
+            if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
+            disableJoinBtn();
+          } else {
+            if (joinBtn) {
+              joinBtn.onclick = async () => {
+                const confirmed = await showConfirm(`ยืนยันการเข้าร่วม`, `เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`);
+                if (!confirmed) return;
+
+                joinBtn.disabled = true; // Disable button immediately
+                joinBtn.classList.add('disabled');
+                try {
+                  const res = await fetch(CONFIG.GAS_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                      action: "joinEvent",
+                      lineId: userState.lineId,
+                      eventId,
+                      title: eventTitle,
+                      point: eventRewardPoint
+                    })
+                  });
+                  const text = await res.text();
+                  showAlert("สถานะ", text, () => {
+                    if (text.includes("สำเร็จ")) {
+                      if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
+                      disableJoinBtn(); // Ensure it stays disabled
+                      updatePointsInHeader(userState.points + eventRewardPoint); // Update points immediately
+                    }
+                  });
+                } catch (e) {
+                  console.error("Join event failed:", e);
+                  showAlert('ข้อผิดพลาด', 'ไม่สามารถเข้าร่วมกิจกรรมได้ กรุณาลองใหม่');
+                  joinBtn.disabled = false; // Re-enable on error
+                  joinBtn.classList.remove('disabled');
                 }
-              });
-            };
+              };
+            }
           }
         }
+      } catch (error) {
+        console.error("Error in initEventDetail:", error);
+        if (titleEl) titleEl.textContent = "เกิดข้อผิดพลาด";
+        if (descEl) descEl.textContent = "ไม่สามารถโหลดรายละเอียดกิจกรรมได้";
+        disableJoinBtn();
+      } finally {
+        if (cardSkeleton) cardSkeleton.classList.add("hidden");
+        if (card) card.classList.remove("hidden");
       }
-      if (cardSkeleton) cardSkeleton.classList.add("hidden");
-      if (card) card.classList.remove("hidden");
     }
 
 async function initProfile() {
@@ -666,87 +715,123 @@ async function initProfile() {
       const profileNoteEl    = document.getElementById('profileNote');
       const updateBtn        = document.getElementById('updateProfileBtn');
 
-      const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
-      const uData = await uRes.json();
-      if (profileIdEl) profileIdEl.value      = uData.id      || '';
-      if (profileLevelEl) profileLevelEl.value   = uData.level   || '';
-      if (profileNameEl) profileNameEl.value = uData.name || '';
-      if (profilePhoneEl) profilePhoneEl.value = uData.phone || '';
-      if (profileEmailEl) profileEmailEl.value = uData.email || '';
-      if (profileAddressEl) profileAddressEl.value = uData.address || '';
-      if (profileNoteEl) profileNoteEl.value = uData.note || '';
-      if (updateBtn) {
+      try {
+        const uRes  = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+        const uData = await uRes.json();
 
-      updateBtn.onclick = async () => {
-        const body = {
-          action: 'updateProfile',
-          lineId: userState.lineId,
-          name: profileNameEl.value,
-          phone: profilePhoneEl.value,
-          email: profileEmailEl.value,
-          address: profileAddressEl.value,
-          note: profileNoteEl.value
-        };
-        const res = await fetch(CONFIG.GAS_URL, {
-          method: 'POST',
-          body: JSON.stringify(body)
-        });
-        showAlert("สถานะ", await res.text());
-      };
-    }}
+        if (profileIdEl) profileIdEl.value      = uData.id      || '';
+        if (profileLevelEl) profileLevelEl.value   = uData.level   || '';
+        if (profileNameEl) profileNameEl.value = uData.name || '';
+        if (profilePhoneEl) profilePhoneEl.value = uData.phone || '';
+        if (profileEmailEl) profileEmailEl.value = uData.email || '';
+        if (profileAddressEl) profileAddressEl.value = uData.address || '';
+        if (profileNoteEl) profileNoteEl.value = uData.note || '';
+
+        if (updateBtn) {
+          updateBtn.onclick = async () => {
+            updateBtn.disabled = true;
+            updateBtn.classList.add('disabled');
+            try {
+              const body = {
+                action: 'updateProfile',
+                lineId: userState.lineId,
+                name: profileNameEl.value,
+                phone: profilePhoneEl.value,
+                email: profileEmailEl.value,
+                address: profileAddressEl.value,
+                note: profileNoteEl.value
+              };
+              const res = await fetch(CONFIG.GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify(body)
+              });
+              showAlert("สถานะ", await res.text());
+            } catch (e) {
+              console.error("Update profile failed:", e);
+              showAlert('ข้อผิดพลาด', 'ไม่สามารถอัปเดตข้อมูลได้ กรุณาลองใหม่');
+            } finally {
+              updateBtn.disabled = false;
+              updateBtn.classList.remove('disabled');
+            }
+          };
+        }
+      } catch (error) {
+        console.error("Error in initProfile:", error);
+        showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
+        // Clear or disable inputs on error
+        if (profileIdEl) profileIdEl.value = 'โหลดข้อมูลล้มเหลว';
+        if (updateBtn) disableJoinBtn(updateBtn);
+      }
+    }
 
     async function initRedeem() {
       const redeemListEl = document.getElementById('redeemList');
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
 
-      const itemsRes = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
-      const items = await itemsRes.json();
+      try {
+        const itemsRes = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
+        const items = await itemsRes.json();
 
-      if (redeemListEl) {
-        if (!items.length) {
-          redeemListEl.innerHTML = `<li class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลก</li>`;
-          return;
-        }
-        redeemListEl.innerHTML = items.map(item => `
-          <li class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
-            <img src="${item.image}" alt="${item.name}" class="h-24 mx-auto mb-2 rounded-md object-cover">
-            <div class="font-bold mb-1">${item.name}</div>
-            <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
-            <button data-item-id="${item.id}" data-item-name="${item.name}" data-item-point="${item.point}"
-                    class="redeem-btn bg-purple-700 text-white py-1 px-4 rounded-full font-semibold">
-              แลกเลย
-            </button>
-          </li>
-        `).join('');
+        if (redeemListEl) {
+          if (!items.length) {
+            redeemListEl.innerHTML = `<li class="col-span-2 text-center text-gray-500 py-4">ไม่มีของรางวัลให้แลก</li>`;
+            return;
+          }
+          redeemListEl.innerHTML = items.map(item => `
+            <li class="bg-white p-4 rounded-xl shadow-sm text-center transform hover:scale-105 transition-transform">
+              <img src="${item.image}" alt="${item.name}" class="h-24 mx-auto mb-2 rounded-md object-cover">
+              <div class="font-bold mb-1">${item.name}</div>
+              <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
+              <button data-item-id="${item.id}" data-item-name="${item.name}" data-item-point="${item.point}"
+                      class="redeem-btn bg-purple-700 text-white py-1 px-4 rounded-full font-semibold">
+                แลกเลย
+              </button>
+            </li>
+          `).join('');
 
-        // Attach event listeners after rendering
-        document.querySelectorAll('.redeem-btn').forEach(button => {
-          button.addEventListener('click', async (event) => {
-            const id = event.target.dataset.itemId;
-            const name = event.target.dataset.itemName;
-            const point = parseInt(event.target.dataset.itemPoint, 10); // Ensure point is a number
+          // Attach event listeners after rendering
+          document.querySelectorAll('.redeem-btn').forEach(button => {
+            button.addEventListener('click', async (event) => {
+              const btn = event.target;
+              const id = btn.dataset.itemId;
+              const name = btn.dataset.itemName;
+              const point = parseInt(btn.dataset.itemPoint, 10); // Ensure point is a number
 
-            if (userState.points < point) { // Use the global userState.points
-              showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
-              return;
-            }
+              if (userState.points < point) { // Use the global userState.points
+                showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
+                return;
+              }
 
-            const confirmed = await showConfirm(`ยืนยันการแลก`, `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
-            if (!confirmed) return;
+              const confirmed = await showConfirm(`ยืนยันการแลก`, `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
+              if (!confirmed) return;
 
-            const res = await fetch(CONFIG.GAS_URL, {
-              method: 'POST',
-              // REMOVED: headers: {'Content-Type': 'application/json'}, <-- This was likely causing the TypeError for GAS
-              body: JSON.stringify({action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point}) // Pass point to GAS
-            });
-            const text = await res.text();
-            showAlert("สถานะ", text, () => {
-              if (text.includes("สำเร็จ")) {
-                updatePointsInHeader(userState.points - point); // Update points immediately
+              btn.disabled = true; // Disable button immediately
+              btn.classList.add('disabled');
+              try {
+                const res = await fetch(CONFIG.GAS_URL, {
+                  method: 'POST',
+                  body: JSON.stringify({action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point}) // Pass point to GAS
+                });
+                const text = await res.text();
+                showAlert("สถานะ", text, () => {
+                  if (text.includes("สำเร็จ")) {
+                    updatePointsInHeader(userState.points - point); // Update points immediately
+                    btn.textContent = "แลกแล้ว"; // Update button text
+                  }
+                });
+              } catch (e) {
+                console.error("Redeem failed:", e);
+                showAlert('ข้อผิดพลาด', 'ไม่สามารถแลกของรางวัลได้ กรุณาลองใหม่');
+              } finally {
+                btn.disabled = false; // Re-enable on error
+                btn.classList.remove('disabled');
               }
             });
           });
-        });
+        }
+      } catch (error) {
+        console.error("Error in initRedeem:", error);
+        if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
       }
     }
 
@@ -760,14 +845,16 @@ async function initProfile() {
           const toId = transferToEl.value.trim();
           const amt = parseInt(transferAmountEl.value, 10); // Ensure amount is a number
 
-          if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอกปลายทาง"); return; }
-          if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนให้ถูกต้อง"); return; }
-          if (toId === userState.lineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนให้ตัวเอง"); return; }
+          if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอก LINE ID เพื่อน / เบอร์โทรปลายทาง"); return; }
+          if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนพ้อยต์ให้ถูกต้อง"); return; }
+          if (toId === userState.lineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนพ้อยต์ให้ตัวเอง"); return; }
           if (userState.points < amt) { showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับโอน ${amt} พ้อยต์`); return; }
 
-          const confirmed = await showConfirm("ยืนยันโอน", `โอน ${amt} พ้อยต์ ให้ ${toId}?`);
+          const confirmed = await showConfirm("ยืนยันโอน", `คุณต้องการโอน ${amt} พ้อยต์ ให้กับ ${toId} ใช่หรือไม่?`);
           if (!confirmed) return;
 
+          transferBtn.disabled = true; // Disable button immediately
+          transferBtn.classList.add('disabled');
           try {
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
@@ -782,8 +869,11 @@ async function initProfile() {
               }
             });
           } catch (e) {
-            console.error(e);
+            console.error("Transfer failed:", e);
             showAlert("ข้อผิดพลาด", "ไม่สามารถโอนได้ ลองอีกครั้ง");
+          } finally {
+            transferBtn.disabled = false; // Re-enable
+            transferBtn.classList.remove('disabled');
           }
         };
       }
@@ -797,7 +887,7 @@ async function initProfile() {
         const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
         const allHistory = await res.json();
         // Filter for redeemed items, assuming 'redeem' type history means owned items
-        const ownedItems = allHistory.filter(i => i.type === 'redeem').reverse();
+        const ownedItems = allHistory.filter(i => i.type === 'redeem'); // Do not reverse here, group first
 
         if (!ownedItems.length) {
           warehouseListEl.innerHTML = '<li class="text-center text-gray-500 py-4">ยังไม่มีของรางวัลในคลังของคุณ</li>';
@@ -820,8 +910,9 @@ async function initProfile() {
         `).join('');
 
       } catch (e) {
-        console.error(e);
+        console.error("Error in initWarehouse:", e);
         showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดคลังของรางวัลได้");
+        if (warehouseListEl) warehouseListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดคลังของรางวัล</li>`;
       }
     }
 
@@ -836,11 +927,17 @@ async function initProfile() {
       let codePoint = 0;
 
       async function hasReceived(code) {
-        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
-        const historyList = await res.json();
-        return historyList.some(item =>
-          item.type === 'code' && item.eventId === code
-        );
+        try {
+          const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
+          const historyList = await res.json();
+          return historyList.some(item =>
+            item.type === 'code' && item.eventId === code // eventId for codes is the code itself
+          );
+        } catch (e) {
+          console.error("Failed to check history for code:", e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถตรวจสอบประวัติการรับโค้ดได้');
+          return true; // Assume received to prevent re-processing on network error
+        }
       }
 
       async function processCode(code) {
@@ -853,62 +950,77 @@ async function initProfile() {
           return;
         }
         scannedCode = code;
-        const eRes = await fetch(`${CONFIG.GAS_URL}?action=getCodeById&id=${code}`);
-        const eData = await eRes.json();
+        try {
+          const eRes = await fetch(`${CONFIG.GAS_URL}?action=getCodeById&id=${code}`);
+          const eData = await eRes.json();
 
-        if (eData.error) {
-          showAlert('ไม่พบโค้ด', eData.error);
-          return;
-        }
+          if (eData.error) {
+            showAlert('ไม่พบโค้ด', eData.error);
+            return;
+          }
 
-        codeTitle = eData.title;
-        codePoint = eData.point;
+          codeTitle = eData.title;
+          codePoint = eData.point;
 
-        if (scanContainer) {
-          scanContainer.innerHTML = `
-            <div class="bg-white p-6 rounded-xl shadow mb-4">
-              <div class="font-bold text-lg mb-2">${codeTitle}</div>
-              <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
-              <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
-              <button id="acceptBtn"
-                      class="bg-green-500 text-white py-2 px-6 rounded-full font-bold hover:scale-105 transform">
-                รับพ้อยต์
-              </button>
-            </div>`;
-          document.getElementById('acceptBtn')
-                  ?.addEventListener('click', joinCodeFromInput);
+          if (scanContainer) {
+            scanContainer.innerHTML = `
+              <div class="bg-white p-6 rounded-xl shadow mb-4">
+                <div class="font-bold text-lg mb-2">${codeTitle}</div>
+                <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
+                <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
+                <button id="acceptBtn"
+                        class="bg-green-500 text-white py-2 px-6 rounded-full font-bold hover:scale-105 transform">
+                  รับพ้อยต์
+                </button>
+              </div>`;
+            document.getElementById('acceptBtn')
+                    ?.addEventListener('click', joinCodeFromInput);
+          }
+        } catch (e) {
+          console.error("Process code failed:", e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถประมวลผลโค้ดได้ กรุณาลองใหม่');
         }
       }
 
       async function joinCodeFromInput() {
+        const btn = document.getElementById("acceptBtn");
         const confirmed = await showConfirm(
           `ยืนยันการรับโค้ด`,
           `รับ "${codeTitle}" และรับ ${codePoint} พ้อยต์ ใช่หรือไม่?`
         );
         if (!confirmed) return;
 
-        const res = await fetch(CONFIG.GAS_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "joinCode",
-            lineId: userState.lineId,
-            id: scannedCode,
-            title: codeTitle,
-            point: codePoint
-          })
-        });
-        const text = await res.text();
-        showAlert("สถานะ", text, () => {
-          if (text.includes("สำเร็จ")) {
-            updatePointsInHeader(userState.points + codePoint);
-            const btn = document.getElementById("acceptBtn");
-            if (btn) {
-              btn.textContent = "รับพ้อยต์แล้ว";
-              btn.disabled = true;
-              btn.classList.add("disabled");
+        if (btn) {
+          btn.disabled = true;
+          btn.classList.add("disabled");
+        }
+        try {
+          const res = await fetch(CONFIG.GAS_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "joinCode",
+              lineId: userState.lineId,
+              id: scannedCode,
+              title: codeTitle,
+              point: codePoint
+            })
+          });
+          const text = await res.text();
+          showAlert("สถานะ", text, () => {
+            if (text.includes("สำเร็จ")) {
+              updatePointsInHeader(userState.points + codePoint);
+              if (btn) btn.textContent = "รับพ้อยต์แล้ว"; // Keep button disabled and updated
             }
+          });
+        } catch (e) {
+          console.error("Join code failed:", e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถรับพ้อยต์ได้ กรุณาลองใหม่');
+        } finally {
+          if (btn) {
+            btn.disabled = false; // Re-enable on error
+            btn.classList.remove('disabled');
           }
-        });
+        }
       }
 
       if (scanBtn) {
