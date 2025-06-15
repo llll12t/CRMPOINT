@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CRM-3RN</title>
+  <!-- Load config before main script -->
+  <script src="config.js"></script>
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- DaisyUI CDN (includes Tailwind CSS) -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    .hidden {
+      display: none !important;
+    }
+    @keyframes pulseCustom {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.02);
+        opacity: 0.6;
+      }
+    }
+
+    .pulse-custom {
+      animation: pulseCustom 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-opacity {
+
+      0%,
+      100% {
+        opacity: 0.5;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .loading-card-animation {
+      animation: pulse-opacity 1.5s infinite ease-in-out;
+    }
+
+  </style>
+</head>
+
+<body class="bg-gradient-to-b from-neutral via-white to-white min-h-screen relative bg-fixed p-6">
+
+  <!-- GLOBAL HEADER (Shared across all views) -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 id="pageTitle" class="text-xl font-bold text-white">กำลังโหลด...</h2>
+    <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
+      <div class="w-8 h-8 bg-yellow-400 p-1 rounded-full pulse-custom">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" color="#ffffff" fill="none">
+          <path
+            d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
+            stroke="currentColor" stroke-width="1.5"></path>
+          <path
+            d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div id="pointVal" class="font-bold text-black text-lg px-2">0</div>
+      <img id="lineDisplayPicture" class="mask mask-circle w-10 h-10 rounded-full object-cover border-2 border-black"
+        src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" />
+    </div>
+  </div>
+
+  <!-- Main SPA container (Content area) -->
+  <div id="app">
+    <!-- Content will be injected here by JavaScript -->
+    <div class="text-center text-gray-100 py-8">กำลังโหลดเนื้อหา...</div>
+  </div>
+
+  <!-- Common Alert/Confirm Overlays (using DaisyUI modal) -->
+  <dialog id="customAlertDialog" class="modal">
+    <div class="modal-box text-center">
+      <h3 id="customAlertTitle" class="font-bold text-lg mb-3"></h3>
+      <p id="customAlertMessage" class="py-4 whitespace-pre-line"></p>
+      <div class="modal-action justify-center">
+        <button id="customAlertButton" class="btn btn-neutral w-full">ตกลง</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="customConfirmDialog" class="modal">
+    <div class="modal-box text-center">
+      <h3 id="customConfirmTitle" class="font-bold text-lg mb-3"></h3>
+      <p id="customConfirmMessage" class="py-4"></p>
+      <div class="modal-action justify-around">
+        <button id="customConfirmCancelButton" class="btn btn-outline btn-neutral">ยกเลิก</button>
+        <button id="customConfirmConfirmButton" class="btn btn-neutral">ยืนยัน</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Template: Dashboard (Main Menu) -->
+  <template id="view-dashboard">
+    <!-- Menus (Visual links within dashboard) -->
+    <div class="bg-black rounded p-4 grid grid-cols-3 gap-3 text-center text-sm font-medium mb-6">
+      <a href="#event"
+        class="bg-white text-black p-3 rounded flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+        <span>กิจกรรม</span>
+      </a>
+      <a href="#warehouse"
+        class="bg-white text-black p-3 rounded flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+        <span>คลัง</span>
+      </a>
+      <a href="#addpoint"
+        class="bg-white text-black p-3 rounded flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6"  fill="none">
+          <path
+            d="M2.5 8.18677C2.60406 6.08705 2.91537 4.77792 3.84664 3.84664C4.77792 2.91537 6.08705 2.60406 8.18677 2.5M21.5 8.18677C21.3959 6.08705 21.0846 4.77792 20.1534 3.84664C19.2221 2.91537 17.9129 2.60406 15.8132 2.5M15.8132 21.5C17.9129 21.3959 19.2221 21.0846 20.1534 20.1534C21.0846 19.2221 21.3959 17.9129 21.5 15.8132M8.18676 21.5C6.08705 21.3959 4.77792 21.0846 3.84664 20.1534C2.91537 19.2221 2.60406 17.9129 2.5 15.8132"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M2.49986 12H21.4999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+          <path
+            d="M6 12C6 8.68629 8.68629 6 12 6C12 7.65685 13.3431 9 15 9C15.6755 9 16.2989 8.77672 16.8004 8.39993C17.5536 9.40273 18 10.6492 18 12M17.1973 15C16.1599 16.7934 14.2208 18 12 18C9.77915 18 7.84012 16.7934 6.80269 15"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <span>สแกนรับ</span>
+      </a>
+      <a href="#transfer"
+        class="bg-white text-black p-3 rounded flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+        <span>โอนพ้อย</span>
+      </a>
+      <a href="#redeem"
+        class="bg-white text-black p-3 rounded flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+        </svg>
+        <span>แลกพ้อย</span>
+      </a>
+      <a href="#profile"
+        class="bg-white text-black p-3 rounded flex flex-col items-center justify-center space-y-1 transform hover:scale-105 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span>บัญชี</span>
+      </a>
+    </div>
+
+    <!-- Check-in Section -->
+    <div id="checkinBox" class="flex items-center justify-between mb-8 hidden">
+      <div class="bg-gray-100 rounded-full px-4 py-2 flex items-center space-x-2 text-gray-700">
+        <span class="text-sm">วันที่</span>
+        <span id="todayDate" class="font-bold text-md">00</span>
+      </div>
+      <div class="bg-yellow-400 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold text-sm">
+        +1
+      </div>
+      <button id="checkinBtn" class="btn btn-neutral btn-sm">
+        เช็คอิน
+      </button>
+    </div>
+
+    <!-- History Section -->
+    <div>
+      <div class="flex justify-between items-center mb-4">
+        <div class="font-bold text-lg">รายการล่าสุด</div>
+        <div class="text-xs text-gray-400 font-medium">POINT</div>
+      </div>
+      <ul id="historyList" class="space-y-4">
+        <!-- skeleton loader -->
+      </ul>
+    </div>
+  </template>
+
+  <!-- Template: Event List -->
+  <template id="view-event">
+    <!-- Event List -->
+    <div id="eventList" class="space-y-3">
+      <!-- skeleton loaders -->
+      <div class="bg-white rounded p-4 flex justify-between items-center shadow-sm animate-pulse">
+        <div class="space-y-2 w-3/4">
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div class="h-3 bg-gray-200 rounded w-2/3"></div>
+        </div>
+        <div class="h-6 w-20 bg-gray-200 rounded-full"></div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Template: Event Detail -->
+  <template id="view-event-detail">
+    <!-- Card Wrapper -->
+    <div id="cardWrapper">
+      <!-- Skeleton Loader -->
+      <div id="cardSkeleton" class="bg-white p-6 rounded shadow-md mb-6 animate-pulse">
+        <div class="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div class="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+        <div class="h-3 bg-gray-200 rounded w-full mb-6"></div>
+        <div class="h-12 bg-gray-200 rounded-full w-full"></div>
+      </div>
+      <!-- Actual Card -->
+      <div id="card" class="bg-white p-6 rounded shadow-md text-gray-800 mb-6 hidden">
+        <div class="flex justify-between items-start mb-3">
+          <div class="font-bold text-lg" id="eventDetailTitle">–</div>
+          <div class="bg-yellow-400 text-black font-bold text-md px-3 py-1 rounded-full" id="eventPoint">0+</div>
+        </div>
+        <div class="text-sm text-gray-700 mb-6 leading-relaxed" id="eventDetailDesc">...</div>
+        <button id="joinBtn" class="btn btn-neutral w-full">
+          เข้าร่วม
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <!-- Template: Profile -->
+  <template id="view-profile">
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Profile ID</label>
+        <input id="profileId" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ระดับ</label>
+        <input id="profileLevel" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
+        <input id="profileName" class="input input-bordered input-neutral w-full" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
+        <input id="profilePhone" class="input input-bordered input-neutral w-full" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+        <input id="profileEmail" class="input input-bordered input-neutral w-full" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
+        <input id="profileAddress" class="input input-bordered input-neutral w-full" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
+        <input id="profileNote" class="input input-bordered input-neutral w-full" />
+      </div>
+      <button id="updateProfileBtn" class="btn btn-neutral w-full">
+        อัปเดตข้อมูล
+      </button>
+    </div>
+  </template>
+
+  <!-- Template: Redeem -->
+  <template id="view-redeem">
+    <div class="p-0">
+      <ul id="redeemList" class="grid grid-cols-2 gap-4">
+        <!-- skeleton cards / items will be injected here -->
+      </ul>
+    </div>
+  </template>
+
+  <!-- Template: Transfer -->
+  <template id="view-transfer">
+    <!-- Form -->
+    <div class="space-y-4 mb-6">
+      <input id="transferTo" placeholder="LINE ID เพื่อน / เบอร์โทรปลายทาง" type="text"
+        class="input input-bordered input-neutral w-full">
+      <input id="transferAmount" placeholder="จำนวนพ้อยที่ต้องการโอน" type="number"
+        class="input input-bordered input-neutral w-full">
+      <button id="transferBtn" class="btn btn-neutral w-full">
+        โอนพ้อย
+      </button>
+    </div>
+  </template>
+
+  <!-- Template: Warehouse -->
+  <template id="view-warehouse">
+    <!-- List -->
+    <ul id="warehouseList" class="space-y-3">
+      <!-- skeleton loader -->
+      <li class="bg-white rounded p-4 shadow-sm loading-card-animation flex justify-between items-center">
+        <div class="space-y-2 flex-1">
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+        </div>
+        <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
+      </li>
+    </ul>
+  </template>
+
+  <!-- Template: Add Points (Scan/Manual Code) -->
+  <template id="view-addpoint">
+    <!-- Scan & Manual Input -->
+    <div id="scanContainer" class="space-y-4 mb-6">
+      <button id="scanBtn" class="btn btn-neutral w-full">
+        สแกน QR Code
+      </button>
+      <div class="flex space-x-2">
+        <input id="manualCode" type="text" placeholder="กรอกโค้ดที่นี่"
+          class="input input-bordered input-neutral flex-1">
+        <button id="enterBtn" class="btn btn-neutral">
+          รับโค้ด
+        </button>
+      </div>
+    </div>
+  </template>
+
+
+  <script>
+    // Global LIFF status and user info
+    let liffInitialized = false;
+    const userState = {
+      profile: null,
+      lineId: "",
+      points: 0,
+      pointsChanged: false, // Flag to indicate if points have changed since last render
+    };
+
+    // Global Data Cache (Frontend Cache)
+    const dataCache = {
+      events: null,
+      redeemItems: null,
+      eventDetails: {},
+    };
+
+    // Common Alert & Confirm Dialogs
+    const alertDialog = document.getElementById('customAlertDialog');
+    const alertT = document.getElementById('customAlertTitle');
+    const alertM = document.getElementById('customAlertMessage');
+    const alertBtn = document.getElementById('customAlertButton');
+
+    const confirmDialog = document.getElementById('customConfirmDialog');
+    const confT = document.getElementById('customConfirmTitle');
+    const confM = document.getElementById('customConfirmMessage');
+    const okBtn = document.getElementById('customConfirmConfirmButton');
+    const noBtn = document.getElementById('customConfirmCancelButton');
+
+    // Global Header Elements
+    const pageTitleEl = document.getElementById('pageTitle');
+    const pointValEl = document.getElementById('pointVal');
+    const dpEl = document.getElementById('lineDisplayPicture');
+
+    // --- Common UI Functions ---
+    function showAlert(title, message, cb) {
+      alertT.textContent = title;
+      alertM.textContent = message;
+      alertDialog.showModal();
+
+      const hide = () => {
+        alertDialog.close();
+        alertBtn.removeEventListener('click', hide);
+        cb && cb();
+      };
+      alertBtn.addEventListener('click', hide);
+    }
+
+    function showConfirm(title, message) {
+      return new Promise(res => {
+        confT.textContent = title;
+        confM.textContent = message;
+        confirmDialog.showModal();
+
+        const onOk = () => { cleanup(); res(true); };
+        const onNo = () => { cleanup(); res(false); };
+
+        function cleanup() {
+          confirmDialog.close();
+          okBtn.removeEventListener('click', onOk);
+          noBtn.removeEventListener('click', onNo);
+        }
+        okBtn.addEventListener('click', onOk);
+        noBtn.addEventListener('click', onNo);
+      });
+    }
+
+    // --- LIFF Initialization & Initial Data Fetch ---
+    async function ensureLIFFAndFetchInitialData() {
+      if (!liffInitialized) {
+        await liff.init({ liffId: CONFIG.LIFF_ID });
+        liffInitialized = true;
+      }
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return false;
+      }
+
+      userState.profile = await liff.getProfile();
+      userState.lineId = userState.profile.userId;
+
+      dpEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
+      dpEl.alt = `รูปโปรไฟล์ของ ${userState.profile.displayName}`;
+
+      pointValEl.textContent = '0';
+      try {
+        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+        const userRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+        const userData = await userRes.json();
+
+        if (!userData || !userData.name || userData.isRegistered === false) {
+          console.log("User not registered. Redirecting to register.html");
+          // NOTE: ตรวจสอบว่า register.html ของคุณก็ชี้ไปที่ Cloud Functions แล้วเช่นกัน
+          window.location.href = 'register.html';
+          return false;
+        }
+
+        userState.points = parseInt(userData.point || 0, 10);
+        pointValEl.textContent = userState.points;
+
+        try {
+          console.log("Preloading initial common data (events, items)...");
+          const [eventsRes, redeemRes] = await Promise.all([
+            // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+            fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getEvents`),
+            fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getItems`)
+          ]);
+
+          dataCache.events = await eventsRes.json();
+          dataCache.redeemItems = await redeemRes.json();
+          console.log("Initial data preloaded successfully.");
+        } catch (preloadError) {
+          console.warn("Failed to preload some initial data. Views will fetch on demand.", preloadError);
+        }
+
+      } catch (error) {
+        console.error("Failed to fetch initial user points or check registration:", error);
+        pointValEl.textContent = 'N/A';
+        return false;
+      }
+      return true;
+    }
+
+    // --- Router Setup ---
+    const routes = {
+      '#dashboard': { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard },
+      '#event': { title: 'กิจกรรม', tpl: 'view-event', init: initEvent },
+      '#event-detail': { title: 'รายละเอียดกิจกรรม', tpl: 'view-event-detail', init: initEventDetail },
+      '#profile': { title: 'โปรไฟล์ของคุณ', tpl: 'view-profile', init: initProfile },
+      '#redeem': { title: 'ร้านค้าแลกของรางวัล', tpl: 'view-redeem', init: initRedeem },
+      '#transfer': { title: 'โอนพ้อยให้เพื่อน', tpl: 'view-transfer', init: initTransfer },
+      '#warehouse': { title: 'คลังของรางวัล', tpl: 'view-warehouse', init: initWarehouse },
+      '#addpoint': { title: 'โค้ดเพื่อรับรางวัล', tpl: 'view-addpoint', init: initAddpoint },
+      '': { title: 'CRM-3RN', tpl: 'view-dashboard', init: initDashboard }
+    };
+
+    async function router() {
+      const hash = window.location.hash.split('?')[0] || '';
+      const route = routes[hash] || routes[''];
+      const appDiv = document.getElementById('app');
+
+      pageTitleEl.textContent = route.title;
+
+      appDiv.innerHTML = '';
+      const template = document.getElementById(route.tpl);
+      if (template) {
+        appDiv.appendChild(template.content.cloneNode(true));
+      } else {
+        appDiv.innerHTML = `<p class="text-center text-red-500 py-8">เกิดข้อผิดพลาด: ไม่พบเทมเพลตสำหรับ ${hash}</p>`;
+        console.error(`Template ${route.tpl} not found.`);
+        return;
+      }
+
+      try {
+        await route.init();
+      } catch (error) {
+        console.error(`Error initializing view ${route.tpl}:`, error);
+        showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลหน้านี้ได้ กรุณาลองใหม่อีกครั้ง');
+      }
+
+      if (userState.pointsChanged) {
+        console.log("Points changed, consider re-fetching history-dependent data for next navigation.");
+      }
+      userState.pointsChanged = false;
+    }
+
+    // --- Common Helper Functions ---
+
+    function generateListSkeleton(count) {
+      return Array.from({ length: count }).map(_ => `
+        <li class="flex justify-between items-center animate-pulse py-3">
+          <div class="space-y-2 flex-1">
+            <div class="h-4 bg-gray-200 rounded w-${Math.floor(30 + Math.random() * 40)}%"></div>
+            <div class="h-3 bg-gray-200 rounded w-${Math.floor(30 + Math.random() * 30)}% mt-1"></div>
+          </div>
+          <div class="h-6 w-12 bg-gray-200 rounded-full"></div>
+        </li>`).join("");
+    }
+
+    function generateCardSkeleton(count) {
+      let html = '';
+      for (let i = 0; i < count; i++) {
+        html += `
+          <li class="bg-white p-4 rounded shadow-sm loading-card-animation">
+            <div class="h-24 bg-gray-200 rounded-md mb-3"></div>
+            <div class="h-4 bg-gray-200 rounded w-${30 + Math.random() * 50}% mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-${20 + Math.random() * 40}% mb-3"></div>
+            <div class="h-8 bg-gray-200 rounded-full w-full"></div>
+          </li>`;
+      }
+      return html;
+    }
+
+    function updatePointsInHeader(newPoints) {
+      userState.points = newPoints;
+      pointValEl.textContent = userState.points;
+      userState.pointsChanged = true;
+    }
+
+    // --------- Init functions for each view ---------
+
+    async function initDashboard() {
+      const historyListEl = document.getElementById('historyList');
+      const checkinBox = document.getElementById('checkinBox');
+      const todayDateEl = document.getElementById('todayDate');
+      const checkinBtn = document.getElementById('checkinBtn');
+
+      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5);
+
+      try {
+        const [checkRes, histRes] = await Promise.all([
+          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+          fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=checkinStatus&lineId=${userState.lineId}`),
+          fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`)
+        ]);
+        const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
+
+        // Check-in
+        if (checkinBox && todayDateEl && checkinBtn) {
+          if (!checkData.checkedInToday) {
+            checkinBox.classList.remove('hidden');
+            todayDateEl.textContent = new Date().getDate().toString().padStart(2, "0");
+            checkinBtn.onclick = async () => {
+              checkinBtn.disabled = true;
+              try {
+                // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
+                const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
+                  method: 'POST',
+                  body: JSON.stringify({ action: "dailyCheckin", lineId: userState.lineId })
+                });
+                const text = await res.text(); // หรือ res.json() ถ้า Cloud Function ส่งกลับเป็น JSON
+                showAlert('เช็คอินสำเร็จ', text, () => {
+                  if (text.includes("สำเร็จ")) {
+                    updatePointsInHeader(userState.points + 1);
+                    router();
+                  }
+                });
+              } catch (e) {
+                console.error("Check-in failed:", e);
+                showAlert('ข้อผิดพลาด', 'ไม่สามารถเช็คอินได้ กรุณาลองใหม่');
+              } finally {
+                checkinBtn.disabled = false;
+              }
+            };
+          } else {
+            checkinBox.classList.add('hidden');
+          }
+        }
+
+        // History
+        if (historyListEl) {
+          const latest10 = history.reverse().slice(0, 10);
+          if (latest10.length === 0) {
+            historyListEl.innerHTML = `<li class="text-center text-gray-100 py-4">ไม่มีประวัติการทำรายการ</li>`;
+          }
+          else {
+            historyListEl.innerHTML = latest10.map(item => {
+              const isDebit = ['redeem', 'transfer_out'].includes(item.type);
+              const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+              const sign = isDebit ? '-' : '+';
+              return `
+                <li class="flex justify-between items-center">
+                  <div>
+                    <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
+                    <div class="text-xs text-gray-400 mt-1">${item.date}</div>
+                  </div>
+                  <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
+                    ${sign} ${item.amount}
+                  </div>
+                </li>`;
+            }).join("");
+          }
+        }
+      } catch (error) {
+        console.error("Error in initDashboard:", error);
+        if (historyListEl) historyListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</li>`;
+        if (checkinBox) checkinBox.classList.add('hidden');
+      }
+    }
+
+    async function initEvent() {
+      const eventListEl = document.getElementById('eventList');
+      if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5);
+
+      let events;
+      if (dataCache.events) {
+        events = dataCache.events;
+        console.log("Loading events from frontend cache.");
+      } else {
+        try {
+          console.log("Fetching events from API (Cloud Function).");
+          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+          const eventsRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getEvents`);
+          events = await eventsRes.json();
+          dataCache.events = events;
+        } catch (error) {
+          console.error("Error fetching events:", error);
+          if (eventListEl) eventListEl.innerHTML = `<div class="text-center text-red-500 py-8">เกิดข้อผิดพลาดในการโหลดกิจกรรม</div>`;
+          return;
+        }
+      }
+
+      if (eventListEl) {
+        if (!events.length) {
+          eventListEl.innerHTML = `<div class="text-center text-gray-500 py-8">ไม่มีกิจกรรมในขณะนี้</div>`;
+        } else {
+          eventListEl.innerHTML = events.map(e => `
+            <div class="bg-white rounded p-4 flex justify-between items-center shadow-sm transform hover:scale-105 transition-transform">
+              <div>
+                <div class="font-semibold text-gray-800 text-sm">${e.title}</div>
+                <div class="text-xs text-gray-500">${e.detail || 'ดูรายละเอียดกิจกรรม'}</div>
+              </div>
+              <a href="#event-detail?id=${e.id}" class="btn btn-neutral">  ดูรายละเอียด </a>
+            </div>
+          `).join('');
+        }
+      }
+    }
+
+    async function initEventDetail() {
+      const params = new URLSearchParams(window.location.hash.split('?')[1]);
+      const eventId = params.get("id");
+      let eventTitle = "", eventRewardPoint = 0;
+
+      const cardSkeleton = document.getElementById('cardSkeleton');
+      const card = document.getElementById('card');
+      const titleEl = document.getElementById('eventDetailTitle');
+      const descEl = document.getElementById('eventDetailDesc');
+      const eventPointEl = document.getElementById('eventPoint');
+      const joinBtn = document.getElementById('joinBtn');
+
+      if (cardSkeleton) cardSkeleton.classList.remove('hidden');
+      if (card) card.classList.add('hidden');
+
+      function disableJoinBtn() {
+        if (joinBtn) {
+          joinBtn.disabled = true;
+        }
+      }
+
+      let eventData;
+      if (dataCache.eventDetails[eventId]) {
+        eventData = dataCache.eventDetails[eventId];
+        console.log(`Loading event detail for ${eventId} from frontend cache.`);
+      } else {
+        try {
+          console.log(`Fetching event detail for ${eventId} from API (Cloud Function).`);
+          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+          const eRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getEventById&id=${eventId}`);
+          eventData = await eRes.json();
+          if (!eventData.error) {
+            dataCache.eventDetails[eventId] = eventData;
+          }
+        } catch (error) {
+          console.error("Error fetching event detail:", error);
+          if (titleEl) titleEl.textContent = "เกิดข้อผิดพลาด";
+          if (descEl) descEl.textContent = "ไม่สามารถโหลดรายละเอียดกิจกรรมได้";
+          disableJoinBtn();
+          if (cardSkeleton) cardSkeleton.classList.add("hidden");
+          if (card) card.classList.remove("hidden");
+          return;
+        }
+      }
+
+      // Always re-fetch history for join status
+      let historyList = [];
+      try {
+        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+        const hRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`);
+        historyList = await hRes.json();
+      } catch (error) {
+        console.error("Error fetching history for event detail:", error);
+      }
+
+      if (eventData.error) {
+        if (titleEl) titleEl.textContent = "ไม่พบกิจกรรม";
+        if (descEl) descEl.textContent = eventData.error;
+        disableJoinBtn();
+      } else {
+        eventTitle = eventData.title;
+        eventRewardPoint = eventData.point;
+        if (titleEl) titleEl.textContent = eventTitle;
+        if (eventPointEl) eventPointEl.textContent = `${eventRewardPoint}+`;
+        if (descEl) descEl.textContent = eventData.desc;
+
+        const hasJoined = historyList.some(item =>
+          item.type === 'event' && item.eventId === eventId
+        );
+        if (hasJoined) {
+          if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
+          disableJoinBtn();
+        } else {
+          if (joinBtn) {
+            joinBtn.onclick = async () => {
+              const confirmed = await showConfirm(`ยืนยันการเข้าร่วม`, `เข้าร่วม "${eventTitle}" และรับ ${eventRewardPoint} พ้อยต์ ใช่หรือไม่?`);
+              if (!confirmed) return;
+
+              joinBtn.disabled = true;
+              try {
+                // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
+                const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
+                  method: "POST",
+                  body: JSON.stringify({
+                    action: "joinEvent",
+                    lineId: userState.lineId,
+                    eventId,
+                    title: eventTitle,
+                    point: eventRewardPoint
+                  })
+                });
+                const text = await res.text();
+                showAlert("สถานะ", text, () => {
+                  if (text.includes("สำเร็จ")) {
+                    if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
+                    disableJoinBtn();
+                    updatePointsInHeader(userState.points + eventRewardPoint);
+                  }
+                });
+              } catch (e) {
+                console.error("Join event failed:", e);
+                showAlert('ข้อผิดพลาด', 'ไม่สามารถเข้าร่วมกิจกรรมได้ กรุณาลองใหม่');
+              } finally {
+                joinBtn.disabled = false;
+              }
+            };
+          }
+        }
+      }
+      if (cardSkeleton) cardSkeleton.classList.add("hidden");
+      if (card) card.classList.remove("hidden");
+    }
+
+    async function initProfile() {
+      const profileIdEl = document.getElementById('profileId');
+      const profileLevelEl = document.getElementById('profileLevel');
+      const profileNameEl = document.getElementById('profileName');
+      const profilePhoneEl = document.getElementById('profilePhone');
+      const profileEmailEl = document.getElementById('profileEmail');
+      const profileAddressEl = document.getElementById('profileAddress');
+      const profileNoteEl = document.getElementById('profileNote');
+      const updateBtn = document.getElementById('updateProfileBtn');
+
+      // Always re-fetch profile info, as it can be updated by the user
+      try {
+        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+        const uRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+        const uData = await uRes.json();
+
+        if (profileIdEl) profileIdEl.value = uData.id || '';
+        if (profileLevelEl) profileLevelEl.value = uData.level || '';
+        if (profileNameEl) profileNameEl.value = uData.name || '';
+        if (profilePhoneEl) profilePhoneEl.value = uData.phone || '';
+        if (profileEmailEl) profileEmailEl.value = uData.email || '';
+        if (profileAddressEl) profileAddressEl.value = uData.address || '';
+        if (profileNoteEl) profileNoteEl.value = uData.note || '';
+
+        if (updateBtn) {
+          updateBtn.onclick = async () => {
+            updateBtn.disabled = true;
+            try {
+              const body = {
+                action: 'updateProfile',
+                lineId: userState.lineId,
+                name: profileNameEl.value,
+                phone: profilePhoneEl.value,
+                email: profileEmailEl.value,
+                address: profileAddressEl.value,
+                note: profileNoteEl.value
+              };
+              // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
+              const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
+                method: 'POST',
+                body: JSON.stringify(body)
+              });
+              showAlert("สถานะ", await res.text());
+            } catch (e) {
+              console.error("Update profile failed:", e);
+              showAlert('ข้อผิดพลาด', 'ไม่สามารถอัปเดตข้อมูลได้ กรุณาลองใหม่');
+            } finally {
+              updateBtn.disabled = false;
+            }
+          };
+        }
+      } catch (error) {
+        console.error("Error in initProfile:", error);
+        showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
+        if (profileIdEl) profileIdEl.value = 'โหลดข้อมูลล้มเหลว';
+        if (updateBtn) { updateBtn.disabled = true; }
+      }
+    }
+
+    async function initRedeem() {
+      const redeemListEl = document.getElementById('redeemList');
+      if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4);
+
+      let items;
+      if (dataCache.redeemItems) {
+        items = dataCache.redeemItems;
+        console.log("Loading redeem items from frontend cache.");
+      } else {
+        try {
+          console.log("Fetching redeem items from API (Cloud Function).");
+          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+          const itemsRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getItems`);
+          items = await itemsRes.json();
+          dataCache.redeemItems = items;
+        } catch (error) {
+          console.error("Error fetching redeem items:", error);
+          if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
+          return;
+        }
+      }
+
+      if (redeemListEl) {
+        if (!items.length) {
+          redeemListEl.innerHTML = `<li class="col-span-2 text-center text-gray-100 py-4">ไม่มีของรางวัลให้แลก</li>`;
+          return;
+        }
+        redeemListEl.innerHTML = items.map(item => `
+          <li class="bg-white p-4 rounded shadow-sm text-center transform hover:scale-105 transition-transform">
+            <img src="${item.image}" alt="${item.name}" class="h-24 mx-auto mb-2 rounded-md object-cover">
+            <div class="font-bold mb-1">${item.name}</div>
+            <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
+            <button data-item-id="${item.id}" data-item-name="${item.name}" data-item-point="${item.point}"
+                    class="redeem-btn btn btn-neutral btn-sm">
+              แลกเลย
+            </button>
+          </li>
+        `).join('');
+
+        document.querySelectorAll('.redeem-btn').forEach(button => {
+          button.addEventListener('click', async (event) => {
+            const btn = event.target;
+            const id = btn.dataset.itemId;
+            const name = btn.dataset.itemName;
+            const point = parseInt(btn.dataset.itemPoint, 10);
+
+            if (userState.points < point) {
+              showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
+              return;
+            }
+
+            const confirmed = await showConfirm(`ยืนยันการแลก`, `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
+            if (!confirmed) return;
+
+            btn.disabled = true;
+            try {
+              // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
+              const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point })
+              });
+              const text = await res.text();
+              showAlert("สถานะ", text, () => {
+                if (text.includes("สำเร็จ")) {
+                  updatePointsInHeader(userState.points - point);
+                  btn.textContent = "แลกแล้ว";
+                }
+              });
+            } catch (e) {
+              console.error("Redeem failed:", e);
+              showAlert('ข้อผิดพลาด', 'ไม่สามารถแลกของรางวัลได้ กรุณาลองใหม่');
+            } finally {
+              btn.disabled = false;
+            }
+          });
+        });
+      }
+    }
+
+    async function initTransfer() {
+      const transferToEl = document.getElementById('transferTo');
+      const transferAmountEl = document.getElementById('transferAmount');
+      const transferBtn = document.getElementById('transferBtn');
+
+      if (transferBtn) {
+        transferBtn.onclick = async () => {
+          const toId = transferToEl.value.trim();
+          const amt = parseInt(transferAmountEl.value, 10);
+
+          if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอก LINE ID เพื่อน / เบอร์โทรปลายทาง"); return; }
+          if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนพ้อยต์ให้ถูกต้อง"); return; }
+          if (toId === userState.lineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนพ้อยต์ให้ตัวเอง"); return; }
+          if (userState.points < amt) { showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับโอน ${amt} พ้อยต์`); return; }
+
+          const confirmed = await showConfirm("ยืนยันโอน", `คุณต้องการโอน ${amt} พ้อยต์ ให้กับ ${toId} ใช่หรือไม่?`);
+          if (!confirmed) return;
+
+          transferBtn.disabled = true;
+          try {
+            // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
+            const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
+              method: 'POST',
+              body: JSON.stringify({ action: 'transferPoints', from: userState.lineId, to: toId, amount: amt })
+            });
+            const txt = await res.text();
+            showAlert("สถานะการโอน", txt, () => {
+              if (/สำเร็จ|เรียบร้อย/.test(txt)) {
+                updatePointsInHeader(userState.points - amt);
+                if (transferToEl) transferToEl.value = '';
+                if (transferAmountEl) transferAmountEl.value = '';
+              }
+            });
+          } catch (e) {
+            console.error("Transfer failed:", e);
+            showAlert("ข้อผิดพลาด", "ไม่สามารถโอนได้ ลองอีกครั้ง");
+          } finally {
+            transferBtn.disabled = false;
+          }
+        };
+      }
+    }
+
+    async function initWarehouse() {
+      const warehouseListEl = document.getElementById('warehouseList');
+      if (warehouseListEl) warehouseListEl.innerHTML = generateListSkeleton(5);
+
+      // Always re-fetch warehouse items because they depend on redemption history
+      try {
+        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+        const res = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`);
+        const allHistory = await res.json();
+        const ownedItems = allHistory.filter(i => i.type === 'redeem');
+
+        if (!ownedItems.length) {
+          warehouseListEl.innerHTML = '<li class="text-center text-gray-100 py-4">ยังไม่มีของรางวัลในคลังของคุณ</li>';
+          return;
+        }
+
+        const itemCounts = {};
+        ownedItems.forEach(item => {
+          const itemName = item.detail.startsWith('แลก: ') ? item.detail.substring(5) : item.detail;
+          itemCounts[itemName] = (itemCounts[itemName] || 0) + 1;
+        });
+
+        warehouseListEl.innerHTML = Object.entries(itemCounts).map(([name, count]) => `
+          <li class="bg-white rounded p-4 shadow-sm flex justify-between items-center transform hover:scale-105 transition-transform">
+            <div>
+              <div class="font-semibold text-gray-800 text-sm">${name}</div>
+              <div class="text-xs text-gray-500 mt-1">จำนวน: ${count} ชิ้น</div>
+            </div>
+          </li>
+        `).join('');
+
+      } catch (e) {
+        console.error("Error in initWarehouse:", e);
+        showAlert("เกิดข้อผิดพลาด", "ไม่สามารถโหลดคลังของรางวัลได้");
+        if (warehouseListEl) warehouseListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดคลังของรางวัล</li>`;
+      }
+    }
+
+    async function initAddpoint() {
+      const scanContainer = document.getElementById('scanContainer');
+      const scanBtn = document.getElementById('scanBtn');
+      const enterBtn = document.getElementById('enterBtn');
+      const manualInput = document.getElementById('manualCode');
+
+      let scannedCode = "";
+      let codeTitle = "";
+      let codePoint = 0;
+
+      async function hasReceived(code) {
+        // Always re-fetch history to check if code has been received
+        try {
+          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+          const res = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`);
+          const historyList = await res.json();
+          return historyList.some(item =>
+            item.type === 'code' && item.eventId === code
+          );
+        } catch (e) {
+          console.error("Failed to check history for code:", e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถตรวจสอบประวัติการรับโค้ดได้');
+          return true;
+        }
+      }
+
+      async function processCode(code) {
+        if (!code) {
+          showAlert('ข้อผิดพลาด', 'โค้ดว่างเปล่า');
+          return;
+        }
+        if (await hasReceived(code)) {
+          showAlert('รับแล้ว', 'คุณรับโค้ดนี้ไปแล้ว');
+          return;
+        }
+        scannedCode = code;
+        try {
+          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
+          const eRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getCodeById&id=${code}`);
+          const eData = await eRes.json();
+
+          if (eData.error) {
+            showAlert('ไม่พบโค้ด', eData.error);
+            return;
+          }
+
+          codeTitle = eData.title;
+          codePoint = eData.point;
+
+          if (scanContainer) {
+            scanContainer.innerHTML = `
+              <div class="bg-white p-6 rounded shadow mb-4">
+                <div class="font-bold text-lg mb-2">${codeTitle}</div>
+                <div class="text-sm text-gray-700 mb-4">${eData.desc}</div>
+                <div class="font-bold text-yellow-600 mb-4">พ้อยต์ที่จะได้รับ: ${codePoint}</div>
+                <button id="acceptBtn"
+                        class="btn btn-neutral">
+                  รับพ้อยต์
+                </button>
+              </div>`;
+            document.getElementById('acceptBtn')
+              ?.addEventListener('click', joinCodeFromInput);
+          }
+        } catch (e) {
+          console.error("Process code failed:", e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถประมวลผลโค้ดได้ กรุณาลองใหม่');
+        }
+      }
+
+      async function joinCodeFromInput() {
+        const btn = document.getElementById("acceptBtn");
+        const confirmed = await showConfirm(
+          `ยืนยันการรับโค้ด`,
+          `รับ "${codeTitle}" และรับ ${codePoint} พ้อยต์ ใช่หรือไม่?`
+        );
+        if (!confirmed) return;
+
+        if (btn) {
+          btn.disabled = true;
+        }
+        try {
+          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
+          const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "joinCode",
+              lineId: userState.lineId,
+              id: scannedCode,
+              title: codeTitle,
+              point: codePoint
+            })
+          });
+          const text = await res.text();
+          showAlert("สถานะ", text, () => {
+            if (text.includes("สำเร็จ")) {
+              updatePointsInHeader(userState.points + codePoint);
+              if (btn) btn.textContent = "รับพ้อยต์แล้ว";
+            }
+          });
+        } catch (e) {
+          console.error("Join code failed:", e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถรับพ้อยต์ได้ กรุณาลองใหม่');
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+          }
+        }
+      }
+
+      if (scanBtn) {
+        scanBtn.onclick = async () => {
+          try {
+            const { value } = await liff.scanCodeV2();
+            await processCode(value);
+          } catch (e) {
+            showAlert('ข้อผิดพลาด', `ไม่สามารถสแกนได้: ${e.message || 'กรุณาลองใหม่'}`);
+          }
+        };
+      }
+
+      if (enterBtn && manualInput) {
+        enterBtn.onclick = () => {
+          const code = manualInput.value.trim();
+          processCode(code);
+        };
+      }
+    }
+
+    // --- Global App Initialization ---
+    async function initializeApp() {
+      const liffReady = await ensureLIFFAndFetchInitialData();
+      if (!liffReady) {
+        return;
+      }
+
+      window.addEventListener('hashchange', router);
+      router();
+    }
+
+    // Start the app
+    initializeApp();
+  </script>
+</body>
+
+</html>
