@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th" data-theme="light"> <!-- Added data-theme="light" here -->
+<html lang="th" data-theme="light">
 
 <head>
   <meta charset="UTF-8" />
@@ -353,8 +353,8 @@
     };
 
     // NEW: Global Data Cache
-    // จะเก็บข้อมูลที่สามารถนำกลับมาใช้ซ้ำได้โดยไม่ต้อง fetch ใหม่
-    // ข้อมูลที่ควร cache: รายการกิจกรรม (ถ้าไม่ค่อยเปลี่ยน), รายการของรางวัล
+    // จะเก็บข้อมูลที่สามารถนำกลับมาใช้ซ้ำได้โดยไม่ต้อง fetch ใหม่ (ในฝั่ง Frontend)
+    // ข้อมูลที่ควร cache: รายการกิจกรรม, รายการของรางวัล (ข้อมูล Master ที่ไม่เปลี่ยนบ่อย)
     // ข้อมูลที่ไม่ควร cache: ประวัติ (เพราะเปลี่ยนตลอด), สถานะเช็คอิน (เปลี่ยนทุกวัน), ข้อมูลโปรไฟล์ (ผู้ใช้อาจแก้ไข)
     const dataCache = {
       events: null, // สำหรับ initEvent
@@ -439,7 +439,7 @@
         const userData = await userRes.json();
 
         // --- เพิ่มโค้ดการตรวจสอบการลงทะเบียนที่นี่ ---
-        if (!userData || !userData.name || userData.isRegistered === false) {
+        if (!userData || !userData.name || userData.isRegistered === false) { // Assuming GAS returns `isRegistered: false` if not found
           console.log("User not registered. Redirecting to register.html");
           window.location.href = 'register.html';
           return false; // หยุดการทำงานของฟังก์ชันนี้
@@ -452,7 +452,7 @@
         // NEW: Preload common data that doesn't change frequently or depends on user actions
         // ทำการ preload ควบคู่ไปกับการ fetch ข้อมูลผู้ใช้
         try {
-          console.log("Preloading initial common data...");
+          console.log("Preloading initial common data (events, items)...");
           const [eventsRes, redeemRes] = await Promise.all([
             fetch(`${CONFIG.GAS_URL}?action=getEvents`),
             fetch(`${CONFIG.GAS_URL}?action=getItems`)
@@ -496,7 +496,7 @@
 
       // Update Header Title immediately
       pageTitleEl.textContent = route.title;
-      pointValEl.textContent = userState.points; // Ensure points are consistent with current state
+      // pointValEl.textContent = userState.points; // This is updated by updatePointsInHeader or initApp
 
       // Clear previous content and load new template content
       appDiv.innerHTML = '';
@@ -522,9 +522,12 @@
       // และล้าง cache ของข้อมูลที่ควรจะ re-fetch ถ้าพ้อยต์เปลี่ยน
       if (userState.pointsChanged) {
         // ถ้าพ้อยต์เปลี่ยน หน้าเหล่านี้ควรโหลดข้อมูลใหม่
-        dataCache.history = null; // ถ้ามี cache history ในอนาคต
-        // อาจจะต้องล้าง cache ของ eventDetails ที่เกี่ยวข้องกับประวัติการเข้าร่วม
-        // หรือแค่ force re-fetch ประวัติใน initEventDetail
+        // ในที่นี้คือ history และข้อมูลที่ต้องเช็ค history เช่น eventDetail (สถานะเข้าร่วม)
+        // หรือ warehouse
+        // เราไม่ล้าง dataCache.events และ dataCache.redeemItems เพราะมันเป็น master data ที่ไม่เปลี่ยนบ่อย
+        // แต่ถ้า init function ของหน้านั้นๆ มีการดึง history ไปเปรียบเทียบ ก็จะ fetch ใหม่เอง
+        console.log("Points changed, consider re-fetching history-dependent data for next navigation.");
+        // We rely on individual init functions to fetch fresh history where needed.
       }
       userState.pointsChanged = false; // Reset the flag
     }
@@ -595,7 +598,6 @@
             todayDateEl.textContent = new Date().getDate().toString().padStart(2, "0");
             checkinBtn.onclick = async () => {
               checkinBtn.disabled = true; // Disable button immediately
-              // checkinBtn.classList.add('disabled'); // Removed custom disabled class
               try {
                 const res = await fetch(CONFIG.GAS_URL, {
                   method: 'POST',
@@ -613,7 +615,6 @@
                 showAlert('ข้อผิดพลาด', 'ไม่สามารถเช็คอินได้ กรุณาลองใหม่');
               } finally {
                 checkinBtn.disabled = false; // Re-enable if needed, though router() will re-render
-                // checkinBtn.classList.remove('disabled'); // Removed custom disabled class
               }
             };
           } else {
@@ -660,13 +661,13 @@
       // NEW: Check cache first for events
       if (dataCache.events) {
         events = dataCache.events;
-        console.log("Loading events from cache.");
+        console.log("Loading events from frontend cache.");
       } else {
         try {
-          console.log("Fetching events from API.");
+          console.log("Fetching events from API (GAS cache or Sheet).");
           const eventsRes = await fetch(`${CONFIG.GAS_URL}?action=getEvents`);
           events = await eventsRes.json();
-          dataCache.events = events; // Store in cache
+          dataCache.events = events; // Store in frontend cache
         } catch (error) {
           console.error("Error fetching events:", error);
           if (eventListEl) eventListEl.innerHTML = `<div class="text-center text-red-500 py-8">เกิดข้อผิดพลาดในการโหลดกิจกรรม</div>`;
@@ -709,22 +710,21 @@
       function disableJoinBtn() {
         if (joinBtn) {
           joinBtn.disabled = true;
-          // joinBtn.classList.add("disabled"); // Removed custom disabled class
         }
       }
 
       let eventData;
-      // NEW: Check cache first for event detail
+      // NEW: Check frontend cache first for event detail
       if (dataCache.eventDetails[eventId]) {
         eventData = dataCache.eventDetails[eventId];
-        console.log(`Loading event detail for ${eventId} from cache.`);
+        console.log(`Loading event detail for ${eventId} from frontend cache.`);
       } else {
         try {
           console.log(`Fetching event detail for ${eventId} from API.`);
           const eRes = await fetch(`${CONFIG.GAS_URL}?action=getEventById&id=${eventId}`);
           eventData = await eRes.json();
           if (!eventData.error) {
-            dataCache.eventDetails[eventId] = eventData; // Store in cache if no error
+            dataCache.eventDetails[eventId] = eventData; // Store in frontend cache if no error
           }
         } catch (error) {
           console.error("Error fetching event detail:", error);
@@ -771,7 +771,6 @@
               if (!confirmed) return;
 
               joinBtn.disabled = true; // Disable button immediately
-              // joinBtn.classList.add('disabled'); // Removed custom disabled class
               try {
                 const res = await fetch(CONFIG.GAS_URL, {
                   method: "POST",
@@ -796,7 +795,6 @@
                 showAlert('ข้อผิดพลาด', 'ไม่สามารถเข้าร่วมกิจกรรมได้ กรุณาลองใหม่');
               } finally {
                 joinBtn.disabled = false; // Re-enable on error
-                // joinBtn.classList.remove('disabled'); // Removed custom disabled class
               }
             };
           }
@@ -832,7 +830,6 @@
         if (updateBtn) {
           updateBtn.onclick = async () => {
             updateBtn.disabled = true;
-            // updateBtn.classList.add('disabled'); // Removed custom disabled class
             try {
               const body = {
                 action: 'updateProfile',
@@ -853,7 +850,6 @@
               showAlert('ข้อผิดพลาด', 'ไม่สามารถอัปเดตข้อมูลได้ กรุณาลองใหม่');
             } finally {
               updateBtn.disabled = false;
-              // updateBtn.classList.remove('disabled'); // Removed custom disabled class
             }
           };
         }
@@ -862,7 +858,7 @@
         showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
         // Clear or disable inputs on error
         if (profileIdEl) profileIdEl.value = 'โหลดข้อมูลล้มเหลว';
-        if (updateBtn) { updateBtn.disabled = true; /* updateBtn.classList.add('disabled'); */ }
+        if (updateBtn) { updateBtn.disabled = true; }
       }
     }
 
@@ -871,16 +867,16 @@
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
 
       let items;
-      // NEW: Check cache first for redeem items
+      // NEW: Check frontend cache first for redeem items
       if (dataCache.redeemItems) {
         items = dataCache.redeemItems;
-        console.log("Loading redeem items from cache.");
+        console.log("Loading redeem items from frontend cache.");
       } else {
         try {
-          console.log("Fetching redeem items from API.");
+          console.log("Fetching redeem items from API (GAS cache or Sheet).");
           const itemsRes = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
           items = await itemsRes.json();
-          dataCache.redeemItems = items; // Store in cache
+          dataCache.redeemItems = items; // Store in frontend cache
         } catch (error) {
           console.error("Error fetching redeem items:", error);
           if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
@@ -923,7 +919,6 @@
             if (!confirmed) return;
 
             btn.disabled = true; // Disable button immediately
-            // btn.classList.add('disabled'); // Removed custom disabled class
             try {
               const res = await fetch(CONFIG.GAS_URL, {
                 method: 'POST',
@@ -941,7 +936,6 @@
               showAlert('ข้อผิดพลาด', 'ไม่สามารถแลกของรางวัลได้ กรุณาลองใหม่');
             } finally {
               btn.disabled = false; // Re-enable on error
-              // btn.classList.remove('disabled'); // Removed custom disabled class
             }
           });
         });
@@ -967,7 +961,6 @@
           if (!confirmed) return;
 
           transferBtn.disabled = true; // Disable button immediately
-          // transferBtn.classList.add('disabled'); // Removed custom disabled class
           try {
             const res = await fetch(CONFIG.GAS_URL, {
               method: 'POST',
@@ -986,7 +979,6 @@
             showAlert("ข้อผิดพลาด", "ไม่สามารถโอนได้ ลองอีกครั้ง");
           } finally {
             transferBtn.disabled = false; // Re-enable
-            // transferBtn.classList.remove('disabled'); // Removed custom disabled class
           }
         };
       }
@@ -1012,7 +1004,10 @@
         // Group items by name and count
         const itemCounts = {};
         ownedItems.forEach(item => {
-          itemCounts[item.detail] = (itemCounts[item.detail] || 0) + 1;
+          // Use item.detail (e.g., "แลก: ของรางวัล A") as key
+          // You might want to strip "แลก: " prefix if you only want the item name
+          const itemName = item.detail.startsWith('แลก: ') ? item.detail.substring(5) : item.detail;
+          itemCounts[itemName] = (itemCounts[itemName] || 0) + 1;
         });
 
         warehouseListEl.innerHTML = Object.entries(itemCounts).map(([name, count]) => `
@@ -1109,7 +1104,6 @@
 
         if (btn) {
           btn.disabled = true;
-          // btn.classList.add("disabled"); // Removed custom disabled class
         }
         try {
           const res = await fetch(CONFIG.GAS_URL, {
@@ -1135,7 +1129,6 @@
         } finally {
           if (btn) {
             btn.disabled = false; // Re-enable on error
-            // btn.classList.remove('disabled'); // Removed custom disabled class
           }
         }
       }
