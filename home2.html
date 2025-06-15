@@ -322,8 +322,7 @@
     </div>
   </template>
 
-
-  <script>
+<script>
     // Global LIFF status and user info
     let liffInitialized = false;
     const userState = {
@@ -401,21 +400,20 @@
         return false;
       }
 
-      userState.profile = await liff.getProfile();
-      userState.lineId = userState.profile.userId;
+      const profile = await liff.getProfile();
+      userLineId = profile.userId; // Defined globally here for convenience
+      userState.lineId = userLineId; // Assign to userState
 
-      dpEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
-      dpEl.alt = `รูปโปรไฟล์ของ ${userState.profile.displayName}`;
+      dpEl.src = profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
+      dpEl.alt = `รูปโปรไฟล์ของ ${profile.displayName}`;
 
       pointValEl.textContent = '0';
       try {
-        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
         const userRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getUserInfo&lineId=${userState.lineId}`);
         const userData = await userRes.json();
 
         if (!userData || !userData.name || userData.isRegistered === false) {
           console.log("User not registered. Redirecting to register.html");
-          // NOTE: ตรวจสอบว่า register.html ของคุณก็ชี้ไปที่ Cloud Functions แล้วเช่นกัน
           window.location.href = 'register.html';
           return false;
         }
@@ -426,7 +424,6 @@
         try {
           console.log("Preloading initial common data (events, items)...");
           const [eventsRes, redeemRes] = await Promise.all([
-            // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
             fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getEvents`),
             fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getItems`)
           ]);
@@ -534,7 +531,6 @@
 
       try {
         const [checkRes, histRes] = await Promise.all([
-          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
           fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=checkinStatus&lineId=${userState.lineId}`),
           fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`)
         ]);
@@ -548,12 +544,15 @@
             checkinBtn.onclick = async () => {
               checkinBtn.disabled = true;
               try {
-                // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
                 const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
                   method: 'POST',
+                  // *** สำคัญ: เพิ่ม headers นี้ ***
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
                   body: JSON.stringify({ action: "dailyCheckin", lineId: userState.lineId })
                 });
-                const text = await res.text(); // หรือ res.json() ถ้า Cloud Function ส่งกลับเป็น JSON
+                const text = await res.text();
                 showAlert('เช็คอินสำเร็จ', text, () => {
                   if (text.includes("สำเร็จ")) {
                     updatePointsInHeader(userState.points + 1);
@@ -614,7 +613,6 @@
       } else {
         try {
           console.log("Fetching events from API (Cloud Function).");
-          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
           const eventsRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getEvents`);
           events = await eventsRes.json();
           dataCache.events = events;
@@ -670,7 +668,6 @@
       } else {
         try {
           console.log(`Fetching event detail for ${eventId} from API (Cloud Function).`);
-          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
           const eRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getEventById&id=${eventId}`);
           eventData = await eRes.json();
           if (!eventData.error) {
@@ -690,7 +687,6 @@
       // Always re-fetch history for join status
       let historyList = [];
       try {
-        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
         const hRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`);
         historyList = await hRes.json();
       } catch (error) {
@@ -722,9 +718,12 @@
 
               joinBtn.disabled = true;
               try {
-                // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
                 const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
                   method: "POST",
+                  // *** สำคัญ: เพิ่ม headers นี้ ***
+                  headers: {
+                      'Content-Type': 'application/json',
+                  },
                   body: JSON.stringify({
                     action: "joinEvent",
                     lineId: userState.lineId,
@@ -767,7 +766,6 @@
 
       // Always re-fetch profile info, as it can be updated by the user
       try {
-        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
         const uRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getUserInfo&lineId=${userState.lineId}`);
         const uData = await uRes.json();
 
@@ -792,9 +790,12 @@
                 address: profileAddressEl.value,
                 note: profileNoteEl.value
               };
-              // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
               const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
                 method: 'POST',
+                // *** สำคัญ: เพิ่ม headers นี้ ***
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify(body)
               });
               showAlert("สถานะ", await res.text());
@@ -825,7 +826,6 @@
       } else {
         try {
           console.log("Fetching redeem items from API (Cloud Function).");
-          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
           const itemsRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getItems`);
           items = await itemsRes.json();
           dataCache.redeemItems = items;
@@ -870,9 +870,12 @@
 
             btn.disabled = true;
             try {
-              // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
               const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
                 method: 'POST',
+                // *** สำคัญ: เพิ่ม headers นี้ ***
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({ action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point })
               });
               const text = await res.text();
@@ -905,7 +908,7 @@
 
           if (!toId) { showAlert("ข้อผิดพลาด", "กรุณากรอก LINE ID เพื่อน / เบอร์โทรปลายทาง"); return; }
           if (isNaN(amt) || amt <= 0) { showAlert("ข้อผิดพลาด", "กรุณากรอกจำนวนพ้อยต์ให้ถูกต้อง"); return; }
-          if (toId === userState.lineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนพ้อยต์ให้ตัวเอง"); return; }
+          if (toId === userState.lineId) { showAlert("ข้อผิดพลาด", "ไม่สามารถโอนพ้อยต์ให้ตัวเองได้"); return; }
           if (userState.points < amt) { showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับโอน ${amt} พ้อยต์`); return; }
 
           const confirmed = await showConfirm("ยืนยันโอน", `คุณต้องการโอน ${amt} พ้อยต์ ให้กับ ${toId} ใช่หรือไม่?`);
@@ -913,9 +916,12 @@
 
           transferBtn.disabled = true;
           try {
-            // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
             const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
               method: 'POST',
+              // *** สำคัญ: เพิ่ม headers นี้ ***
+              headers: {
+                  'Content-Type': 'application/json',
+              },
               body: JSON.stringify({ action: 'transferPoints', from: userState.lineId, to: toId, amount: amt })
             });
             const txt = await res.text();
@@ -942,7 +948,6 @@
 
       // Always re-fetch warehouse items because they depend on redemption history
       try {
-        // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
         const res = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`);
         const allHistory = await res.json();
         const ownedItems = allHistory.filter(i => i.type === 'redeem');
@@ -987,7 +992,6 @@
       async function hasReceived(code) {
         // Always re-fetch history to check if code has been received
         try {
-          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
           const res = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getHistory&lineId=${userState.lineId}`);
           const historyList = await res.json();
           return historyList.some(item =>
@@ -1011,7 +1015,6 @@
         }
         scannedCode = code;
         try {
-          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ GET requests ***
           const eRes = await fetch(`${CONFIG.CLOUD_FUNCTION_GET_URL}?action=getCodeById&id=${code}`);
           const eData = await eRes.json();
 
@@ -1055,9 +1058,12 @@
           btn.disabled = true;
         }
         try {
-          // *** เปลี่ยน URL ไปยัง Cloud Function สำหรับ POST requests ***
           const res = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
             method: "POST",
+            // *** สำคัญ: เพิ่ม headers นี้ ***
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({
               action: "joinCode",
               lineId: userState.lineId,
@@ -1119,3 +1125,4 @@
 </body>
 
 </html>
+
