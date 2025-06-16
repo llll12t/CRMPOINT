@@ -293,12 +293,13 @@
       pointsChanged: false, // Flag to indicate if points have changed since last render
     };
 
-    // Global Data Cache for frequently accessed, relatively static data
+    // Global Data Cache for frequently accessed data
     const dataCache = {
       events: null, // For getEvents (initEvent)
       redeemItems: null, // For getItems (initRedeem)
       eventDetails: {}, // For initEventDetail, stores {eventId: eventData}
       userProfileFull: null, // For getUserInfo full CRM profile (initProfile)
+      history: null, // For getHistory (dashboard, event detail, warehouse, addpoint)
     };
 
     // Common Alert & Confirm Dialogs (references to elements are global now)
@@ -382,10 +383,14 @@
       pointValEl.textContent = '0'; // Show loading state for points
 
       try {
-        // Fetch initial user points and registration status (always fresh for critical info)
-        console.log("Fetching initial user info (points, registration status)...");
-        const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+        // Fetch user info (points, registration status) AND history concurrently for initial Dashboard display
+        console.log("Fetching initial user info and history concurrently...");
+        const [userRes, histRes] = await Promise.all([
+          fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`),
+          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
+        ]);
         const userData = await userRes.json();
+        const historyData = await histRes.json(); // Get history data here
 
         if (!userData || !userData.name || userData.isRegistered === false) { 
           console.log("User not registered. Redirecting to register.html");
@@ -395,30 +400,10 @@
 
         userState.points = parseInt(userData.point || 0, 10);
         pointValEl.textContent = userState.points;
-
-        // NEW: Preload common data that doesn't change frequently.
-        // This runs AFTER user info and registration are confirmed.
-        try {
-          if (!dataCache.events || !dataCache.redeemItems) {
-            console.log("Preloading initial common data (events, items) after user info...");
-            const [eventsRes, redeemRes] = await Promise.all([
-              fetch(`${CONFIG.GAS_URL}?action=getEvents`),
-              fetch(`${CONFIG.GAS_URL}?action=getItems`)
-            ]);
-
-            dataCache.events = await eventsRes.json();
-            dataCache.redeemItems = await redeemRes.json();
-            console.log("Initial data preloaded successfully.");
-          } else {
-            console.log("Events and Redeem Items already in cache, skipping preload.");
-          }
-        } catch (preloadError) {
-          console.warn("Failed to preload some initial data. Views will fetch on demand.", preloadError);
-          // If preload fails, the individual init functions will handle fetching.
-        }
+        dataCache.history = historyData; // Store initial history in cache
 
       } catch (error) {
-        console.error("Failed to fetch initial user points or check registration:", error);
+        console.error("Failed to fetch initial user points or history:", error);
         pointValEl.textContent = 'N/A'; // Indicate error
         showAlert("ข้อผิดพลาด", "ไม่สามารถโหลดข้อมูลผู้ใช้ได้ กรุณาลองใหม่");
         return false;
@@ -510,6 +495,28 @@
       userState.pointsChanged = true; // Set flag when points change
     }
 
+    /**
+     * Fetches history data, either from cache if points haven't changed, or freshly from API.
+     * @returns {Array} history data.
+     */
+    async function getFreshOrCachedHistory() {
+      if (userState.pointsChanged || !dataCache.history) {
+        console.log("Points changed or no history cached, fetching fresh history.");
+        try {
+          const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
+          dataCache.history = await hRes.json();
+        } catch (e) {
+          console.error("Error fetching history:", e);
+          showAlert('ข้อผิดพลาด', 'ไม่สามารถโหลดประวัติได้');
+          dataCache.history = []; // Default to empty array on error
+        }
+      } else {
+        console.log("Using cached history.");
+      }
+      return dataCache.history;
+    }
+
+
     // --------- Init functions for each view ---------
 
     async function initDashboard() {
@@ -521,13 +528,15 @@
       if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
       try {
-        // Always re-fetch check-in status and history for Dashboard
+        // For Dashboard, always re-fetch check-in status and history for real-time updates
         console.log("Fetching fresh check-in status and history for Dashboard...");
         const [checkRes, histRes] = await Promise.all([
           fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`),
-          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
+          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`) // Always fresh for dashboard
         ]);
         const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
+
+        dataCache.history = history; // Update the cache with the freshest history
 
         // Check-in
         if (checkinBox && todayDateEl && checkinBtn) {
@@ -547,6 +556,8 @@
                     updatePointsInHeader(userState.points + 1); 
                     // No need to router() here, just update UI
                     checkinBox.classList.add('hidden'); // Hide checkin after success
+                    // Manually update history display if points changed
+                    initDashboard(); // Re-render dashboard to show updated history
                   }
                 });
               } catch (e) {
@@ -597,7 +608,7 @@
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
       let events;
-      // Check cache first for events (preloaded during app init)
+      // Check cache first for events (lazy loaded on first access to #event)
       if (dataCache.events) {
         events = dataCache.events;
         console.log("Loading events from frontend cache.");
@@ -676,17 +687,9 @@
         }
       }
 
-      // Always re-fetch history for join status (because history can change)
-      console.log("Fetching fresh history for event join status...");
-      let historyList = [];
-      try {
-        const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
-        historyList = await hRes.json();
-      } catch (error) {
-        console.error("Error fetching history for event detail:", error);
-        // Do not block rendering, but join status might be inaccurate
-      }
-
+      // Get history for join status (from cache or fresh if points changed)
+      const historyList = await getFreshOrCachedHistory();
+      
       if (eventData.error) {
         if (titleEl) titleEl.textContent = "ไม่พบกิจกรรม";
         if (descEl) descEl.textContent = eventData.error;
@@ -829,7 +832,7 @@
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
 
       let items;
-      // Check frontend cache first for redeem items (preloaded during app init)
+      // Check frontend cache first for redeem items (lazy loaded on first access to #redeem)
       if (dataCache.redeemItems) {
         items = dataCache.redeemItems;
         console.log("Loading redeem items from frontend cache.");
@@ -949,11 +952,10 @@
       const warehouseListEl = document.getElementById('warehouseList');
       if (warehouseListEl) warehouseListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
-      // Always re-fetch warehouse items because they depend on redemption history
-      console.log("Fetching fresh history for warehouse items...");
+      // Get history for owned items (from cache or fresh if points changed)
+      const allHistory = await getFreshOrCachedHistory();
+      
       try {
-        const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
-        const allHistory = await res.json();
         const ownedItems = allHistory.filter(i => i.type === 'redeem');
 
         if (!ownedItems.length) {
@@ -995,19 +997,11 @@
       let codePoint = 0;
 
       async function hasReceived(code) {
-        // Always re-fetch history to check if code has been received
-        console.log("Fetching fresh history to check if code was received...");
-        try {
-          const res = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
-          const historyList = await res.json();
-          return historyList.some(item =>
-            item.type === 'code' && item.eventId === code // eventId for codes is the code itself
-          );
-        } catch (e) {
-          console.error("Failed to check history for code:", e);
-          showAlert('ข้อผิดพลาด', 'ไม่สามารถตรวจสอบประวัติการรับโค้ดได้');
-          return true; // Assume received to prevent re-processing on network error
-        }
+        // Get history to check if code has been received (from cache or fresh if points changed)
+        const historyList = await getFreshOrCachedHistory();
+        return historyList.some(item =>
+          item.type === 'code' && item.eventId === code // eventId for codes is the code itself
+        );
       }
 
       async function processCode(code) {
