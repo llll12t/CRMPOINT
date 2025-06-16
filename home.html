@@ -451,8 +451,9 @@
         showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลหน้านี้ได้ กรุณาลองใหม่อีกครั้ง');
       }
 
-      // Reset pointsChanged flag after routing is complete
-      userState.pointsChanged = false; 
+      // Removed `userState.pointsChanged = false;` from here.
+      // It's now reset inside `getFreshOrCachedHistory` after a successful fetch
+      // triggered by `pointsChanged`.
     }
 
     // --- Common Helper Functions ---
@@ -497,18 +498,23 @@
 
     /**
      * Fetches history data, either from cache if points haven't changed, or freshly from API.
+     * It also resets userState.pointsChanged after a fresh fetch.
      * @returns {Array} history data.
      */
     async function getFreshOrCachedHistory() {
-      if (userState.pointsChanged || !dataCache.history) {
-        console.log("Points changed or no history cached, fetching fresh history.");
+      // If points have changed, OR if history hasn't been loaded yet, fetch fresh.
+      // dataCache.history === null check handles the very first time history is needed after initial app load.
+      if (userState.pointsChanged || dataCache.history === null) {
+        console.log("Fetching fresh history (points changed or initial load / cache empty).");
         try {
           const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
           dataCache.history = await hRes.json();
+          userState.pointsChanged = false; // Reset the flag AFTER successful fetch
         } catch (e) {
           console.error("Error fetching history:", e);
           showAlert('ข้อผิดพลาด', 'ไม่สามารถโหลดประวัติได้');
           dataCache.history = []; // Default to empty array on error
+          userState.pointsChanged = false; // Reset even on error to avoid looping unnecessarily
         }
       } else {
         console.log("Using cached history.");
@@ -528,15 +534,12 @@
       if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
       try {
-        // For Dashboard, always re-fetch check-in status and history for real-time updates
-        console.log("Fetching fresh check-in status and history for Dashboard...");
-        const [checkRes, histRes] = await Promise.all([
-          fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`),
-          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`) // Always fresh for dashboard
-        ]);
-        const [checkData, history] = await Promise.all([checkRes.json(), histRes.json()]);
+        // For Dashboard, we always need the check-in status fresh.
+        const checkRes = await fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`);
+        const checkData = await checkRes.json();
 
-        dataCache.history = history; // Update the cache with the freshest history
+        // Get history for Dashboard (will be fresh if points changed or initial load)
+        const history = await getFreshOrCachedHistory();
 
         // Check-in
         if (checkinBox && todayDateEl && checkinBtn) {
@@ -554,10 +557,10 @@
                 showAlert('เช็คอินสำเร็จ', text, () => {
                   if (text.includes("สำเร็จ")) {
                     updatePointsInHeader(userState.points + 1); 
-                    // No need to router() here, just update UI
                     checkinBox.classList.add('hidden'); // Hide checkin after success
-                    // Manually update history display if points changed
-                    initDashboard(); // Re-render dashboard to show updated history
+                    // Manually re-render dashboard to show updated history
+                    // getFreshOrCachedHistory() will fetch fresh history because pointsChanged is true
+                    initDashboard(); 
                   }
                 });
               } catch (e) {
