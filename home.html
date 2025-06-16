@@ -450,10 +450,6 @@
         console.error(`Error initializing view ${route.tpl}:`, error);
         showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลหน้านี้ได้ กรุณาลองใหม่อีกครั้ง');
       }
-
-      // Removed `userState.pointsChanged = false;` from here.
-      // It's now reset inside `getFreshOrCachedHistory` after a successful fetch
-      // triggered by `pointsChanged`.
     }
 
     // --- Common Helper Functions ---
@@ -497,13 +493,44 @@
     }
 
     /**
+     * Helper function to render history list into the DOM.
+     * @param {Array} historyDataToRender - The history array to display.
+     */
+    function renderHistoryList(historyDataToRender) {
+      const historyListEl = document.getElementById('historyList');
+      if (!historyListEl) return;
+
+      // Use slice().reverse() to avoid modifying the original cached array
+      const latest10 = historyDataToRender.slice().reverse().slice(0, 10);
+      if (latest10.length === 0) {
+        historyListEl.innerHTML = `<li class="text-center text-gray-400 py-4">ไม่มีประวัติการทำรายการ</li>`;
+      }
+      else {
+        historyListEl.innerHTML = latest10.map(item => {
+          const isDebit = ['redeem', 'transfer_out'].includes(item.type);
+          const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
+          const sign = isDebit ? '-' : '+';
+          return `
+            <li class="flex justify-between items-center">
+              <div>
+                <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
+                <div class="text-xs text-gray-400 mt-1">${item.date}</div>
+              </div>
+              <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
+                ${sign} ${item.amount}
+              </div>
+            </li>`;
+        }).join("");
+      }
+    }
+
+    /**
      * Fetches history data, either from cache if points haven't changed, or freshly from API.
      * It also resets userState.pointsChanged after a fresh fetch.
      * @returns {Array} history data.
      */
     async function getFreshOrCachedHistory() {
       // If points have changed, OR if history hasn't been loaded yet, fetch fresh.
-      // dataCache.history === null check handles the very first time history is needed after initial app load.
       if (userState.pointsChanged || dataCache.history === null) {
         console.log("Fetching fresh history (points changed or initial load / cache empty).");
         try {
@@ -531,17 +558,29 @@
       const todayDateEl = document.getElementById('todayDate');
       const checkinBtn = document.getElementById('checkinBtn');
 
-      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5); // Show skeleton
+      // --- NEW LOGIC FOR HISTORY DISPLAY ---
+      // If history is already in cache AND points haven't changed, render immediately
+      if (dataCache.history && !userState.pointsChanged) {
+        console.log("Dashboard: Rendering history from cache immediately to avoid flicker.");
+        renderHistoryList(dataCache.history);
+      } else {
+        // Otherwise, show skeleton while we wait for fresh data
+        if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5);
+        console.log("Dashboard: Showing skeleton for history, then fetching fresh.");
+      }
 
       try {
-        // For Dashboard, we always need the check-in status fresh.
+        // Fetch check-in status (always fresh for dashboard)
         const checkRes = await fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`);
         const checkData = await checkRes.json();
 
-        // Get history for Dashboard (will be fresh if points changed or initial load)
-        const history = await getFreshOrCachedHistory();
+        // Get history - this call will handle fetching fresh if pointsChanged is true, or use cache otherwise.
+        const history = await getFreshOrCachedHistory(); 
+        
+        // After history is obtained (either from cache or fresh fetch), render it again to ensure latest data is shown
+        renderHistoryList(history); // This will update the display if skeleton was shown or if data changed
 
-        // Check-in
+        // Check-in logic
         if (checkinBox && todayDateEl && checkinBtn) {
           if (!checkData.checkedInToday) {
             checkinBox.classList.remove('hidden');
@@ -558,8 +597,7 @@
                   if (text.includes("สำเร็จ")) {
                     updatePointsInHeader(userState.points + 1); 
                     checkinBox.classList.add('hidden'); // Hide checkin after success
-                    // Manually re-render dashboard to show updated history
-                    // getFreshOrCachedHistory() will fetch fresh history because pointsChanged is true
+                    // Manually re-render dashboard which will trigger fresh history fetch due to pointsChanged=true
                     initDashboard(); 
                   }
                 });
@@ -575,30 +613,6 @@
           }
         }
 
-        // History
-        if (historyListEl) {
-          const latest10 = history.reverse().slice(0, 10);
-          if (latest10.length === 0) {
-            historyListEl.innerHTML = `<li class="text-center text-gray-400 py-4">ไม่มีประวัติการทำรายการ</li>`;
-          }
-          else {
-            historyListEl.innerHTML = latest10.map(item => {
-              const isDebit = ['redeem', 'transfer_out'].includes(item.type);
-              const badge = isDebit ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-              const sign = isDebit ? '-' : '+';
-              return `
-                <li class="flex justify-between items-center">
-                  <div>
-                    <div class="font-medium text-gray-800 text-sm">${item.detail}</div>
-                    <div class="text-xs text-gray-400 mt-1">${item.date}</div>
-                  </div>
-                  <div class="text-sm font-bold px-4 py-1.5 rounded-full ${badge}">
-                    ${sign} ${item.amount}
-                  </div>
-                </li>`;
-            }).join("");
-          }
-        }
       } catch (error) {
         console.error("Error in initDashboard:", error);
         if (historyListEl) historyListEl.innerHTML = `<li class="text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</li>`;
