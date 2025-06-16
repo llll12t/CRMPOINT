@@ -13,56 +13,29 @@
   <!-- DaisyUI CDN (includes Tailwind CSS) -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
   <style>
-    .hidden {
-      display: none !important;
-    }
-    @keyframes pulseCustom {
-
-      0%,
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-
-      50% {
-        transform: scale(1.02);
-        opacity: 0.6;
-      }
-    }
-
-    .pulse-custom {
-      animation: pulseCustom 1.2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-opacity {
-
-      0%,
-      100% {
-        opacity: 0.5;
-      }
-
-      50% {
-        opacity: 1;
-      }
-    }
-
-    .loading-card-animation {
-      animation: pulse-opacity 1.5s infinite ease-in-out;
-    }
-.glass{
-    background: rgba(0, 0, 0, 0.29);
-    border-radius: 16px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(8.1px);
-    -webkit-backdrop-filter: blur(8.1px);
-    border: 1px solid rgba(0, 0, 0, 0.3);}
+    .hidden { display: none !important; }
+    @keyframes pulseCustom { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.02); opacity: 0.6; } }
+    .pulse-custom { animation: pulseCustom 1.2s ease-in-out infinite; }
+    @keyframes pulse-opacity {  0%, 100% { opacity: 0.5;  } 50% { opacity: 1;  } }
+    .loading-card-animation { animation: pulse-opacity 1.5s infinite ease-in-out; }
+    .glass-white{
+        background: rgba(255, 255, 255, 0.29);
+        border-radius: 16px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(8.1px);
+        -webkit-backdrop-filter: blur(8.1px);
+        border: 1px solid rgba(255, 255, 255, 0.3);}
+    .glass-black{
+        background: rgba(0, 0, 0, 0.29);
+        border-radius: 16px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(8.1px);
+        -webkit-backdrop-filter: blur(8.1px);
+        border: 1px solid rgba(0, 0, 0, 0.3);}
   </style>
 </head>
-
 <body class="bg-gradient-to-b from-neutral via-white to-white min-h-screen relative bg-fixed p-6"> <!-- Changed bg-gray-50 to bg-white -->
-
   <div class="flex justify-between items-center mb-6">
     <h2 id="pageTitle" class="text-xl font-bold text-white">กำลังโหลด...</h2>
     <div class="bg-gray-100 rounded-full flex items-center p-1 space-x-2">
@@ -80,11 +53,9 @@
       <img id="lineDisplayPicture" class="mask mask-circle w-10 h-10 rounded-full object-cover border-2 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" />
     </div>
   </div>
-
   <div id="app">
     <div class="text-center text-gray-100 py-8">กำลังโหลดเนื้อหา...</div>
   </div>
-
   <dialog id="customAlertDialog" class="modal">
     <div class="modal-box text-center">
       <h3 id="customAlertTitle" class="font-bold text-lg mb-3"></h3>
@@ -94,7 +65,6 @@
       </div>
     </div>
   </dialog>
-
   <dialog id="customConfirmDialog" class="modal">
     <div class="modal-box text-center">
       <h3 id="customConfirmTitle" class="font-bold text-lg mb-3"></h3>
