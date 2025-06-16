@@ -47,7 +47,13 @@
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
         </svg>
       </div>
-      <div id="pointVal" class="font-bold text-black text-lg px-2">0</div> 
+      <!-- ปรับปรุงตรงนี้: เพิ่ม div สำหรับ level และ progress bar -->
+      <div class="flex flex-col items-end space-y-0.5">
+        <div id="pointVal" class="font-bold text-black text-lg">0</div> 
+        <div id="levelDisplay" class="font-bold text-black text-sm">กำลังโหลด...</div>
+        <progress id="progressBar" class="progress progress-warning w-24 sm:w-32" value="0" max="100"></progress>
+        <span id="pointsToNextLevel" class="text-xs text-gray-700 hidden sm:block"></span>
+      </div>
       <img id="lineDisplayPicture" class="mask mask-circle w-10 h-10 rounded-full object-cover border-2 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" />
     </div>
   </div>
@@ -98,7 +104,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6"  fill="none">
           <path
             d="M2.5 8.18677C2.60406 6.08705 2.91537 4.77792 3.84664 3.84664C4.77792 2.91537 6.08705 2.60406 8.18677 2.5M21.5 8.18677C21.3959 6.08705 21.0846 4.77792 20.1534 3.84664C19.2221 2.91537 17.9129 2.60406 15.8132 2.5M15.8132 21.5C17.9129 21.3959 19.2221 21.0846 20.1534 20.1534C21.0846 19.2221 21.3959 17.9129 21.5 15.8132M8.18676 21.5C6.08705 21.3959 4.77792 21.0846 3.84664 20.1534C2.91537 19.2221 2.60406 17.9129 2.5 15.8132"
-            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
           <path d="M2.49986 12H21.4999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
           <path
             d="M6 12C6 8.68629 8.68629 6 12 6C12 7.65685 13.3431 9 15 9C15.6755 9 16.2989 8.77672 16.8004 8.39993C17.5536 9.40273 18 10.6492 18 12M17.1973 15C16.1599 16.7934 14.2208 18 12 18C9.77915 18 7.84012 16.7934 6.80269 15"
@@ -195,41 +201,50 @@
   </template>
 
   <!-- Template: Profile -->
+  <!-- ปรับปรุง Template Profile ตรงนี้ -->
   <template id="view-profile">
     <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Profile ID</label>
-        <input id="profileId" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+      <div class="glass-white p-6 rounded-lg text-center shadow-md">
+        <img id="profileDisplayPicture" class="mask mask-circle w-24 h-24 mx-auto mb-4 rounded-full object-cover border-4 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" alt="รูปโปรไฟล์" />
+        <div class="text-2xl font-bold mb-2" id="profileDisplayName">กำลังโหลด...</div>
+        <div class="text-lg font-bold mb-2" id="profileLevelDisplay"></div>
+        <progress id="profileProgressBar" class="progress progress-warning w-full" value="0" max="100"></progress>
+        <div id="profilePointsToNextLevel" class="text-sm text-gray-700 mt-1"></div>
+        <div class="font-bold text-xl mt-4">รวมพ้อยต์: <span id="profileTotalPoints">0</span></div>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ระดับ</label>
-        <input id="profileLevel" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+
+      <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">LINE ID</label>
+          <input id="profileLineId" readonly class="input input-bordered input-neutral w-full cursor-not-allowed text-gray-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
+          <input id="profileName" class="input input-bordered input-neutral w-full" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
+          <input id="profilePhone" class="input input-bordered input-neutral w-full" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+          <input id="profileEmail" class="input input-bordered input-neutral w-full" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
+          <input id="profileAddress" class="input input-bordered input-neutral w-full" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
+          <input id="profileNote" class="input input-bordered input-neutral w-full" />
+        </div>
+        <button id="updateProfileBtn" class="btn btn-neutral w-full">
+          อัปเดตข้อมูล
+        </button>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
-        <input id="profileName" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
-        <input id="profilePhone" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-        <input id="profileEmail" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
-        <input id="profileAddress" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
-        <input id="profileNote" class="input input-bordered input-neutral w-full" />
-      </div>
-      <button id="updateProfileBtn" class="btn btn-neutral w-full">
-        อัปเดตข้อมูล
-      </button>
     </div>
   </template>
+
 
   <!-- Template: Redeem -->
   <template id="view-redeem">
@@ -291,6 +306,7 @@
       lineId: "",
       points: 0,
       pointsChanged: false, // Flag to indicate if points have changed since last render
+      level: "Member" // เพิ่ม field สำหรับเก็บระดับ
     };
 
     // Global Data Cache for frequently accessed data
@@ -318,6 +334,12 @@
     const pageTitleEl = document.getElementById('pageTitle');
     const pointValEl = document.getElementById('pointVal');
     const dpEl = document.getElementById('lineDisplayPicture');
+
+    // เพิ่ม Global Header Elements สำหรับ Level และ Progress Bar
+    const levelDisplayEl = document.getElementById('levelDisplay');
+    const progressBarEl = document.getElementById('progressBar');
+    const pointsToNextLevelEl = document.getElementById('pointsToNextLevel');
+
 
     // --- Common UI Functions ---
     function showAlert(title, message, cb) {
@@ -383,7 +405,7 @@
       pointValEl.textContent = '0'; // Show loading state for points
 
       try {
-        // Fetch user info (points, registration status) AND history concurrently for initial Dashboard display
+        // Fetch user info (points, registration status, level) AND history concurrently for initial Dashboard display
         console.log("Fetching initial user info and history concurrently...");
         const [userRes, histRes] = await Promise.all([
           fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`),
@@ -399,7 +421,8 @@
         }
 
         userState.points = parseInt(userData.point || 0, 10);
-        pointValEl.textContent = userState.points;
+        userState.level = userData.level || 'Member'; // ดึงระดับจาก Backend
+        updatePointsInHeader(userState.points); // อัปเดต UI ด้วยคะแนนและระดับ
         dataCache.history = historyData; // Store initial history in cache
 
       } catch (error) {
@@ -482,7 +505,51 @@
     }
 
     /**
-     * Updates the global header with user points.
+     * คำนวณระดับและเปอร์เซ็นต์ความคืบหน้าสำหรับแถบแสดงสถานะ
+     * @param {number} currentPoints - คะแนนปัจจุบันของผู้ใช้
+     * @returns {object} { level: string, progressValue: number, pointsToNext: number, nextLevelName: string }
+     */
+    function calculateLevelAndProgress(currentPoints) {
+      let level = 'Member';
+      let currentLevelMin = 0;
+      let nextLevelMin = 5000;
+      let nextLevelName = 'VIP';
+
+      if (currentPoints >= 10000) {
+        level = 'Super';
+        currentLevelMin = 10000;
+        nextLevelMin = currentPoints; // ไม่มีระดับถัดไป, ให้ progress เป็น 100%
+        nextLevelName = '';
+      } else if (currentPoints >= 5000) {
+        level = 'VIP';
+        currentLevelMin = 5000;
+        nextLevelMin = 10000;
+        nextLevelName = 'Super';
+      }
+
+      const pointsInCurrentTier = currentPoints - currentLevelMin;
+      const pointsToNextTier = nextLevelMin - currentLevelMin;
+      let progressValue = 0;
+      let pointsNeeded = 0;
+
+      if (nextLevelName) { // ถ้าไม่ใช่ระดับ Super
+        progressValue = (pointsInCurrentTier / pointsToNextTier) * 100;
+        pointsNeeded = nextLevelMin - currentPoints;
+      } else { // สำหรับระดับ Super
+        progressValue = 100;
+        pointsNeeded = 0;
+      }
+
+      return {
+        level: level,
+        progressValue: Math.min(100, Math.max(0, progressValue)), // Clamp between 0 and 100
+        pointsToNext: pointsNeeded,
+        nextLevelName: nextLevelName
+      };
+    }
+
+    /**
+     * Updates the global header with user points, level, and progress bar.
      * This function should be called after any action that changes points.
      * @param {number} newPoints - The new point value to display.
      */
@@ -490,6 +557,19 @@
       userState.points = newPoints;
       pointValEl.textContent = userState.points;
       userState.pointsChanged = true; // Set flag when points change
+
+      const { level, progressValue, pointsToNext, nextLevelName } = calculateLevelAndProgress(newPoints);
+      userState.level = level; // อัปเดต userState.level ด้วย
+
+      if (levelDisplayEl) levelDisplayEl.textContent = level;
+      if (progressBarEl) progressBarEl.value = progressValue;
+      if (pointsToNextLevelEl) {
+        if (nextLevelName) {
+          pointsToNextLevelEl.textContent = `อีก ${pointsToNext} พ้อยต์ สู่ระดับ ${nextLevelName}`;
+        } else {
+          pointsToNextLevelEl.textContent = `คุณอยู่ในระดับสูงสุดแล้ว!`;
+        }
+      }
     }
 
     /**
@@ -595,9 +675,9 @@
                 const text = await res.text();
                 showAlert('เช็คอินสำเร็จ', text, () => {
                   if (text.includes("สำเร็จ")) {
-                    updatePointsInHeader(userState.points + 1); 
-                    checkinBox.classList.add('hidden'); // Hide checkin after success
-                    // Manually re-render dashboard which will trigger fresh history fetch due to pointsChanged=true
+                    // ไม่ต้อง +1 เอง UI จะถูกอัปเดตจากค่าที่ดึงมาจาก Backend โดยตรงหลังจาก Reload หน้า
+                    // การเรียก initDashboard() อีกครั้งจะทำให้ดึงข้อมูลคะแนนและประวัติล่าสุดมาแสดงผล
+                    // userState.pointsChanged เป็น true จะบังคับให้ดึงข้อมูลใหม่
                     initDashboard(); 
                   }
                 });
@@ -743,11 +823,18 @@
                   })
                 });
                 const text = await res.text();
-                showAlert("สถานะ", text, () => {
+                showAlert("สถานะ", text, async () => { // ใช้ async callback
                   if (text.includes("สำเร็จ")) {
                     if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
                     disableJoinBtn(); // Ensure it stays disabled
-                    updatePointsInHeader(userState.points + eventRewardPoint); // Update points immediately
+                    
+                    // ดึงข้อมูลผู้ใช้ล่าสุดมาอัปเดตคะแนนและระดับใน Header
+                    const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+                    const userData = await userRes.json();
+                    if (userData && !userData.error) {
+                        updatePointsInHeader(parseInt(userData.point || 0, 10));
+                    }
+                    userState.pointsChanged = true; // เพื่อให้ history ถูกดึงใหม่บน dashboard
                   }
                 });
               } catch (e) {
@@ -764,15 +851,47 @@
       if (card) card.classList.remove("hidden");
     }
 
+    // ปรับปรุง initProfile
     async function initProfile() {
-      const profileIdEl = document.getElementById('profileId');
-      const profileLevelEl = document.getElementById('profileLevel');
+      const profileDisplayPictureEl = document.getElementById('profileDisplayPicture');
+      const profileDisplayNameEl = document.getElementById('profileDisplayName');
+      const profileLineIdEl = document.getElementById('profileLineId');
+      const profileLevelDisplayEl = document.getElementById('profileLevelDisplay');
+      const profileProgressBarEl = document.getElementById('profileProgressBar');
+      const profilePointsToNextLevelEl = document.getElementById('profilePointsToNextLevel');
+      const profileTotalPointsEl = document.getElementById('profileTotalPoints');
+
       const profileNameEl = document.getElementById('profileName');
       const profilePhoneEl = document.getElementById('profilePhone');
       const profileEmailEl = document.getElementById('profileEmail');
       const profileAddressEl = document.getElementById('profileAddress');
       const profileNoteEl = document.getElementById('profileNote');
       const updateBtn = document.getElementById('updateProfileBtn');
+
+      if (profileDisplayPictureEl && userState.profile) {
+        profileDisplayPictureEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
+      }
+      if (profileDisplayNameEl && userState.profile) {
+        profileDisplayNameEl.textContent = userState.profile.displayName || 'ผู้ใช้ LINE';
+      }
+      if (profileLineIdEl && userState.lineId) {
+        profileLineIdEl.value = userState.lineId;
+      }
+      if (profileTotalPointsEl) {
+        profileTotalPointsEl.textContent = userState.points.toLocaleString(); // แสดงคะแนนปัจจุบัน
+      }
+
+      // แสดงระดับและ Progress Bar ในหน้า Profile
+      const { level, progressValue, pointsToNext, nextLevelName } = calculateLevelAndProgress(userState.points);
+      if (profileLevelDisplayEl) profileLevelDisplayEl.textContent = level;
+      if (profileProgressBarEl) profileProgressBarEl.value = progressValue;
+      if (profilePointsToNextLevelEl) {
+        if (nextLevelName) {
+          profilePointsToNextLevelEl.textContent = `อีก ${pointsToNext} พ้อยต์ สู่ระดับ ${nextLevelName}`;
+        } else {
+          profilePointsToNextLevelEl.textContent = `คุณอยู่ในระดับสูงสุดแล้ว!`;
+        }
+      }
 
       let uData;
       // Check cache first for full user profile
@@ -788,14 +907,13 @@
         } catch (error) {
           console.error("Error in initProfile:", error);
           showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
-          if (profileIdEl) profileIdEl.value = 'โหลดข้อมูลล้มเหลว';
+          if (profileLineIdEl) profileLineIdEl.value = 'โหลดข้อมูลล้มเหลว';
           if (updateBtn) { updateBtn.disabled = true; }
           return;
         }
       }
       
-      if (profileIdEl) profileIdEl.value = uData.id || '';
-      if (profileLevelEl) profileLevelEl.value = uData.level || '';
+      // อัปเดตฟิลด์ข้อมูลที่สามารถแก้ไขได้
       if (profileNameEl) profileNameEl.value = uData.name || '';
       if (profilePhoneEl) profilePhoneEl.value = uData.phone || '';
       if (profileEmailEl) profileEmailEl.value = uData.email || '';
@@ -906,10 +1024,16 @@
                 body: JSON.stringify({ action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point }) 
               });
               const text = await res.text();
-              showAlert("สถานะ", text, () => {
+              showAlert("สถานะ", text, async () => { // ใช้ async callback
                 if (text.includes("สำเร็จ")) {
-                  updatePointsInHeader(userState.points - point); 
                   btn.textContent = "แลกแล้ว"; 
+                  // ดึงข้อมูลผู้ใช้ล่าสุดมาอัปเดตคะแนนและระดับใน Header
+                  const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+                  const userData = await userRes.json();
+                  if (userData && !userData.error) {
+                      updatePointsInHeader(parseInt(userData.point || 0, 10));
+                  }
+                  userState.pointsChanged = true; // เพื่อให้ history ถูกดึงใหม่บน dashboard
                 }
               });
             } catch (e) {
@@ -948,9 +1072,16 @@
               body: JSON.stringify({ action: 'transferPoints', from: userState.lineId, to: toId, amount: amt })
             });
             const txt = await res.text();
-            showAlert("สถานะการโอน", txt, () => {
+            showAlert("สถานะการโอน", txt, async () => { // ใช้ async callback
               if (/สำเร็จ|เรียบร้อย/.test(txt)) {
-                updatePointsInHeader(userState.points - amt); 
+                // ดึงข้อมูลผู้ใช้ล่าสุดมาอัปเดตคะแนนและระดับใน Header
+                const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+                const userData = await userRes.json();
+                if (userData && !userData.error) {
+                    updatePointsInHeader(parseInt(userData.point || 0, 10));
+                }
+                userState.pointsChanged = true; // เพื่อให้ history ถูกดึงใหม่บน dashboard
+
                 if (transferToEl) transferToEl.value = ''; 
                 if (transferAmountEl) transferAmountEl.value = '';
               }
@@ -1087,10 +1218,16 @@
             })
           });
           const text = await res.text();
-          showAlert("สถานะ", text, () => {
+          showAlert("สถานะ", text, async () => { // ใช้ async callback
             if (text.includes("สำเร็จ")) {
-              updatePointsInHeader(userState.points + codePoint); 
               if (btn) btn.textContent = "รับพ้อยต์แล้ว"; 
+              // ดึงข้อมูลผู้ใช้ล่าสุดมาอัปเดตคะแนนและระดับใน Header
+              const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+              const userData = await userRes.json();
+              if (userData && !userData.error) {
+                  updatePointsInHeader(parseInt(userData.point || 0, 10));
+              }
+              userState.pointsChanged = true; // เพื่อให้ history ถูกดึงใหม่บน dashboard
             }
           });
         } catch (e) {
