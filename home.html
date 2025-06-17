@@ -33,7 +33,7 @@
         border: 1px solid rgba(0, 0, 0, 0.3);}
   </style>
 </head>
-<body class="bg-gradient-to-b from-neutral via-white to-white min-h-screen relative bg-fixed p-6"> <!-- Changed bg-gray-50 to bg-white -->
+<body class="bg-gradient-to-b from-neutral via-white to-white min-h-screen relative bg-fixed p-6">
   <div class="flex justify-between items-center mb-6">
     <h2 id="pageTitle" class="text-xl font-bold text-white">กำลังโหลด...</h2>
     <div class="glass-white rounded-full flex items-center p-1 space-x-2">
@@ -47,6 +47,7 @@
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
         </svg>
       </div>
+      <!-- Header: แสดงเฉพาะคะแนนและรูปโปรไฟล์เท่านั้น -->
       <div id="pointVal" class="font-bold text-black text-lg px-2">0</div> 
       <img id="lineDisplayPicture" class="mask mask-circle w-10 h-10 rounded-full object-cover border-2 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" />
     </div>
@@ -98,7 +99,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="h-6 w-6"  fill="none">
           <path
             d="M2.5 8.18677C2.60406 6.08705 2.91537 4.77792 3.84664 3.84664C4.77792 2.91537 6.08705 2.60406 8.18677 2.5M21.5 8.18677C21.3959 6.08705 21.0846 4.77792 20.1534 3.84664C19.2221 2.91537 17.9129 2.60406 15.8132 2.5M15.8132 21.5C17.9129 21.3959 19.2221 21.0846 20.1534 20.1534C21.0846 19.2221 21.3959 17.9129 21.5 15.8132M8.18676 21.5C6.08705 21.3959 4.77792 21.0846 3.84664 20.1534C2.91537 19.2221 2.60406 17.9129 2.5 15.8132"
-            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
           <path d="M2.49986 12H21.4999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
           <path
             d="M6 12C6 8.68629 8.68629 6 12 6C12 7.65685 13.3431 9 15 9C15.6755 9 16.2989 8.77672 16.8004 8.39993C17.5536 9.40273 18 10.6492 18 12M17.1973 15C16.1599 16.7934 14.2208 18 12 18C9.77915 18 7.84012 16.7934 6.80269 15"
@@ -197,39 +198,66 @@
   <!-- Template: Profile -->
   <template id="view-profile">
     <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Profile ID</label>
-        <input id="profileId" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+      <div class="glass-white p-6 rounded-lg text-center shadow-md">
+        <div class="relative w-24 h-24 mx-auto mb-4">
+            <img id="profileDisplayPicture" class="mask mask-circle w-24 h-24 rounded-full object-cover border-4 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" alt="รูปโปรไฟล์" />
+            <!-- ปุ่มแก้ไข (ดินสอ) -->
+            <button id="editProfileBtn" class="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.389-8.389-2.828-2.828z" />
+                </svg>
+            </button>
+        </div>
+        <div class="text-2xl font-bold mb-2" id="profileDisplayName">กำลังโหลด...</div>
+        <!-- แสดง Level Badge และ Custom Tag เฉพาะในหน้า Profile -->
+        <div class="flex items-center justify-center space-x-2 mb-2"> 
+          <span id="profileLevelBadge" class="badge badge-lg"></span>
+          <span id="profileCustomTagBadge" class="badge badge-lg badge-neutral"></span>
+        </div>
+        <progress id="profileProgressBar" class="progress progress-warning w-full" value="0" max="100"></progress>
+        <div id="profilePointsToNextLevel" class="text-sm text-gray-700 mt-1"></div>
+        <div class="font-bold text-xl mt-4">รวมพ้อยต์: <span id="profileTotalPoints">0</span></div>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ระดับ</label>
-        <input id="profileLevel" readonly class="input input-bordered input-neutral w-full cursor-not-allowed" />
+
+      <!-- ฟอร์มข้อมูลผู้ใช้ - ซ่อนไว้ตอนเริ่มต้น -->
+      <div id="profileFormContainer" class="bg-white p-6 rounded-lg shadow-md space-y-4 hidden">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">LINE ID</label>
+          <input id="profileLineId" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
+          <input id="profileName" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
+          <input id="profilePhone" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+          <input id="profileEmail" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
+          <input id="profileAddress" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
+          <input id="profileNote" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
+        </div>
+        <!-- ปุ่มบันทึกและยกเลิก - ซ่อนไว้ตอนเริ่มต้น -->
+        <div id="profileEditButtons" class="flex space-x-2 hidden">
+            <button id="saveProfileBtn" class="btn btn-neutral flex-1">
+                บันทึกข้อมูล
+            </button>
+            <button id="cancelEditBtn" class="btn btn-outline btn-neutral flex-1">
+                ยกเลิก
+            </button>
+        </div>
       </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
-        <input id="profileName" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
-        <input id="profilePhone" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-        <input id="profileEmail" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
-        <input id="profileAddress" class="input input-bordered input-neutral w-full" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
-        <input id="profileNote" class="input input-bordered input-neutral w-full" />
-      </div>
-      <button id="updateProfileBtn" class="btn btn-neutral w-full">
-        อัปเดตข้อมูล
-      </button>
     </div>
   </template>
+
 
   <!-- Template: Redeem -->
   <template id="view-redeem">
@@ -291,6 +319,8 @@
       lineId: "",
       points: 0,
       pointsChanged: false, // Flag to indicate if points have changed since last render
+      level: "Member", // เพิ่ม field สำหรับเก็บระดับ
+      customTag: ""    // NEW: เพิ่ม field สำหรับเก็บ custom tag
     };
 
     // Global Data Cache for frequently accessed data
@@ -318,6 +348,22 @@
     const pageTitleEl = document.getElementById('pageTitle');
     const pointValEl = document.getElementById('pointVal');
     const dpEl = document.getElementById('lineDisplayPicture');
+
+    // Define styles for each level (for level badges)
+    const LEVEL_STYLES = {
+      'Member': { text: 'Member', class: 'badge-info badge-outline' },
+      'VIP': { text: 'VIP', class: 'badge-primary badge-outline' },
+      'Super': { text: 'Super', class: 'badge-success badge-outline' }
+    };
+
+    // NEW: Define styles for custom tags (optional, can be expanded)
+    const CUSTOM_TAG_STYLES = {
+      'newuser': { class: 'badge-warning', text: 'New User' }, // Example for specific tag
+      'ceo': { class: 'badge-accent', text: 'CEO' },
+      'admin': { class: 'badge-error', text: 'Admin' },
+      // Add more custom tags here if needed
+      'default': { class: 'badge-neutral', text: '' } // Default style if tag not found or empty
+    };
 
     // --- Common UI Functions ---
     function showAlert(title, message, cb) {
@@ -352,6 +398,80 @@
       });
     }
 
+    // Function to calculate level and progress (used by Profile)
+    function calculateLevelAndProgress(currentPoints) {
+      let level = 'Member';
+      let currentLevelMin = 0;
+      let nextLevelMin = 5000;
+      let nextLevelName = 'VIP';
+
+      if (currentPoints >= 10000) {
+        level = 'Super';
+        currentLevelMin = 10000;
+        nextLevelMin = currentPoints; // ไม่มีระดับถัดไป, ให้ progress เป็น 100%
+        nextLevelName = '';
+      } else if (currentPoints >= 5000) {
+        level = 'VIP';
+        currentLevelMin = 5000;
+        nextLevelMin = 10000;
+        nextLevelName = 'Super';
+      }
+
+      const pointsInCurrentTier = currentPoints - currentLevelMin;
+      const pointsToNextTier = nextLevelMin - currentLevelMin;
+      let progressValue = 0;
+      let pointsNeeded = 0;
+
+      if (nextLevelName) { // ถ้าไม่ใช่ระดับ Super
+        progressValue = (pointsInCurrentTier / pointsToNextTier) * 100;
+        pointsNeeded = nextLevelMin - currentPoints;
+      } else { // สำหรับระดับ Super
+        progressValue = 100;
+        pointsNeeded = 0;
+      }
+
+      return {
+        level: level,
+        progressValue: Math.min(100, Math.max(0, progressValue)), // Clamp between 0 and 100
+        pointsToNext: pointsNeeded,
+        nextLevelName: nextLevelName
+      };
+    }
+
+    /**
+     * Helper to set badge text and classes.
+     * @param {HTMLElement} badgeElement - The DOM element for the badge.
+     * @param {string} text - The text to display in the badge.
+     * @param {string} className - DaisyUI class names for the badge (e.g., 'badge badge-sm badge-info').
+     */
+    function setBadgeContent(badgeElement, text, className) {
+        if (!badgeElement) return;
+        badgeElement.textContent = text;
+        badgeElement.className = className;
+        if (text) {
+            badgeElement.classList.remove('hidden');
+        } else {
+            badgeElement.classList.add('hidden'); // Hide if no text
+        }
+    }
+
+    /**
+     * Updates the global header with user points.
+     * This function should be called after any action that changes points or initial load.
+     * @param {number} newPoints - The new point value to display.
+     */
+    function updatePointsInHeader(newPoints) {
+      userState.points = newPoints;
+      pointValEl.textContent = userState.points;
+      userState.pointsChanged = true; // Set flag when points change, to trigger history reload for Dashboard
+      
+      // อัปเดต userState.level และ customTag ทันทีเมื่อคะแนนเปลี่ยนหรือโหลดข้อมูลผู้ใช้ครั้งแรก
+      // เพื่อให้ข้อมูลพร้อมสำหรับหน้า Profile ทันทีที่ถูกเรียก
+      const { level } = calculateLevelAndProgress(newPoints);
+      userState.level = level; 
+      // userState.customTag ถูกตั้งค่าจาก ensureLIFFAndFetchInitialData
+    }
+
     // --- LIFF Initialization & Initial Data Fetch ---
     async function ensureLIFFAndFetchInitialData() {
       if (!liffInitialized) {
@@ -383,32 +503,41 @@
       pointValEl.textContent = '0'; // Show loading state for points
 
       try {
-        // Fetch user info (points, registration status) AND history concurrently for initial Dashboard display
-        console.log("Fetching initial user info and history concurrently...");
-        const [userRes, histRes] = await Promise.all([
+        // Fetch user info (points, registration status, level, customTag), history, events, and redeem items concurrently
+        // This is the main optimization for perceived speed on initial load.
+        console.log("Fetching all initial data concurrently (user info, history, events, redeem items)...");
+        const [userRes, histRes, eventsRes, redeemRes] = await Promise.all([
           fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`),
-          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`)
+          fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`),
+          fetch(`${CONFIG.GAS_URL}?action=getEvents`), // Preload events
+          fetch(`${CONFIG.GAS_URL}?action=getItems`)   // Preload redeem items
         ]);
         const userData = await userRes.json();
-        const historyData = await histRes.json(); // Get history data here
+        const historyData = await histRes.json();
+        dataCache.events = await eventsRes.json(); // Store preloaded events
+        dataCache.redeemItems = await redeemRes.json(); // Store preloaded redeem items
 
         if (!userData || !userData.name || userData.isRegistered === false) { 
           console.log("User not registered. Redirecting to register.html");
           window.location.href = 'register.html';
-          return false; // Stop execution
+          return false;
         }
 
         userState.points = parseInt(userData.point || 0, 10);
-        pointValEl.textContent = userState.points;
-        dataCache.history = historyData; // Store initial history in cache
+        userState.level = userData.level || 'Member'; // ตั้งค่า level ที่นี่
+        userState.customTag = userData.customTag || ''; // ตั้งค่า customTag ที่นี่
+
+        updatePointsInHeader(userState.points); // อัปเดต UI ด้วยคะแนน (level/tag จะถูกอัปเดตใน userState แล้ว)
+        dataCache.history = historyData; // Store history in cache
+        userState.pointsChanged = false; // Reset flag as history is now fresh
 
       } catch (error) {
-        console.error("Failed to fetch initial user points or history:", error);
-        pointValEl.textContent = 'N/A'; // Indicate error
+        console.error("Failed to fetch initial data:", error);
+        pointValEl.textContent = 'N/A';
         showAlert("ข้อผิดพลาด", "ไม่สามารถโหลดข้อมูลผู้ใช้ได้ กรุณาลองใหม่");
         return false;
       }
-      return true; // LIFF initialized and user info fetched successfully
+      return true;
     }
 
     // --- Router Setup ---
@@ -450,6 +579,9 @@
         console.error(`Error initializing view ${route.tpl}:`, error);
         showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลหน้านี้ได้ กรุณาลองใหม่อีกครั้ง');
       }
+
+      // Reset pointsChanged flag after routing is complete
+      // userState.pointsChanged = false; // Moved inside getFreshOrCachedHistory
     }
 
     // --- Common Helper Functions ---
@@ -479,17 +611,6 @@
           </li>`;
       }
       return html;
-    }
-
-    /**
-     * Updates the global header with user points.
-     * This function should be called after any action that changes points.
-     * @param {number} newPoints - The new point value to display.
-     */
-    function updatePointsInHeader(newPoints) {
-      userState.points = newPoints;
-      pointValEl.textContent = userState.points;
-      userState.pointsChanged = true; // Set flag when points change
     }
 
     /**
@@ -593,11 +714,12 @@
                   body: JSON.stringify({ action: "dailyCheckin", lineId: userState.lineId })
                 });
                 const text = await res.text();
-                showAlert('เช็คอินสำเร็จ', text, () => {
+                showAlert('เช็คอินสำเร็จ', text, async () => {
                   if (text.includes("สำเร็จ")) {
+                    // Update points in header, which will also set userState.pointsChanged = true
                     updatePointsInHeader(userState.points + 1); 
                     checkinBox.classList.add('hidden'); // Hide checkin after success
-                    // Manually re-render dashboard which will trigger fresh history fetch due to pointsChanged=true
+                    // Manually re-initialize dashboard which will trigger fresh history fetch due to pointsChanged=true
                     initDashboard(); 
                   }
                 });
@@ -625,7 +747,7 @@
       if (eventListEl) eventListEl.innerHTML = generateListSkeleton(5); // Show skeleton
 
       let events;
-      // Check cache first for events (lazy loaded on first access to #event)
+      // Check cache first for events (preloaded in ensureLIFFAndFetchInitialData)
       if (dataCache.events) {
         events = dataCache.events;
         console.log("Loading events from frontend cache.");
@@ -743,11 +865,19 @@
                   })
                 });
                 const text = await res.text();
-                showAlert("สถานะ", text, () => {
+                showAlert("สถานะ", text, async () => {
                   if (text.includes("สำเร็จ")) {
+                    // Fetch user info to get latest points, level, and customTag
+                    const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+                    const userData = await userRes.json();
+                    if (userData && !userData.error) {
+                        // Update global userState.points, level, customTag
+                        userState.level = userData.level || 'Member';
+                        userState.customTag = userData.customTag || '';
+                        updatePointsInHeader(parseInt(userData.point || 0, 10)); // Will also set pointsChanged = true
+                    }
                     if (joinBtn) joinBtn.textContent = "รับพ้อยต์แล้ว";
                     disableJoinBtn(); // Ensure it stays disabled
-                    updatePointsInHeader(userState.points + eventRewardPoint); // Update points immediately
                   }
                 });
               } catch (e) {
@@ -765,46 +895,163 @@
     }
 
     async function initProfile() {
-      const profileIdEl = document.getElementById('profileId');
-      const profileLevelEl = document.getElementById('profileLevel');
+      const profileDisplayPictureEl = document.getElementById('profileDisplayPicture');
+      const profileDisplayNameEl = document.getElementById('profileDisplayName');
+      const profileLineIdEl = document.getElementById('profileLineId');
+      
+      // Elements for Level/Tag/Progress specific to Profile Page
+      const profileLevelBadgeEl = document.getElementById('profileLevelBadge'); 
+      const profileCustomTagBadgeEl = document.getElementById('profileCustomTagBadge'); 
+      const profileProgressBarEl = document.getElementById('profileProgressBar'); 
+      const profilePointsToNextLevelEl = document.getElementById('profilePointsToNextLevel'); 
+      const profileTotalPointsEl = document.getElementById('profileTotalPoints'); 
+
       const profileNameEl = document.getElementById('profileName');
       const profilePhoneEl = document.getElementById('profilePhone');
       const profileEmailEl = document.getElementById('profileEmail');
       const profileAddressEl = document.getElementById('profileAddress');
       const profileNoteEl = document.getElementById('profileNote');
-      const updateBtn = document.getElementById('updateProfileBtn');
+      
+      const editProfileBtn = document.getElementById('editProfileBtn');
+      const profileFormContainer = document.getElementById('profileFormContainer');
+      const profileEditButtonsDiv = document.getElementById('profileEditButtons');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+      // Array of editable input elements
+      const editableInputs = [
+        profileNameEl,
+        profilePhoneEl,
+        profileEmailEl,
+        profileAddressEl,
+        profileNoteEl
+      ];
+
+      let initialProfileData = {}; // To store values for revert on cancel
+
+      if (profileDisplayPictureEl && userState.profile) {
+        profileDisplayPictureEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
+      }
+      if (profileDisplayNameEl && userState.profile) {
+        profileDisplayNameEl.textContent = userState.profile.displayName || 'ผู้ใช้ LINE';
+      }
+      // profileLineIdEl is always readonly, populated later
+
+      if (profileTotalPointsEl) {
+        profileTotalPointsEl.textContent = userState.points.toLocaleString(); // Use points from global userState
+      }
+
+      // แสดงระดับและ Progress Bar ในหน้า Profile โดยใช้ค่าจาก userState
+      const { level, progressValue, pointsToNext, nextLevelName } = calculateLevelAndProgress(userState.points);
+      
+      // Update level and custom tag badges in profile
+      setBadgeContent(profileLevelBadgeEl, LEVEL_STYLES[userState.level] ? LEVEL_STYLES[userState.level].text : userState.level, `badge badge-lg ${LEVEL_STYLES[userState.level] ? LEVEL_STYLES[userState.level].class : ''}`);
+      
+      const rawCustomTag = userState.customTag.split(',')[0].trim().toLowerCase();
+      const customTagInfo = CUSTOM_TAG_STYLES[rawCustomTag] || CUSTOM_TAG_STYLES['default'];
+      const tagText = customTagInfo.text || userState.customTag;
+      
+      if (!tagText) {
+          if (profileCustomTagBadgeEl) profileCustomTagBadgeEl.classList.add('hidden');
+      } else {
+          setBadgeContent(profileCustomTagBadgeEl, tagText, `badge badge-lg ${customTagInfo.class}`);
+      }
+
+      if (profileProgressBarEl) profileProgressBarEl.value = progressValue;
+      if (profilePointsToNextLevelEl) {
+        if (nextLevelName) {
+          profilePointsToNextLevelEl.textContent = `อีก ${pointsToNext} พ้อยต์ สู่ระดับ ${nextLevelName}`;
+        } else {
+          profilePointsToNextLevelEl.textContent = `คุณอยู่ในระดับสูงสุดแล้ว!`;
+        }
+      }
 
       let uData;
-      // Check cache first for full user profile
+      // Get full profile data for editable fields (check cache first)
       if (dataCache.userProfileFull) {
         uData = dataCache.userProfileFull;
-        console.log("Loading full user profile from frontend cache.");
+        console.log("Loading full profile data from frontend cache.");
       } else {
         try {
-          console.log("Fetching full user profile from API - cache miss.");
+          console.log("Fetching full profile data from API.");
           const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
           uData = await uRes.json();
-          dataCache.userProfileFull = uData; // Store in cache
+          if (uData.error) {
+              throw new Error(uData.error);
+          }
+          dataCache.userProfileFull = uData; // Store in frontend cache
+          // Ensure userState's level and customTag are updated with the latest full profile data
+          // (though they should have been set during ensureLIFFAndFetchInitialData)
+          userState.level = uData.level || 'Member';
+          userState.customTag = uData.customTag || '';
         } catch (error) {
           console.error("Error in initProfile:", error);
           showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
-          if (profileIdEl) profileIdEl.value = 'โหลดข้อมูลล้มเหลว';
-          if (updateBtn) { updateBtn.disabled = true; }
+          if (profileLineIdEl) profileLineIdEl.value = 'โหลดข้อมูลล้มเหลว';
+          if (editProfileBtn) editProfileBtn.classList.add('hidden');
           return;
         }
       }
       
-      if (profileIdEl) profileIdEl.value = uData.id || '';
-      if (profileLevelEl) profileLevelEl.value = uData.level || '';
-      if (profileNameEl) profileNameEl.value = uData.name || '';
-      if (profilePhoneEl) profilePhoneEl.value = uData.phone || '';
-      if (profileEmailEl) profileEmailEl.value = uData.email || '';
-      if (profileAddressEl) profileAddressEl.value = uData.address || '';
-      if (profileNoteEl) profileNoteEl.value = uData.note || '';
+      // Store initial data for revert on cancel
+      initialProfileData = {
+        name: uData.name || '',
+        phone: uData.phone || '',
+        email: uData.email || '',
+        address: uData.address || '',
+        note: uData.note || ''
+      };
 
-      if (updateBtn) {
-        updateBtn.onclick = async () => {
-          updateBtn.disabled = true;
+      // Populate input fields
+      if (profileLineIdEl) profileLineIdEl.value = userState.lineId; // Always readonly
+      if (profileNameEl) profileNameEl.value = initialProfileData.name;
+      if (profilePhoneEl) profilePhoneEl.value = initialProfileData.phone;
+      if (profileEmailEl) profileEmailEl.value = initialProfileData.email;
+      if (profileAddressEl) profileAddressEl.value = initialProfileData.address;
+      if (profileNoteEl) profileNoteEl.value = initialProfileData.note;
+
+      // Set initial state (view mode)
+      toggleEditMode(false);
+
+      // --- Helper function to toggle edit mode ---
+      function toggleEditMode(enable) {
+        editableInputs.forEach(input => {
+          if (input) {
+            input.readOnly = !enable;
+            input.classList.toggle('input-neutral', enable);
+            input.classList.toggle('cursor-not-allowed', !enable);
+            input.classList.toggle('text-gray-500', !enable);
+          }
+        });
+
+        // Hide/Show the entire form container
+        if (profileFormContainer) {
+            profileFormContainer.classList.toggle('hidden', !enable);
+        }
+
+        if (editProfileBtn) {
+          editProfileBtn.classList.toggle('hidden', enable);
+        }
+        if (profileEditButtonsDiv) {
+          profileEditButtonsDiv.classList.toggle('hidden', !enable);
+        }
+      }
+
+      // --- Event Listeners for buttons ---
+
+      // Edit Button (Pencil Icon)
+      if (editProfileBtn) {
+        editProfileBtn.onclick = () => {
+          toggleEditMode(true);
+        };
+      }
+
+      // Save Button
+      if (saveProfileBtn) { 
+        saveProfileBtn.onclick = async () => {
+          saveProfileBtn.disabled = true;
+          if(cancelEditBtn) cancelEditBtn.disabled = true;
+
           try {
             const body = {
               action: 'updateProfile',
@@ -822,24 +1069,44 @@
             const responseText = await res.text();
             showAlert("สถานะ", responseText, () => {
                 if (responseText.includes("สำเร็จ")) {
-                    // Update the cached userProfileFull object directly
+                    // Update cached full profile data
                     dataCache.userProfileFull = { 
-                        ...dataCache.userProfileFull, // Keep existing properties
+                        ...dataCache.userProfileFull, 
                         name: profileNameEl.value,
                         phone: profilePhoneEl.value,
                         email: profileEmailEl.value,
                         address: profileAddressEl.value,
                         note: profileNoteEl.value
                     };
-                    console.log("User profile cache updated after successful save.");
+                    // Update initialProfileData for subsequent edits
+                    initialProfileData = { ...initialProfileData, ...body };
+                    toggleEditMode(false);
+                } else {
+                    saveProfileBtn.disabled = false;
+                    if(cancelEditBtn) cancelEditBtn.disabled = false;
                 }
             });
-          } catch (e) {
+          }
+           catch (e) {
             console.error("Update profile failed:", e);
             showAlert('ข้อผิดพลาด', 'ไม่สามารถอัปเดตข้อมูลได้ กรุณาลองใหม่');
-          } finally {
-            updateBtn.disabled = false;
+            saveProfileBtn.disabled = false;
+            if(cancelEditBtn) cancelEditBtn.disabled = false;
           }
+        };
+      }
+
+      // Cancel Button
+      if (cancelEditBtn) {
+        cancelEditBtn.onclick = () => {
+          // Revert values to initial state
+          if (profileNameEl) profileNameEl.value = initialProfileData.name;
+          if (profilePhoneEl) profilePhoneEl.value = initialProfileData.phone;
+          if (profileEmailEl) profileEmailEl.value = initialProfileData.email;
+          if (profileAddressEl) profileAddressEl.value = initialProfileData.address;
+          if (profileNoteEl) profileNoteEl.value = initialProfileData.note;
+
+          toggleEditMode(false);
         };
       }
     }
@@ -849,7 +1116,7 @@
       if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
 
       let items;
-      // Check frontend cache first for redeem items (lazy loaded on first access to #redeem)
+      // Check frontend cache first for redeem items (preloaded in ensureLIFFAndFetchInitialData)
       if (dataCache.redeemItems) {
         items = dataCache.redeemItems;
         console.log("Loading redeem items from frontend cache.");
@@ -906,9 +1173,16 @@
                 body: JSON.stringify({ action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point }) 
               });
               const text = await res.text();
-              showAlert("สถานะ", text, () => {
+              showAlert("สถานะ", text, async () => {
                 if (text.includes("สำเร็จ")) {
-                  updatePointsInHeader(userState.points - point); 
+                    // Fetch user info to get latest points, level, and customTag
+                    const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+                    const userData = await userRes.json();
+                    if (userData && !userData.error) {
+                        userState.level = userData.level || 'Member';
+                        userState.customTag = userData.customTag || '';
+                        updatePointsInHeader(parseInt(userData.point || 0, 10)); // Will also set pointsChanged = true
+                    }
                   btn.textContent = "แลกแล้ว"; 
                 }
               });
@@ -948,9 +1222,16 @@
               body: JSON.stringify({ action: 'transferPoints', from: userState.lineId, to: toId, amount: amt })
             });
             const txt = await res.text();
-            showAlert("สถานะการโอน", txt, () => {
+            showAlert("สถานะการโอน", txt, async () => {
               if (/สำเร็จ|เรียบร้อย/.test(txt)) {
-                updatePointsInHeader(userState.points - amt); 
+                // Fetch user info to get latest points, level, and customTag
+                const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+                const userData = await userRes.json();
+                if (userData && !userData.error) {
+                    userState.level = userData.level || 'Member';
+                    userState.customTag = userData.customTag || '';
+                    updatePointsInHeader(parseInt(userData.point || 0, 10)); // Will also set pointsChanged = true
+                }
                 if (transferToEl) transferToEl.value = ''; 
                 if (transferAmountEl) transferAmountEl.value = '';
               }
@@ -1087,9 +1368,16 @@
             })
           });
           const text = await res.text();
-          showAlert("สถานะ", text, () => {
+          showAlert("สถานะ", text, async () => {
             if (text.includes("สำเร็จ")) {
-              updatePointsInHeader(userState.points + codePoint); 
+                // Fetch user info to get latest points, level, and customTag
+                const userRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
+                const userData = await userRes.json();
+                if (userData && !userData.error) {
+                    userState.level = userData.level || 'Member';
+                    userState.customTag = userData.customTag || '';
+                    updatePointsInHeader(parseInt(userData.point || 0, 10)); // Will also set pointsChanged = true
+                }
               if (btn) btn.textContent = "รับพ้อยต์แล้ว"; 
             }
           });
