@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="th" data-theme="light">
-
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -19,13 +18,11 @@
     }
 
     @keyframes pulseCustom {
-
       0%,
       100% {
         transform: scale(1);
         opacity: 1;
       }
-
       50% {
         transform: scale(1.02);
         opacity: 0.6;
@@ -37,12 +34,10 @@
     }
 
     @keyframes pulse-opacity {
-
       0%,
       100% {
         opacity: 0.5;
       }
-
       50% {
         opacity: 1;
       }
@@ -255,7 +250,7 @@
         <!-- แสดง Level Badge และ Custom Tag เฉพาะในหน้า Profile -->
         <div class="flex items-center justify-center space-x-2 mb-2">
           <span id="profileLevelBadge" class="badge badge-lg"></span>
-          <span id="profileCustomTagBadge" class="badge badge-lg"></span> <!-- REMOVED badge-neutral here for flexibility -->
+          <span id="profileCustomTagBadge" class="badge badge-lg"></span>
         </div>
         <progress id="profileProgressBar" class="progress progress-warning w-full" value="0" max="100"></progress>
         <div id="profilePointsToNextLevel" class="text-sm text-gray-700 mt-1"></div>
@@ -444,8 +439,13 @@
 
     // Function to calculate level and progress (used by Profile)
     function calculateLevelAndProgress(currentPoints) {
+      console.log("DEBUG: calculateLevelAndProgress called with points:", currentPoints); // ADD THIS LOG
+      console.log("DEBUG: dataCache.levelSettings at start of calculation:", dataCache.levelSettings); // ADD THIS LOG
+
       const vipPoints = dataCache.levelSettings?.VIP_points || 5000;
       const superPoints = dataCache.levelSettings?.SUPER_points || 10000;
+
+      console.log("DEBUG: Using VIP_points:", vipPoints, "SUPER_points:", superPoints); // ADD THIS LOG
 
       let level = 'Member';
       let currentLevelMin = 0;
@@ -455,7 +455,7 @@
       if (currentPoints >= superPoints) {
         level = 'Super';
         currentLevelMin = superPoints;
-        nextLevelMin = currentPoints; // ไม่มีระดับถัดไป, ให้ progress เป็น 100%
+        nextLevelMin = currentPoints; // นี่คือจุดที่ทำให้ progress เป็น 100% สำหรับ Super
         nextLevelName = '';
       } else if (currentPoints >= vipPoints) {
         level = 'VIP';
@@ -469,13 +469,15 @@
       let progressValue = 0;
       let pointsNeeded = 0;
 
-      if (nextLevelName) { // ถ้าไม่ใช่ระดับ Super
+      if (nextLevelName) {
         progressValue = (pointsInCurrentTier / pointsToNextTier) * 100;
         pointsNeeded = nextLevelMin - currentPoints;
-      } else { // สำหรับระดับ Super
+      } else {
         progressValue = 100;
         pointsNeeded = 0;
       }
+
+      console.log("DEBUG: Calculated Level:", level, "Progress Value:", progressValue, "Points To Next:", pointsNeeded, "Next Level Name:", nextLevelName); // ADD THIS LOG
 
       return {
         level: level,
@@ -594,7 +596,7 @@
             VIP_points: parseInt(settingsData.VIP_points || 0, 10),
             SUPER_points: parseInt(settingsData.SUPER_points || 0, 10),
           };
-          console.log("Level settings loaded:", dataCache.levelSettings);
+          console.log("DEBUG: Level settings loaded (ensureLIFFAndFetchInitialData):", dataCache.levelSettings); // ADD THIS LOG
         } else {
           console.warn("Failed to load level settings, using defaults.");
           dataCache.levelSettings = { VIP_points: 5000, SUPER_points: 10000 }; // Ensure defaults are set
@@ -615,6 +617,8 @@
         updatePointsInHeader(userState.points); // อัปเดต UI ด้วยคะแนน (level/tag จะถูกอัปเดตใน userState แล้ว)
         dataCache.history = historyData; // Store history in cache
         userState.pointsChanged = false; // Reset flag as history is now fresh
+
+        console.log("DEBUG: Initial User Points:", userState.points, "Level:", userState.level, "Tag:", userState.customTag); // ADD THIS LOG
 
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
@@ -1035,9 +1039,19 @@
       }
 
       // แสดงระดับและ Progress Bar ในหน้า Profile โดยใช้ค่าจาก userState
-      const { level, progressValue, pointsToNext, nextLevelName } = calculateLevelAndProgress(userState.points);
+      const { level: calculatedLevel, progressValue, pointsToNext, nextLevelName } = calculateLevelAndProgress(userState.points);
+
+      // ADD THESE LOGS
+      console.log("DEBUG: initProfile - userState.points:", userState.points);
+      console.log("DEBUG: initProfile - userState.level (from backend):", userState.level);
+      console.log("DEBUG: initProfile - calculatedLevel (from frontend function):", calculatedLevel);
+      console.log("DEBUG: initProfile - progressValue:", progressValue);
+      console.log("DEBUG: initProfile - pointsToNext:", pointsToNext); // Check pointsToNext
+      console.log("DEBUG: initProfile - nextLevelName:", nextLevelName);
+
 
       // Update level badge in profile
+      // ควรใช้ userState.level ที่มาจาก Backend เพื่อความถูกต้องตามข้อมูลจริงในชีต
       setBadgeContent(profileLevelBadgeEl, LEVEL_STYLES[userState.level] ? LEVEL_STYLES[userState.level].text : userState.level, `badge badge-lg ${LEVEL_STYLES[userState.level] ? LEVEL_STYLES[userState.level].class : ''}`);
 
       // Update custom tag badge in profile
@@ -1057,9 +1071,9 @@
 
       if (profileProgressBarEl) profileProgressBarEl.value = progressValue;
       if (profilePointsToNextLevelEl) {
-        if (nextLevelName) {
+        if (nextLevelName) { // ถ้ามีระดับถัดไป (คือไม่ใช่ Super)
           profilePointsToNextLevelEl.textContent = `อีก ${pointsToNext} พ้อยต์ สู่ระดับ ${nextLevelName}`;
-        } else {
+        } else { // ถ้าไม่มีระดับถัดไป (คือ Super)
           profilePointsToNextLevelEl.textContent = `คุณอยู่ในระดับสูงสุดแล้ว!`;
         }
       }
