@@ -210,6 +210,7 @@
       <div class="glass-white p-6 rounded-lg text-center shadow-md">
         <div class="relative w-24 h-24 mx-auto mb-4">
             <img id="profileDisplayPicture" class="mask mask-circle w-24 h-24 rounded-full object-cover border-4 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" alt="รูปโปรไฟล์" />
+            <!-- ปุ่มแก้ไข (ดินสอ) -->
             <button id="editProfileBtn" class="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md hover:scale-110 transition-transform">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.389-8.389-2.828-2.828z" />
@@ -252,6 +253,7 @@
           <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
           <input id="profileNote" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
         </div>
+        <!-- ปุ่มบันทึกและยกเลิก - ซ่อนไว้ตอนเริ่มต้น -->
         <div id="profileEditButtons" class="flex space-x-2 hidden">
             <button id="saveProfileBtn" class="btn btn-neutral flex-1">
                 บันทึกข้อมูล
@@ -1016,17 +1018,18 @@
         editableInputs.forEach(input => {
           if (input) {
             input.readOnly = !enable;
-            input.classList.toggle('input-neutral', enable);
-            input.classList.toggle('cursor-not-allowed', !enable);
-            input.classList.toggle('text-gray-500', !enable);
+            // Toggle classes for visual feedback
+            input.classList.toggle('input-neutral', enable); // Active style when editable
+            input.classList.toggle('cursor-not-allowed', !enable); // Cursor style when readonly
+            input.classList.toggle('text-gray-500', !enable); // Text color when readonly
           }
         });
 
         if (editProfileBtn) {
-          editProfileBtn.classList.toggle('hidden', enable);
+          editProfileBtn.classList.toggle('hidden', enable); // Hide pencil icon in edit mode
         }
         if (profileEditButtonsDiv) {
-          profileEditButtonsDiv.classList.toggle('hidden', !enable);
+          profileEditButtonsDiv.classList.toggle('hidden', !enable); // Show save/cancel buttons in edit mode
         }
       }
 
@@ -1035,7 +1038,7 @@
       // Edit Button (Pencil Icon)
       if (editProfileBtn) {
         editProfileBtn.onclick = () => {
-          toggleEditMode(true);
+          toggleEditMode(true); // Enter edit mode
         };
       }
 
