@@ -1,259 +1,1299 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="corporate">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRM-3RN Admin</title>
+  <!-- Load config before main script -->
+  <script src="config.js"></script>
+  <!-- DaisyUI CDN (includes Tailwind CSS) -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Mimic CRM-3RN body background using DaisyUI's color variables */
+    body {
+      background: linear-gradient(to bottom, oklch(var(--b2)) 0%, oklch(var(--b1)) 50%, oklch(var(--b1)) 100%);
+      min-height: 100vh;
+      color: oklch(var(--bc)); /* Base content color */
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Simple loading animation for content */
+    .loading-spinner {
+      border: 4px solid oklch(var(--bc) / 0.2);
+      /* Light border */
+      border-top: 4px solid oklch(var(--p));
+      /* Primary color border */
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Ensure tables are scrollable on small screens */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    /* For modals - ensure backdrop is full screen */
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-sm font-sans">
 
-  <!-- HEADER -->
-  <div class="bg-purple-800 text-white p-4 text-xl font-bold">📋 Admin Dashboard</div>
+<body>
+  <!-- Drawer for mobile navigation -->
+  <div class="drawer lg:drawer-open">
+    <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
+    <div class="drawer-content flex flex-col">
+      <!-- Page content -->
+      <!-- Navbar for header and mobile menu toggle -->
+      <div class="navbar bg-neutral text-neutral-content shadow-md p-4 mb-6 sticky top-0 z-50">
+        <div class="flex-none lg:hidden">
+          <label for="my-drawer-2" aria-label="open sidebar" class="btn btn-square btn-ghost">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+              class="inline-block w-6 h-6 stroke-current">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </label>
+        </div>
+        <div class="flex-1 px-2 mx-2">
+          <h1 class="text-xl font-bold">CRM-3RN Admin</h1>
+        </div>
+        <div class="flex-none hidden lg:block">
+          <!-- Horizontal menu for desktop (replicated in sidebar) -->
+          <ul class="menu menu-horizontal px-1">
+            <li><a href="#users" class="nav-link">ผู้ใช้</a></li>
+            <li><a href="#items" class="nav-link">ของรางวัล</a></li>
+            <li><a href="#events" class="nav-link">กิจกรรม</a></li>
+            <li><a href="#codes" class="nav-link">โค้ด</a></li>
+            <li><a href="#history" class="nav-link">ประวัติ</a></li>
+            <li><a href="#settings" class="nav-link">ตั้งค่า</a></li>
+          </ul>
+        </div>
+      </div>
 
-  <!-- CONTENT -->
-  <div class="flex">
-    <!-- SIDEBAR -->
-    <aside class="w-64 bg-white shadow p-4">
-      <ul class="space-y-2">
-        <li><button onclick="showTab('events')" class="w-full text-left hover:bg-purple-100 p-2 rounded">📢 กิจกรรม</button></li>
-        <li><button onclick="showTab('items')" class="w-full text-left hover:bg-green-100 p-2 rounded">🎁 ของแลก</button></li>
-        <li><button onclick="showTab('users')" class="w-full text-left hover:bg-yellow-100 p-2 rounded">👤 สมาชิก</button></li>
-        <li><button onclick="showTab('points')" class="w-full text-left hover:bg-red-100 p-2 rounded">🎯 แต้ม</button></li>
+      <!-- Main content area for SPA -->
+      <div class="container mx-auto p-4 lg:p-6 pb-20">
+        <div id="app-container" class="bg-base-100 p-6 rounded-lg shadow-xl">
+          <div class="text-center text-base-content text-opacity-50 py-8">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            กำลังโหลด...
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="drawer-side z-50">
+      <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
+      <ul class="menu p-4 w-80 min-h-full bg-base-200 text-base-content">
+        <!-- Sidebar content here -->
+        <li class="menu-title text-lg font-bold">เมนูผู้ดูแลระบบ</li>
+        <li><a href="#dashboard" class="nav-link">ภาพรวม</a></li>
+        <li><a href="#users" class="nav-link">จัดการผู้ใช้</a></li>
+        <li><a href="#items" class="nav-link">จัดการของรางวัล</a></li>
+        <li><a href="#events" class="nav-link">จัดการกิจกรรม</a></li>
+        <li><a href="#codes" class="nav-link">จัดการโค้ด</a></li>
+        <li><a href="#history" class="nav-link">ประวัติการทำรายการ</a></li>
+        <li><a href="#settings" class="nav-link">ตั้งค่าระบบ</a></li>
       </ul>
-    </aside>
-
-    <!-- MAIN -->
-    <main class="flex-1 p-6 space-y-6 overflow-x-auto">
-      <!-- TAB: EVENTS -->
-      <section id="tab-events" class="hidden">
-        <h2 class="text-xl font-bold mb-2">📢 รายการกิจกรรม</h2>
-        <table class="table-auto w-full bg-white rounded shadow">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="p-2 text-left">ID</th>
-              <th class="p-2 text-left">ชื่อ</th>
-              <th class="p-2 text-left">แต้ม</th>
-              <th class="p-2 text-left">แก้ไข</th>
-              <th class="p-2 text-left">ลบ</th>
-            </tr>
-          </thead>
-          <tbody id="eventTable"></tbody>
-        </table>
-
-        <!-- เพิ่มกิจกรรม -->
-        <div class="mt-4 bg-gray-50 p-4 rounded shadow space-y-2">
-          <h3 class="font-bold">➕ เพิ่มกิจกรรม</h3>
-          <input id="newEventTitle" placeholder="ชื่อกิจกรรม" class="w-full p-2 border rounded">
-          <input id="newEventPoint" type="number" placeholder="แต้ม" class="w-full p-2 border rounded">
-          <textarea id="newEventDesc" placeholder="รายละเอียด" class="w-full p-2 border rounded"></textarea>
-          <button onclick="createEvent()" class="bg-purple-700 text-white px-4 py-2 rounded">บันทึก</button>
-        </div>
-      </section>
-
-      <!-- TAB: ITEMS -->
-      <section id="tab-items" class="hidden">
-        <h2 class="text-xl font-bold mb-2">🎁 รายการของแลก</h2>
-        <table class="table-auto w-full bg-white rounded shadow">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="p-2 text-left">ID</th>
-              <th class="p-2 text-left">ชื่อ</th>
-              <th class="p-2 text-left">แต้ม</th>
-              <th class="p-2 text-left">แก้ไข</th>
-              <th class="p-2 text-left">ลบ</th>
-            </tr>
-          </thead>
-          <tbody id="itemTable"></tbody>
-        </table>
-
-        <!-- เพิ่มของ -->
-        <div class="mt-4 bg-gray-50 p-4 rounded shadow space-y-2">
-          <h3 class="font-bold">➕ เพิ่มของแลก</h3>
-          <input id="newItemName" placeholder="ชื่อของ" class="w-full p-2 border rounded">
-          <input id="newItemPoint" type="number" placeholder="แต้ม" class="w-full p-2 border rounded">
-          <button onclick="createItem()" class="bg-green-700 text-white px-4 py-2 rounded">บันทึก</button>
-        </div>
-      </section>
-
-      <!-- TAB: USERS -->
-      <section id="tab-users" class="hidden">
-        <h2 class="text-xl font-bold mb-2">👤 รายชื่อสมาชิก</h2>
-        <table class="table-auto w-full bg-white rounded shadow">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="p-2">ชื่อ</th>
-              <th class="p-2">เบอร์</th>
-              <th class="p-2">พ้อย</th>
-              <th class="p-2">อีเมล</th>
-            </tr>
-          </thead>
-          <tbody id="userTable"></tbody>
-        </table>
-      </section>
-
-      <!-- TAB: POINTS -->
-      <section id="tab-points" class="hidden">
-        <h2 class="text-xl font-bold mb-2">🎯 แจก/หักแต้ม</h2>
-        <input id="targetLineId" placeholder="Line ID" class="w-full p-2 border mb-2 rounded">
-        <input id="pointAmount" type="number" placeholder="แต้ม" class="w-full p-2 border mb-2 rounded">
-        <input id="pointNote" placeholder="หมายเหตุ" class="w-full p-2 border mb-2 rounded">
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="adjustPoint('add')" class="bg-purple-700 text-white py-2 rounded">แจกแต้ม</button>
-          <button onclick="adjustPoint('subtract')" class="bg-red-700 text-white py-2 rounded">หักแต้ม</button>
-        </div>
-      </section>
-    </main>
+    </div>
   </div>
 
-<script>
-  const url = 'https://script.google.com/macros/s/AKfycbz-i__HSZ02gYgSP_3bqIi_sURADUEWCa6UW1ajYiuPdVF_2QW8ZU9oDSCPBfLgRsGK/exec';
 
-  function showTab(id) {
-    ['events', 'items', 'users', 'points'].forEach(t =>
-      document.getElementById('tab-' + t).classList.add('hidden')
-    );
-    document.getElementById('tab-' + id).classList.remove('hidden');
-  }
+  <!-- Common Alert/Confirm Modals -->
+  <dialog id="customAlertDialog" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box text-center">
+      <h3 id="customAlertTitle" class="font-bold text-lg mb-3"></h3>
+      <p id="customAlertMessage" class="py-4 whitespace-pre-line"></p>
+      <div class="modal-action justify-center">
+        <button id="customAlertButton" class="btn btn-primary w-full">ตกลง</button>
+      </div>
+    </div>
+  </dialog>
 
-  window.onload = () => {
-    loadEvents();
-    loadItems();
-    loadUsers();
-  }
+  <dialog id="customConfirmDialog" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box text-center">
+      <h3 id="customConfirmTitle" class="font-bold text-lg mb-3"></h3>
+      <p id="customConfirmMessage" class="py-4"></p>
+      <div class="modal-action justify-around">
+        <button id="customConfirmCancelButton" class="btn btn-outline">ยกเลิก</button>
+        <button id="customConfirmConfirmButton" class="btn btn-primary">ยืนยัน</button>
+      </div>
+    </div>
+  </dialog>
 
-  async function loadEvents() {
-    const res = await fetch(url + '?action=getEvents');
-    const data = await res.json();
-    eventTable.innerHTML = data.map(e => `
-      <tr>
-        <td class="p-2">${e.id}</td>
-        <td class="p-2">${e.title}</td>
-        <td class="p-2">${e.point}</td>
-        <td class="p-2"><button onclick="editEventPrompt('${e.id}', '${e.title}', ${e.point})" class="text-blue-600">แก้ไข</button></td>
-        <td class="p-2"><button onclick="deleteEvent('${e.id}')" class="text-red-600">ลบ</button></td>
-      </tr>
-    `).join('');
-  }
+  <!-- Generic Add/Edit Form Modal -->
+  <dialog id="dataFormModal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+      <h3 id="dataFormModalTitle" class="font-bold text-lg mb-4"></h3>
+      <form id="dataForm" method="dialog">
+        <!-- Form fields will be injected here by JS -->
+        <div id="formFields" class="space-y-4"></div>
+        <div class="modal-action">
+          <button type="button" id="formCancelBtn" class="btn btn-outline">ยกเลิก</button>
+          <button type="submit" id="formSaveBtn" class="btn btn-primary">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
 
-  async function loadItems() {
-    const res = await fetch(url + '?action=getItems');
-    const data = await res.json();
-    itemTable.innerHTML = data.map(e => `
-      <tr>
-        <td class="p-2">${e.id}</td>
-        <td class="p-2">${e.name}</td>
-        <td class="p-2">${e.point}</td>
-        <td class="p-2"><button onclick="editItemPrompt('${e.id}', '${e.name}', ${e.point})" class="text-blue-600">แก้ไข</button></td>
-        <td class="p-2"><button onclick="deleteItem('${e.id}')" class="text-red-600">ลบ</button></td>
-      </tr>
-    `).join('');
-  }
 
-  async function loadUsers() {
-    const res = await fetch(url + '?action=getUsers');
-    const data = await res.json();
-    userTable.innerHTML = data.map(u => `
-      <tr>
-        <td class="p-2">${u.name}</td>
-        <td class="p-2">${u.phone}</td>
-        <td class="p-2">${u.point}</td>
-        <td class="p-2">${u.email}</td>
-      </tr>
-    `).join('');
-  }
+  <!-- Templates for each view -->
 
-  async function createEvent() {
-    const body = {
-      action: 'addEvent',
-      title: newEventTitle.value,
-      point: newEventPoint.value,
-      desc: newEventDesc.value,
+  <!-- Template: Dashboard -->
+  <template id="view-dashboard">
+    <h2 class="text-2xl font-bold mb-6 text-center">ยินดีต้อนรับสู่ CRM-3RN Admin Panel</h2>
+    <p class="text-center text-base-content text-opacity-70 mb-8">
+      ใช้เมนูด้านบน หรือเมนูด้านข้าง (สำหรับมือถือ) เพื่อจัดการข้อมูลผู้ใช้, ของรางวัล, กิจกรรม, โค้ด และดูประวัติการทำรายการต่างๆ
+    </p>
+    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300">
+      <div class="stat place-items-center">
+        <div class="stat-figure text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">ผู้ใช้งานทั้งหมด</div>
+        <div id="statTotalUsers" class="stat-value text-primary">0</div>
+      </div>
+
+      <div class="stat place-items-center">
+        <div class="stat-figure text-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+          </svg>
+        </div>
+        <div class="stat-title">ของรางวัล</div>
+        <div id="statTotalItems" class="stat-value text-secondary">0</div>
+      </div>
+
+      <div class="stat place-items-center">
+        <div class="stat-figure text-accent">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">กิจกรรม</div>
+        <div id="statTotalEvents" class="stat-value text-accent">0</div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Template: Users Management -->
+  <template id="view-users">
+    <h2 class="text-2xl font-bold mb-4">จัดการผู้ใช้</h2>
+    <div class="flex flex-col md:flex-row gap-4 mb-4">
+      <input type="text" id="userSearchInput" placeholder="ค้นหา (LINE ID / ชื่อ / เบอร์โทร)" class="input input-bordered flex-grow" />
+      <button id="userSearchBtn" class="btn btn-primary">ค้นหา</button>
+      <button id="addUserBtn" class="btn btn-secondary">เพิ่มผู้ใช้ใหม่</button>
+    </div>
+    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+      <table class="table w-full table-zebra">
+        <thead>
+          <tr class="bg-base-200">
+            <th>LINE ID</th>
+            <th>ชื่อ</th>
+            <th>เบอร์โทร</th>
+            <th>พ้อยต์</th>
+            <th>ระดับ</th>
+            <th>Tags</th>
+            <th>วันที่สมัคร</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          <tr>
+            <td colspan="8" class="text-center py-4">
+              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+  <!-- Template: Items Management -->
+  <template id="view-items">
+    <h2 class="text-2xl font-bold mb-4">จัดการของรางวัล</h2>
+    <button id="addItemBtn" class="btn btn-secondary mb-4">เพิ่มของรางวัลใหม่</button>
+    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+      <table class="table w-full table-zebra">
+        <thead>
+          <tr class="bg-base-200">
+            <th>ID</th>
+            <th>ชื่อ</th>
+            <th>พ้อยต์</th>
+            <th>รูปภาพ</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="itemTableBody">
+          <tr>
+            <td colspan="5" class="text-center py-4">
+              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+  <!-- Template: Events Management -->
+  <template id="view-events">
+    <h2 class="text-2xl font-bold mb-4">จัดการกิจกรรม</h2>
+    <button id="addEventBtn" class="btn btn-secondary mb-4">เพิ่มกิจกรรมใหม่</button>
+    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+      <table class="table w-full table-zebra">
+        <thead>
+          <tr class="bg-base-200">
+            <th>ID</th>
+            <th>ชื่อกิจกรรม</th>
+            <th>พ้อยต์</th>
+            <th>ระดับที่เข้าร่วมได้</th>
+            <th>รายละเอียด</th>
+            <th>รูปภาพ</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="eventTableBody">
+          <tr>
+            <td colspan="7" class="text-center py-4">
+              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+  <!-- Template: Codes Management -->
+  <template id="view-codes">
+    <h2 class="text-2xl font-bold mb-4">จัดการโค้ด</h2>
+    <button id="addCodeBtn" class="btn btn-secondary mb-4">เพิ่มโค้ดใหม่</button>
+    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+      <table class="table w-full table-zebra">
+        <thead>
+          <tr class="bg-base-200">
+            <th>ID (QR Code Value)</th>
+            <th>ชื่อโค้ด</th>
+            <th>พ้อยต์</th>
+            <th>รายละเอียด</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="codeTableBody">
+          <tr>
+            <td colspan="5" class="text-center py-4">
+              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+  <!-- Template: History View -->
+  <template id="view-history">
+    <h2 class="text-2xl font-bold mb-4">ประวัติการทำรายการ</h2>
+    <div class="flex flex-col md:flex-row gap-4 mb-4 items-end">
+        <input type="text" id="historySearchLineId" placeholder="ค้นหาด้วย Line ID" class="input input-bordered flex-grow" />
+        <select id="historyFilterType" class="select select-bordered w-full md:w-auto">
+            <option value="">-- ประเภททั้งหมด --</option>
+            <option value="checkin">เช็คอิน</option>
+            <option value="event">กิจกรรม</option>
+            <option value="code">โค้ด</option>
+            <option value="redeem">แลกของรางวัล</option>
+            <option value="transfer_in">รับโอน</option>
+            <option value="transfer_out">โอนออก</option>
+        </select>
+        <div class="form-control flex-grow">
+            <label class="label">
+                <span class="label-text">จากวันที่:</span>
+            </label>
+            <input type="date" id="historyStartDate" class="input input-bordered w-full">
+        </div>
+        <div class="form-control flex-grow">
+            <label class="label">
+                <span class="label-text">ถึงวันที่:</span>
+            </label>
+            <input type="date" id="historyEndDate" class="input input-bordered w-full">
+        </div>
+        <button id="historyFilterBtn" class="btn btn-primary w-full md:w-auto">กรอง</button>
+        <button id="historyResetBtn" class="btn btn-outline w-full md:w-auto">รีเซ็ต</button>
+    </div>
+    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+      <table class="table w-full table-zebra">
+        <thead>
+          <tr class="bg-base-200">
+            <th>Line ID</th>
+            <th>ประเภท</th>
+            <th>รายละเอียด</th>
+            <th>จำนวน</th>
+            <th>วันที่</th>
+            <th>ID อ้างอิง</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr>
+            <td colspan="6" class="text-center py-4">
+              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </template>
+
+  <!-- Template: Settings View -->
+  <template id="view-settings">
+    <h2 class="text-2xl font-bold mb-4">ตั้งค่าระบบ</h2>
+
+    <div class="card bg-base-200 shadow-md mb-6">
+      <div class="card-body">
+        <h3 class="card-title text-xl mb-4">การตั้งค่าระดับผู้ใช้ (User Levels)</h3>
+        <p class="text-sm text-base-content text-opacity-70 mb-4">กำหนดจำนวนพ้อยต์ขั้นต่ำที่ผู้ใช้ต้องมีเพื่อเลื่อนระดับ</p>
+        <form id="levelSettingsForm" class="space-y-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">แต้มสำหรับระดับ VIP</span></label>
+            <input type="number" id="vipPoints" placeholder="0" class="input input-bordered w-full" required min="0" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">แต้มสำหรับระดับ SUPER</span></label>
+            <input type="number" id="superPoints" placeholder="0" class="input input-bordered w-full" required min="0" />
+          </div>
+          <div class="mt-6">
+            <button type="submit" id="saveLevelSettingsBtn" class="btn btn-primary w-full">บันทึกการตั้งค่าระดับ</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // --- Global UI Elements & Helpers ---
+    const appContainer = document.getElementById('app-container');
+    const customAlertDialog = document.getElementById('customAlertDialog');
+    const customAlertTitle = document.getElementById('customAlertTitle');
+    const customAlertMessage = document.getElementById('customAlertMessage');
+    const customAlertButton = document.getElementById('customAlertButton');
+
+    const customConfirmDialog = document.getElementById('customConfirmDialog');
+    const customConfirmTitle = document.getElementById('customConfirmTitle');
+    const customConfirmMessage = document.getElementById('customConfirmMessage');
+    const customConfirmConfirmButton = document.getElementById('customConfirmConfirmButton');
+    const customConfirmCancelButton = document.getElementById('customConfirmCancelButton');
+
+    const dataFormModal = document.getElementById('dataFormModal');
+    const dataFormModalTitle = document.getElementById('dataFormModalTitle');
+    const dataForm = document.getElementById('dataForm');
+    const formFieldsContainer = document.getElementById('formFields');
+    const formSaveBtn = document.getElementById('formSaveBtn');
+    const formCancelBtn = document.getElementById('formCancelBtn');
+    const drawerToggle = document.getElementById('my-drawer-2');
+
+    const USER_LEVELS = ['MEMBER', 'VIP', 'SUPER']; // Fixed order for level hierarchy
+
+    let currentEditItem = null; // To store data of item being edited
+    let levelConfig = { // Default level thresholds
+      VIP_points: 100,
+      SUPER_points: 500,
     };
-    const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
-    Swal.fire("เพิ่มกิจกรรม", await res.text(), "success").then(loadEvents);
-  }
 
-  async function createItem() {
-    const body = {
-      action: 'addItem',
-      name: newItemName.value,
-      point: newItemPoint.value,
+    function showAlert(title, message, callback) {
+      customAlertTitle.textContent = title;
+      customAlertMessage.textContent = message;
+      customAlertDialog.showModal();
+
+      const handler = () => {
+        customAlertDialog.close();
+        customAlertButton.removeEventListener('click', handler);
+        if (callback) callback();
+      };
+      customAlertButton.addEventListener('click', handler);
+    }
+
+    function showConfirm(title, message) {
+      return new Promise(resolve => {
+        customConfirmTitle.textContent = title;
+        customConfirmMessage.textContent = message;
+        customConfirmDialog.showModal();
+
+        const onConfirm = () => {
+          cleanup();
+          resolve(true);
+        };
+        const onCancel = () => {
+          cleanup();
+          resolve(false);
+        };
+
+        function cleanup() {
+          customConfirmDialog.close();
+          customConfirmConfirmButton.removeEventListener('click', onConfirm);
+          customConfirmCancelButton.removeEventListener('click', onCancel);
+        }
+        customConfirmConfirmButton.addEventListener('click', onConfirm);
+        customConfirmCancelButton.addEventListener('click', onCancel);
+      });
+    }
+
+    // --- API Interactions ---
+    async function fetchData(action, params = {}) {
+      const url = new URL(CONFIG.CLOUD_FUNCTION_GET_URL);
+      url.searchParams.append('action', action);
+      for (const key in params) {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
+          url.searchParams.append(key, params[key]);
+        }
+      }
+      try {
+        const response = await fetch(url.toString());
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error(`Error fetching data for ${action}:`, error);
+        showAlert('เกิดข้อผิดพลาด', `ไม่สามารถดึงข้อมูลได้: ${error.message}`);
+        throw error; // Re-throw to propagate error to calling function
+      }
+    }
+
+    async function postData(action, data) {
+      try {
+        const response = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action, ...data })
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+        return await response.text();
+      } catch (error) {
+        console.error(`Error posting data for ${action}:`, error);
+        showAlert('เกิดข้อผิดพลาด', `ไม่สามารถทำรายการได้: ${error.message}`);
+        throw error; // Re-throw to propagate error to calling function
+      }
+    }
+
+    // --- Router ---
+    const routes = {
+      '': { title: 'Dashboard', tpl: 'view-dashboard', init: initDashboard },
+      '#dashboard': { title: 'Dashboard', tpl: 'view-dashboard', init: initDashboard },
+      '#users': { title: 'จัดการผู้ใช้', tpl: 'view-users', init: initUsers },
+      '#items': { title: 'จัดการของรางวัล', tpl: 'view-items', init: initItems },
+      '#events': { title: 'จัดการกิจกรรม', tpl: 'view-events', init: initEvents },
+      '#codes': { title: 'จัดการโค้ด', tpl: 'view-codes', init: initCodes },
+      '#history': { title: 'ประวัติการทำรายการ', tpl: 'view-history', init: initHistory },
+      '#settings': { title: 'ตั้งค่าระบบ', tpl: 'view-settings', init: initSettings },
     };
-    const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
-    Swal.fire("เพิ่มของ", await res.text(), "success").then(loadItems);
-  }
 
-  async function adjustPoint(mode) {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'adjustPoint',
-        lineId: targetLineId.value,
-        amount: pointAmount.value,
-        note: pointNote.value,
-        mode
-      })
-    });
-    Swal.fire("แต้ม", await res.text(), "success");
-  }
-
-  async function deleteEvent(id) {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'deleteEvent', id })
-    });
-    Swal.fire("ลบกิจกรรม", await res.text(), "success").then(loadEvents);
-  }
-
-  async function deleteItem(id) {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'deleteItem', id })
-    });
-    Swal.fire("ลบของ", await res.text(), "success").then(loadItems);
-  }
-
-  function editEventPrompt(id, title, point) {
-    Swal.fire({
-      title: "แก้ไขกิจกรรม",
-      html: `
-        <input id="title" class="swal2-input" value="${title}">
-        <input id="point" class="swal2-input" value="${point}">
-      `,
-      preConfirm: async () => {
-        const body = {
-          action: 'editEvent',
-          id,
-          title: document.getElementById("title").value,
-          point: document.getElementById("point").value
-        };
-        const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
-        Swal.fire("อัปเดต", await res.text(), "success").then(loadEvents);
+    function setActiveNavLink() {
+      const currentHash = window.location.hash.split('?')[0] || '#dashboard';
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === currentHash) {
+          link.classList.add('active');
+        }
+      });
+      // Close drawer on navigation for mobile
+      if (drawerToggle) {
+        drawerToggle.checked = false;
       }
-    });
-  }
+    }
 
-  function editItemPrompt(id, name, point) {
-    Swal.fire({
-      title: "แก้ไขของ",
-      html: `
-        <input id="name" class="swal2-input" value="${name}">
-        <input id="point" class="swal2-input" value="${point}">
-      `,
-      preConfirm: async () => {
-        const body = {
-          action: 'editItem',
-          id,
-          name: document.getElementById("name").value,
-          point: document.getElementById("point").value
-        };
-        const res = await fetch(url, { method: 'POST', body: JSON.stringify(body) });
-        Swal.fire("อัปเดต", await res.text(), "success").then(loadItems);
+
+    async function router() {
+      // First, attempt to load level configuration
+      try {
+        const config = await fetchData('getLevelConfig');
+        if (config) {
+          levelConfig = {
+            VIP_points: parseInt(config.VIP_points || 0, 10),
+            SUPER_points: parseInt(config.SUPER_points || 0, 10),
+          };
+        }
+      } catch (error) {
+        console.warn("Failed to load level config, using defaults:", error);
+        // Continue with default levelConfig
       }
+
+      const hash = window.location.hash.split('?')[0] || '';
+      const route = routes[hash] || routes['']; // Default to dashboard
+
+      // Set active nav link immediately
+      setActiveNavLink();
+
+      // Clear previous content and show loading spinner
+      appContainer.innerHTML = `
+        <div class="text-center text-base-content text-opacity-50 py-8">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          กำลังโหลดข้อมูล...
+        </div>`;
+
+      const template = document.getElementById(route.tpl);
+      if (template) {
+        appContainer.innerHTML = ''; // Clear loading spinner
+        appContainer.appendChild(template.content.cloneNode(true));
+        try {
+          await route.init();
+        } catch (error) {
+          console.error(`Error initializing view ${route.tpl}:`, error);
+          appContainer.innerHTML = `<p class="text-center text-error py-8">เกิดข้อผิดพลาดในการโหลดข้อมูลหน้านี้: ${error.message}</p>`;
+        }
+      } else {
+        appContainer.innerHTML = `<p class="text-center text-error py-8">ไม่พบเทมเพลตสำหรับ ${hash}</p>`;
+      }
+    }
+
+    // --- Dashboard ---
+    async function initDashboard() {
+      try {
+        const users = await fetchData('getUsers');
+        const items = await fetchData('getItems');
+        const events = await fetchData('getEvents');
+
+        document.getElementById('statTotalUsers').textContent = users.length;
+        document.getElementById('statTotalItems').textContent = items.length;
+        document.getElementById('statTotalEvents').textContent = events.length;
+      } catch (error) {
+        console.error("Failed to load dashboard stats:", error);
+        document.getElementById('statTotalUsers').textContent = 'N/A';
+        document.getElementById('statTotalItems').textContent = 'N/A';
+        document.getElementById('statTotalEvents').textContent = 'N/A';
+      }
+    }
+
+    // --- User Management ---
+    async function initUsers() {
+      const tableBody = document.getElementById('userTableBody');
+      const addUserBtn = document.getElementById('addUserBtn');
+      const userSearchInput = document.getElementById('userSearchInput');
+      const userSearchBtn = document.getElementById('userSearchBtn');
+
+      addUserBtn.onclick = () => showUserFormModal();
+      userSearchBtn.onclick = () => loadUsers(userSearchInput.value);
+      userSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') userSearchBtn.click();
+      });
+
+      await loadUsers(); // Load all users initially
+
+      async function loadUsers(query = null) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4"><div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...</td></tr>`;
+        try {
+          const users = await fetchData('getUsers', { query });
+          renderUserTable(users);
+        } catch (error) {
+          tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-error">ไม่สามารถโหลดข้อมูลผู้ใช้ได้</td></tr>`;
+        }
+      }
+
+      function renderUserTable(users) {
+        if (users.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-base-content text-opacity-50">ไม่พบผู้ใช้</td></tr>`;
+          return;
+        }
+        tableBody.innerHTML = users.map(user => `
+          <tr>
+            <td class="font-mono text-xs">${user.lineId}</td>
+            <td>${user.name || '-'}</td>
+            <td>${user.phone || '-'}</td>
+            <td>${user.point}</td>
+            <td>
+              <span class="badge badge-lg ${user.level === 'SUPER' ? 'badge-primary' : user.level === 'VIP' ? 'badge-secondary' : 'badge-ghost'}">
+                ${user.level || '-'}
+              </span>
+            </td>
+            <td>${(user.tags && user.tags.length > 0) ? user.tags.map(tag => `<span class="badge badge-info badge-outline mr-1">${tag}</span>`).join('') : '-'}</td>
+            <td>${user.signupDate || '-'}</td>
+            <td class="whitespace-nowrap">
+              <button class="btn btn-sm btn-info btn-square text-white mr-2 edit-user-btn" data-id="${user.lineId}" aria-label="แก้ไข">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                  <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <button class="btn btn-sm btn-error btn-square text-white delete-user-btn" data-id="${user.lineId}" aria-label="ลบ">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 01-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        tableBody.querySelectorAll('.edit-user-btn').forEach(btn => {
+          btn.onclick = async () => {
+            const userId = btn.dataset.id;
+            try {
+              const user = await fetchData('getUserInfo', { lineId: userId });
+              showUserFormModal(user);
+            } catch (error) {
+              console.error("Error fetching user for edit:", error);
+            }
+          };
+        });
+
+        tableBody.querySelectorAll('.delete-user-btn').forEach(btn => {
+          btn.onclick = () => deleteUser(btn.dataset.id);
+        });
+      }
+
+      function showUserFormModal(user = null) {
+        currentEditItem = user;
+        dataFormModalTitle.textContent = user ? 'แก้ไขข้อมูลผู้ใช้' : 'เพิ่มผู้ใช้ใหม่';
+        formFieldsContainer.innerHTML = `
+          <div class="form-control">
+            <label class="label"><span class="label-text">LINE ID (ไม่สามารถแก้ไขได้หากมีข้อมูลแล้ว)</span></label>
+            <input type="text" id="formLineId" placeholder="Line ID" class="input input-bordered w-full" ${user ? 'readonly' : 'required'} value="${user ? user.id : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">ชื่อ</span></label>
+            <input type="text" id="formName" placeholder="ชื่อ" class="input input-bordered w-full" value="${user ? user.name : ''}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">เบอร์โทรศัพท์</span></label>
+            <input type="tel" id="formPhone" placeholder="เบอร์โทรศัพท์" class="input input-bordered w-full" value="${user ? user.phone : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">อีเมล</span></label>
+            <input type="email" id="formEmail" placeholder="อีเมล" class="input input-bordered w-full" value="${user ? user.email : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">ที่อยู่</span></label>
+            <input type="text" id="formAddress" placeholder="ที่อยู่" class="input input-bordered w-full" value="${user ? user.address : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">หมายเหตุ</span></label>
+            <input type="text" id="formNote" placeholder="หมายเหตุ" class="input input-bordered w-full" value="${user ? user.note : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">พ้อยต์</span></label>
+            <input type="number" id="formPoint" placeholder="พ้อยต์" class="input input-bordered w-full" value="${user ? user.point : 0}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">ระดับ</span></label>
+            <select id="formLevel" class="select select-bordered w-full" required>
+              ${USER_LEVELS.map(level => `<option value="${level}" ${user && user.level === level ? 'selected' : ''}>${level}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Tags (คั่นด้วยเครื่องหมายคอมม่า ",")</span></label>
+            <input type="text" id="formTags" placeholder="Tag1, Tag2, Tag3" class="input input-bordered w-full" value="${user && user.tags ? user.tags.join(', ') : ''}" />
+          </div>
+        `;
+        dataFormModal.showModal();
+
+        formSaveBtn.onclick = () => saveUser(user);
+        formCancelBtn.onclick = () => dataFormModal.close();
+      }
+
+      async function saveUser(originalUser) {
+        const lineId = document.getElementById('formLineId').value.trim();
+        const name = document.getElementById('formName').value.trim();
+        const phone = document.getElementById('formPhone').value.trim();
+        const email = document.getElementById('formEmail').value.trim();
+        const address = document.getElementById('formAddress').value.trim();
+        const note = document.getElementById('formNote').value.trim();
+        const point = parseInt(document.getElementById('formPoint').value, 10);
+        const level = document.getElementById('formLevel').value;
+        const tagsInput = document.getElementById('formTags').value.trim();
+        const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag !== '') : [];
+
+
+        if (!name || !lineId) {
+          showAlert('ข้อผิดพลาด', 'กรุณากรอกชื่อและ Line ID');
+          return;
+        }
+
+        formSaveBtn.disabled = true;
+        try {
+          let message;
+          if (originalUser) {
+            // Update existing user
+            message = await postData('updateUserAdmin', {
+              lineId: originalUser.id, // Use original ID as it's readonly
+              name, phone, email, address, note, point, level, tags
+            });
+          } else {
+            // Register new user
+            message = await postData('registerAdmin', {
+              lineId, name, phone, email, address, note, point, level, tags
+            });
+          }
+          showAlert('สำเร็จ', message, () => {
+            dataFormModal.close();
+            loadUsers(); // Reload table
+          });
+        } catch (error) {
+          // Error handled by postData, just log
+        } finally {
+          formSaveBtn.disabled = false;
+        }
+      }
+
+      async function deleteUser(lineId) {
+        const confirmed = await showConfirm('ยืนยันการลบ', `คุณแน่ใจหรือไม่ที่จะลบผู้ใช้ LINE ID: ${lineId}?`);
+        if (!confirmed) return;
+
+        try {
+          const message = await postData('deleteUser', { lineId });
+          showAlert('สำเร็จ', message, () => loadUsers());
+        } catch (error) {
+          // Error handled by postData, just log
+        }
+      }
+    }
+
+    // --- Item Management ---
+    async function initItems() {
+      const tableBody = document.getElementById('itemTableBody');
+      const addItemBtn = document.getElementById('addItemBtn');
+
+      addItemBtn.onclick = () => showItemFormModal();
+      await loadItems();
+
+      async function loadItems() {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...</td></tr>`;
+        try {
+          const items = await fetchData('getItems');
+          renderItemTable(items);
+        } catch (error) {
+          tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-error">ไม่สามารถโหลดข้อมูลของรางวัลได้</td></tr>`;
+        }
+      }
+
+      function renderItemTable(items) {
+        if (items.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-base-content text-opacity-50">ไม่พบของรางวัล</td></tr>`;
+          return;
+        }
+        tableBody.innerHTML = items.map(item => `
+          <tr>
+            <td class="font-mono text-xs">${item.id}</td>
+            <td>${item.name}</td>
+            <td>${item.point}</td>
+            <td>
+              ${item.image ? `<img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-md border border-base-300">` : '-'}
+            </td>
+            <td class="whitespace-nowrap">
+              <button class="btn btn-sm btn-info btn-square text-white mr-2 edit-item-btn" data-id="${item.id}" aria-label="แก้ไข">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                  <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <button class="btn btn-sm btn-error btn-square text-white delete-item-btn" data-id="${item.id}" aria-label="ลบ">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 01-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        tableBody.querySelectorAll('.edit-item-btn').forEach(btn => {
+          btn.onclick = () => showItemFormModal(items.find(i => i.id === btn.dataset.id));
+        });
+        tableBody.querySelectorAll('.delete-item-btn').forEach(btn => {
+          btn.onclick = () => deleteItem(btn.dataset.id);
+        });
+      }
+
+      function showItemFormModal(item = null) {
+        currentEditItem = item;
+        dataFormModalTitle.textContent = item ? 'แก้ไขของรางวัล' : 'เพิ่มของรางวัลใหม่';
+        formFieldsContainer.innerHTML = `
+          <div class="form-control">
+            <label class="label"><span class="label-text">ID (ไม่สามารถแก้ไขได้หากมีข้อมูลแล้ว, เว้นว่างเพื่อสร้างอัตโนมัติ)</span></label>
+            <input type="text" id="formItemId" placeholder="Auto-generated if empty" class="input input-bordered w-full" ${item ? 'readonly' : ''} value="${item ? item.id : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">ชื่อของรางวัล</span></label>
+            <input type="text" id="formItemName" placeholder="ชื่อของรางวัล" class="input input-bordered w-full" value="${item ? item.name : ''}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">พ้อยต์ที่ใช้แลก</span></label>
+            <input type="number" id="formItemPoint" placeholder="0" class="input input-bordered w-full" value="${item ? item.point : 0}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">URL รูปภาพ</span></label>
+            <input type="url" id="formItemImage" placeholder="https://example.com/image.png" class="input input-bordered w-full" value="${item ? item.image : ''}" />
+          </div>
+        `;
+        dataFormModal.showModal();
+
+        formSaveBtn.onclick = () => saveItem(item);
+        formCancelBtn.onclick = () => dataFormModal.close();
+      }
+
+      async function saveItem(originalItem) {
+        const id = document.getElementById('formItemId').value.trim();
+        const name = document.getElementById('formItemName').value.trim();
+        const point = parseInt(document.getElementById('formItemPoint').value, 10);
+        const image = document.getElementById('formItemImage').value.trim();
+
+        if (!name || isNaN(point) || point < 0) {
+          showAlert('ข้อผิดพลาด', 'กรุณากรอกชื่อและพ้อยต์ให้ถูกต้อง');
+          return;
+        }
+
+        formSaveBtn.disabled = true;
+        try {
+          let message;
+          if (originalItem) {
+            message = await postData('updateItem', { id: originalItem.id, name, point, image });
+          } else {
+            message = await postData('addItem', { id: id || undefined, name, point, image }); // Pass undefined if ID is empty for auto-generation
+          }
+          showAlert('สำเร็จ', message, () => {
+            dataFormModal.close();
+            loadItems();
+          });
+        } catch (error) {
+          // Error handled by postData
+        } finally {
+          formSaveBtn.disabled = false;
+        }
+      }
+
+      async function deleteItem(id) {
+        const confirmed = await showConfirm('ยืนยันการลบ', `คุณแน่ใจหรือไม่ที่จะลบของรางวัล ID: ${id}?`);
+        if (!confirmed) return;
+
+        try {
+          const message = await postData('deleteItem', { id });
+          showAlert('สำเร็จ', message, () => loadItems());
+        } catch (error) {
+          // Error handled by postData
+        }
+      }
+    }
+
+    // --- Event Management ---
+    async function initEvents() {
+      const tableBody = document.getElementById('eventTableBody');
+      const addEventBtn = document.getElementById('addEventBtn');
+
+      addEventBtn.onclick = () => showEventFormModal();
+      await loadEvents();
+
+      async function loadEvents() {
+        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4"><div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...</td></tr>`;
+        try {
+          const events = await fetchData('getEvents');
+          renderEventTable(events);
+        } catch (error) {
+          tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-error">ไม่สามารถโหลดข้อมูลกิจกรรมได้</td></tr>`;
+        }
+      }
+
+      function renderEventTable(events) {
+        if (events.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-base-content text-opacity-50">ไม่พบกิจกรรม</td></tr>`;
+          return;
+        }
+        tableBody.innerHTML = events.map(event => `
+          <tr>
+            <td class="font-mono text-xs">${event.id}</td>
+            <td>${event.title}</td>
+            <td>${event.point}</td>
+            <td>
+              ${(event.allowedLevels && event.allowedLevels.length > 0) ? event.allowedLevels.map(level => `<span class="badge ${level === 'SUPER' ? 'badge-primary' : level === 'VIP' ? 'badge-secondary' : 'badge-ghost'} badge-outline mr-1">${level}</span>`).join('') : '<span class="text-base-content text-opacity-50">ทุกคน</span>'}
+            </td>
+            <td class="max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">${event.desc || '-'}</td>
+            <td>
+              ${event.image ? `<img src="${event.image}" alt="${event.title}" class="w-16 h-16 object-cover rounded-md border border-base-300">` : '-'}
+            </td>
+            <td class="whitespace-nowrap">
+              <button class="btn btn-sm btn-info btn-square text-white mr-2 edit-event-btn" data-id="${event.id}" aria-label="แก้ไข">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                  <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <button class="btn btn-sm btn-error btn-square text-white delete-event-btn" data-id="${event.id}" aria-label="ลบ">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 01-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        tableBody.querySelectorAll('.edit-event-btn').forEach(btn => {
+          btn.onclick = () => showEventFormModal(events.find(e => e.id === btn.dataset.id));
+        });
+        tableBody.querySelectorAll('.delete-event-btn').forEach(btn => {
+          btn.onclick = () => deleteEvent(btn.dataset.id);
+        });
+      }
+
+      function showEventFormModal(event = null) {
+        currentEditItem = event;
+        dataFormModalTitle.textContent = event ? 'แก้ไขกิจกรรม' : 'เพิ่มกิจกรรมใหม่';
+
+        const checkedLevelsHtml = USER_LEVELS.map(level => `
+          <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-2">
+              <input type="checkbox" id="level_${level}" name="allowedLevels" value="${level}" class="checkbox checkbox-primary"
+                ${event && event.allowedLevels && event.allowedLevels.includes(level) ? 'checked' : ''}>
+              <span class="label-text">${level}</span>
+            </label>
+          </div>
+        `).join('');
+
+        formFieldsContainer.innerHTML = `
+          <div class="form-control">
+            <label class="label"><span class="label-text">ID (ไม่สามารถแก้ไขได้หากมีข้อมูลแล้ว, เว้นว่างเพื่อสร้างอัตโนมัติ)</span></label>
+            <input type="text" id="formEventId" placeholder="Auto-generated if empty" class="input input-bordered w-full" ${event ? 'readonly' : ''} value="${event ? event.id : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">ชื่อกิจกรรม</span></label>
+            <input type="text" id="formEventTitle" placeholder="ชื่อกิจกรรม" class="input input-bordered w-full" value="${event ? event.title : ''}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">พ้อยต์ที่จะได้รับ</span></label>
+            <input type="number" id="formEventPoint" placeholder="0" class="input input-bordered w-full" value="${event ? event.point : 0}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">ระดับที่เข้าร่วมได้</span></label>
+            <div class="flex flex-wrap gap-x-4">
+              ${checkedLevelsHtml}
+            </div>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">รายละเอียดกิจกรรม</span></label>
+            <textarea id="formEventDesc" placeholder="รายละเอียด" class="textarea textarea-bordered h-24 w-full">${event ? event.desc : ''}</textarea>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">URL รูปภาพ (Banner)</span></label>
+            <input type="url" id="formEventImage" placeholder="https://example.com/event_banner.png" class="input input-bordered w-full" value="${event ? event.image : ''}" />
+          </div>
+        `;
+        dataFormModal.showModal();
+
+        formSaveBtn.onclick = () => saveEvent(event);
+        formCancelBtn.onclick = () => dataFormModal.close();
+      }
+
+      async function saveEvent(originalEvent) {
+        const id = document.getElementById('formEventId').value.trim();
+        const title = document.getElementById('formEventTitle').value.trim();
+        const point = parseInt(document.getElementById('formEventPoint').value, 10);
+        const desc = document.getElementById('formEventDesc').value.trim();
+        const image = document.getElementById('formEventImage').value.trim();
+
+        const allowedLevels = Array.from(document.querySelectorAll('input[name="allowedLevels"]:checked'))
+                               .map(cb => cb.value);
+
+        if (!title || isNaN(point) || point < 0) {
+          showAlert('ข้อผิดพลาด', 'กรุณากรอกชื่อกิจกรรมและพ้อยต์ให้ถูกต้อง');
+          return;
+        }
+
+        formSaveBtn.disabled = true;
+        try {
+          let message;
+          if (originalEvent) {
+            message = await postData('updateEvent', { id: originalEvent.id, title, point, desc, image, allowedLevels });
+          } else {
+            message = await postData('addEvent', { id: id || undefined, title, point, desc, image, allowedLevels });
+          }
+          showAlert('สำเร็จ', message, () => {
+            dataFormModal.close();
+            loadEvents();
+          });
+        } catch (error) {
+          // Error handled by postData
+        } finally {
+          formSaveBtn.disabled = false;
+        }
+      }
+
+      async function deleteEvent(id) {
+        const confirmed = await showConfirm('ยืนยันการลบ', `คุณแน่ใจหรือไม่ที่จะลบกิจกรรม ID: ${id}?`);
+        if (!confirmed) return;
+
+        try {
+          const message = await postData('deleteEvent', { id });
+          showAlert('สำเร็จ', message, () => loadEvents());
+        } catch (error) {
+          // Error handled by postData
+        }
+      }
+    }
+
+    // --- Code Management ---
+    async function initCodes() {
+      const tableBody = document.getElementById('codeTableBody');
+      const addCodeBtn = document.getElementById('addCodeBtn');
+
+      addCodeBtn.onclick = () => showCodeFormModal();
+      await loadCodes();
+
+      async function loadCodes() {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...</td></tr>`;
+        try {
+          const codes = await fetchData('getCodes');
+          renderCodeTable(codes);
+        } catch (error) {
+          tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-error">ไม่สามารถโหลดข้อมูลโค้ดได้</td></tr>`;
+        }
+      }
+
+      function renderCodeTable(codes) {
+        if (codes.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-base-content text-opacity-50">ไม่พบโค้ด</td></tr>`;
+          return;
+        }
+        tableBody.innerHTML = codes.map(code => `
+          <tr>
+            <td class="font-mono text-xs">${code.id}</td>
+            <td>${code.title}</td>
+            <td>${code.point}</td>
+            <td class="max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">${code.desc || '-'}</td>
+            <td class="whitespace-nowrap">
+              <button class="btn btn-sm btn-info btn-square text-white mr-2 edit-code-btn" data-id="${code.id}" aria-label="แก้ไข">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                  <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <button class="btn btn-sm btn-error btn-square text-white delete-code-btn" data-id="${code.id}" aria-label="ลบ">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 01-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+        tableBody.querySelectorAll('.edit-code-btn').forEach(btn => {
+          btn.onclick = () => showCodeFormModal(codes.find(c => c.id === btn.dataset.id));
+        });
+        tableBody.querySelectorAll('.delete-code-btn').forEach(btn => {
+          btn.onclick = () => deleteCode(btn.dataset.id);
+        });
+      }
+
+      function showCodeFormModal(code = null) {
+        currentEditItem = code;
+        dataFormModalTitle.textContent = code ? 'แก้ไขโค้ด' : 'เพิ่มโค้ดใหม่';
+        formFieldsContainer.innerHTML = `
+          <div class="form-control">
+            <label class="label"><span class="label-text">ID (ค่า QR Code / รหัสโค้ด, ไม่สามารถแก้ไขได้)</span></label>
+            <input type="text" id="formCodeId" placeholder="ID สำหรับ QR Code / รหัส" class="input input-bordered w-full" ${code ? 'readonly' : 'required'} value="${code ? code.id : ''}" />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">ชื่อโค้ด</span></label>
+            <input type="text" id="formCodeTitle" placeholder="ชื่อโค้ด (เช่น โค้ดรับพ้อยต์จากงาน)" class="input input-bordered w-full" value="${code ? code.title : ''}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">พ้อยต์ที่จะได้รับ</span></label>
+            <input type="number" id="formCodePoint" placeholder="0" class="input input-bordered w-full" value="${code ? code.point : 0}" required />
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">รายละเอียดโค้ด</span></label>
+            <textarea id="formCodeDesc" placeholder="รายละเอียด" class="textarea textarea-bordered h-24 w-full">${code ? code.desc : ''}</textarea>
+          </div>
+        `;
+        dataFormModal.showModal();
+
+        formSaveBtn.onclick = () => saveCode(code);
+        formCancelBtn.onclick = () => dataFormModal.close();
+      }
+
+      async function saveCode(originalCode) {
+        const id = document.getElementById('formCodeId').value.trim();
+        const title = document.getElementById('formCodeTitle').value.trim();
+        const point = parseInt(document.getElementById('formCodePoint').value, 10);
+        const desc = document.getElementById('formCodeDesc').value.trim();
+
+        if (!id || !title || isNaN(point) || point < 0) {
+          showAlert('ข้อผิดพลาด', 'กรุณากรอก ID, ชื่อโค้ด และพ้อยต์ให้ถูกต้อง');
+          return;
+        }
+
+        formSaveBtn.disabled = true;
+        try {
+          let message;
+          if (originalCode) {
+            message = await postData('updateCode', { id: originalCode.id, title, point, desc });
+          } else {
+            message = await postData('addCode', { id, title, point, desc });
+          }
+          showAlert('สำเร็จ', message, () => {
+            dataFormModal.close();
+            loadCodes();
+          });
+        } catch (error) {
+          // Error handled by postData
+        } finally {
+          formSaveBtn.disabled = false;
+        }
+      }
+
+      async function deleteCode(id) {
+        const confirmed = await showConfirm('ยืนยันการลบ', `คุณแน่ใจหรือไม่ที่จะลบโค้ด ID: ${id}?`);
+        if (!confirmed) return;
+
+        try {
+          const message = await postData('deleteCode', { id });
+          showAlert('สำเร็จ', message, () => loadCodes());
+        } catch (error) {
+          // Error handled by postData
+        }
+      }
+    }
+
+    // --- History View ---
+    async function initHistory() {
+      const tableBody = document.getElementById('historyTableBody');
+      const filterLineIdInput = document.getElementById('historySearchLineId');
+      const filterTypeSelect = document.getElementById('historyFilterType');
+      const filterStartDateInput = document.getElementById('historyStartDate');
+      const filterEndDateInput = document.getElementById('historyEndDate');
+      const filterBtn = document.getElementById('historyFilterBtn');
+      const resetBtn = document.getElementById('historyResetBtn');
+
+      filterBtn.onclick = () => loadHistory();
+      resetBtn.onclick = () => {
+        filterLineIdInput.value = '';
+        filterTypeSelect.value = '';
+        filterStartDateInput.value = '';
+        filterEndDateInput.value = '';
+        loadHistory();
+      };
+
+      await loadHistory();
+
+      async function loadHistory() {
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...</td></tr>`;
+        try {
+          const filters = {
+            lineId: filterLineIdInput.value.trim(),
+            type: filterTypeSelect.value,
+            startDate: filterStartDateInput.value,
+            endDate: filterEndDateInput.value
+          };
+          const history = await fetchData('getAllHistory', filters);
+          renderHistoryTable(history);
+        } catch (error) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-error">ไม่สามารถโหลดประวัติได้</td></tr>`;
+        }
+      }
+
+      function renderHistoryTable(history) {
+        if (history.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-base-content text-opacity-50">ไม่พบประวัติการทำรายการ</td></tr>`;
+          return;
+        }
+        tableBody.innerHTML = history.map(record => `
+          <tr>
+            <td class="font-mono text-xs">${record.lineId}</td>
+            <td>${record.type}</td>
+            <td>${record.detail}</td>
+            <td class="${record.amount < 0 ? 'text-error' : 'text-success'} font-bold">${record.amount > 0 ? '+' : ''}${record.amount}</td>
+            <td>${record.date}</td>
+            <td>${record.refId || '-'}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    // --- Settings View ---
+    async function initSettings() {
+      const vipPointsInput = document.getElementById('vipPoints');
+      const superPointsInput = document.getElementById('superPoints');
+      const saveLevelSettingsBtn = document.getElementById('saveLevelSettingsBtn');
+      const levelSettingsForm = document.getElementById('levelSettingsForm');
+
+      // Load current settings
+      try {
+        const config = await fetchData('getLevelConfig');
+        if (config) {
+          vipPointsInput.value = parseInt(config.VIP_points || 0, 10);
+          superPointsInput.value = parseInt(config.SUPER_points || 0, 10);
+          levelConfig = {
+            VIP_points: parseInt(config.VIP_points || 0, 10),
+            SUPER_points: parseInt(config.SUPER_points || 0, 10),
+          };
+        }
+      } catch (error) {
+        console.error("Error loading level settings:", error);
+        showAlert('ข้อผิดพลาด', 'ไม่สามารถโหลดการตั้งค่าระดับได้');
+      }
+
+      // Save settings
+      levelSettingsForm.onsubmit = async (e) => {
+        e.preventDefault();
+        saveLevelSettingsBtn.disabled = true;
+
+        const vipPoints = parseInt(vipPointsInput.value, 10);
+        const superPoints = parseInt(superPointsInput.value, 10);
+
+        if (isNaN(vipPoints) || vipPoints < 0 || isNaN(superPoints) || superPoints < 0) {
+          showAlert('ข้อผิดพลาด', 'กรุณากรอกจำนวนแต้มให้ถูกต้อง (ตัวเลขที่ไม่ติดลบ)');
+          saveLevelSettingsBtn.disabled = false;
+          return;
+        }
+        if (vipPoints >= superPoints && superPoints !== 0) { // Allow SUPER=0 if VIP=0
+          showAlert('ข้อผิดพลาด', 'แต้มสำหรับระดับ SUPER ต้องมากกว่าแต้มสำหรับระดับ VIP');
+          saveLevelSettingsBtn.disabled = false;
+          return;
+        }
+
+
+        try {
+          const message = await postData('setLevelConfig', { VIP_points: vipPoints, SUPER_points: superPoints });
+          showAlert('สำเร็จ', message, () => {
+             // Update global levelConfig after successful save
+             levelConfig = { VIP_points: vipPoints, SUPER_points: superPoints };
+          });
+        } catch (error) {
+          // Error handled by postData
+        } finally {
+          saveLevelSettingsBtn.disabled = false;
+        }
+      };
+    }
+
+
+    // --- Initialize App ---
+    document.addEventListener('DOMContentLoaded', () => {
+      window.addEventListener('hashchange', router);
+      router(); // Initial route load
     });
-  }
-</script>
+  </script>
 </body>
+
 </html>
