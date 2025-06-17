@@ -16,9 +16,9 @@
 
 
   <style>
- body{
-  background-color: #eeeeee;
- }
+    body {
+      background-color: #ffffff;
+    }
 
     .hidden {
       display: none !important;
@@ -68,7 +68,7 @@
       <!-- Navbar for header and mobile menu toggle -->
       <div class="navbar bg-neutral text-white-content shadow-md p-4 mb-6 sticky top-0 z-50">
         <div class="flex-none lg:hidden">
-          <label for="my-drawer-2" aria-label="open sidebar" class="btn btn-square btn-ghost">
+          <label for="my-drawer-2" aria-label="open sidebar" class="btn btn-neutral-content	 btn-neutral-content	">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
               class="inline-block w-6 h-6 stroke-current">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -104,16 +104,16 @@
     </div>
     <div class="drawer-side z-50">
       <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
-      <ul class="menu p-4 w-80 min-h-full bg-base-200 text-base-content">
+      <ul class="menu p-4 w-80 min-h-full bg-gray-200 text-base-content">
         <!-- Sidebar content here -->
         <li class="menu-title text-lg font-bold p-6 text-black">เมนูผู้ดูแลระบบ</li>
-        <li><a href="#dashboard" class="nav-link p-4">ภาพรวม</a></li>
-        <li><a href="#users" class="nav-link p-4">จัดการผู้ใช้</a></li>
-        <li><a href="#items" class="nav-link p-4">จัดการของรางวัล</a></li>
-        <li><a href="#events" class="nav-link p-4">จัดการกิจกรรม</a></li>
-        <li><a href="#codes" class="nav-link p-4">จัดการโค้ด</a></li>
-        <li><a href="#history" class="nav-link p-4">ประวัติการทำรายการ</a></li>
-        <li><a href="#settings" class="nav-link p-4">ตั้งค่าระบบ</a></li>
+        <li><a href="#dashboard" class="nav-link p-4 border-gray-300 border-b">ภาพรวม</a></li>
+        <li><a href="#users" class="nav-link p-4 border-gray-300 border-b">จัดการผู้ใช้</a></li>
+        <li><a href="#items" class="nav-link p-4 border-gray-300 border-b">จัดการของรางวัล</a></li>
+        <li><a href="#events" class="nav-link p-4 border-gray-300 border-b">จัดการกิจกรรม</a></li>
+        <li><a href="#codes" class="nav-link p-4 border-gray-300 border-b">จัดการโค้ด</a></li>
+        <li><a href="#history" class="nav-link p-4 border-gray-300 border-b">ประวัติการทำรายการ</a></li>
+        <li><a href="#settings" class="nav-link p-4 border-gray-300 border-b">ตั้งค่าระบบ</a></li>
       </ul>
     </div>
   </div>
@@ -164,7 +164,7 @@
     <h2 class="text-3xl font-bold mb-6 text-center text-white-content">ภาพรวมระบบ CRM-3RN</h2>
 
     <!-- Stats Section -->
-    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300 mb-8 bg-base-200">
+    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300 mb-8 bg-gray-50">
       <div class="stat place-items-center">
         <div class="stat-figure text-neutral">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -196,7 +196,8 @@
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
             class="inline-block w-8 h-8 stroke-current">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+            </path>
           </svg>
         </div>
         <div class="stat-title">กิจกรรม</div>
@@ -207,16 +208,16 @@
 
     <!-- Graphs Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div class="card bg-base-200 shadow-md">
+      <div class="card bg-gray-50 shadow-md">
         <div class="card-body">
           <h3 class="card-title">ผู้ใช้งานตามระดับ (LV)</h3>
           <!-- เพิ่ม div ห่อ canvas พร้อมกำหนดขนาดที่นี่ -->
-          <div class="relative w-full h-64"> 
+          <div class="relative w-full h-64">
             <canvas id="userLevelChart"></canvas>
           </div>
         </div>
       </div>
-      <div class="card bg-base-200 shadow-md">
+      <div class="card bg-gray-50 shadow-md">
         <div class="card-body">
           <h3 class="card-title">สถิติพ้อยต์ (รับ / ใช้)</h3>
           <!-- เพิ่ม div ห่อ canvas พร้อมกำหนดขนาดที่นี่ -->
@@ -229,13 +230,14 @@
 
     <!-- Tables Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <div class="card bg-base-200 shadow-md">
+      <div class="card bg-gray-50 shadow-md">
         <div class="card-body">
-          <h3 class="card-title mb-4">ตารางการแลกรางวัลล่าสุด <span class="badge badge-lg badge-success-outline">TOP 10</span></h3>
+          <h3 class="card-title mb-4">ตารางการแลกรางวัลล่าสุด <span class="badge badge-lg badge-success-outline">TOP
+              10</span></h3>
           <div class="table-responsive rounded-lg border border-base-300 ">
             <table class="table w-full table-zebra table-sm">
               <thead>
-                <tr class="bg-base-200">
+                <tr class="bg-gray-50">
                   <th>ชื่อผู้ใช้</th> <!-- เปลี่ยนเป็น 'ชื่อผู้ใช้' -->
                   <th>รางวัล</th>
                   <th>พ้อยต์</th>
@@ -254,13 +256,14 @@
         </div>
       </div>
 
-      <div class="card bg-base-200 shadow-md">
+      <div class="card bg-gray-50 shadow-md">
         <div class="card-body">
-          <h3 class="card-title mb-4">ตารางการรับ/ใช้พ้อยต์ล่าสุด <span class="badge badge-lg badge-info-outline">TOP 10</span></h3>
+          <h3 class="card-title mb-4">ตารางการรับ/ใช้พ้อยต์ล่าสุด <span class="badge badge-lg badge-info-outline">TOP
+              10</span></h3>
           <div class="table-responsive rounded-lg border border-base-300 ">
             <table class="table w-full table-zebra table-sm">
               <thead>
-                <tr class="bg-base-200">
+                <tr class="bg-gray-50">
                   <th>ชื่อผู้ใช้</th> <!-- เปลี่ยนเป็น 'ชื่อผู้ใช้' -->
                   <th>ประเภท</th>
                   <th>จำนวน</th>
@@ -285,14 +288,15 @@
   <template id="view-users">
     <h2 class="text-2xl font-bold mb-4">จัดการผู้ใช้</h2>
     <div class="flex flex-col md:flex-row gap-4 mb-4">
-      <input type="text" id="userSearchInput" placeholder="ค้นหา (LINE ID / ชื่อ / เบอร์โทร)" class="input input-bordered flex-grow" />
+      <input type="text" id="userSearchInput" placeholder="ค้นหา (LINE ID / ชื่อ / เบอร์โทร)"
+        class="input input-bordered flex-grow" />
       <button id="userSearchBtn" class="btn btn-neutral">ค้นหา</button>
       <button id="addUserBtn" class="btn btn-soft">เพิ่มผู้ใช้ใหม่</button>
     </div>
     <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
-          <tr class="bg-base-200">
+          <tr class="bg-gray-50">
             <th>LINE ID</th>
             <th>ชื่อ</th>
             <th>เบอร์โทร</th>
@@ -321,7 +325,7 @@
     <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
-          <tr class="bg-base-200">
+          <tr class="bg-gray-50">
             <th>ID</th>
             <th>ชื่อ</th>
             <th>พ้อยต์</th>
@@ -347,7 +351,7 @@
     <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
-          <tr class="bg-base-200">
+          <tr class="bg-gray-50">
             <th>ID</th>
             <th>ชื่อกิจกรรม</th>
             <th>พ้อยต์</th>
@@ -375,7 +379,7 @@
     <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
-          <tr class="bg-base-200">
+          <tr class="bg-gray-50">
             <th>ID (QR Code Value)</th>
             <th>ชื่อโค้ด</th>
             <th>พ้อยต์</th>
@@ -398,7 +402,8 @@
   <template id="view-history">
     <h2 class="text-2xl font-bold mb-4">ประวัติการทำรายการ</h2>
     <div class="flex flex-col md:flex-row gap-4 mb-4 items-end">
-      <input type="text" id="historySearchLineId" placeholder="ค้นหาด้วย Line ID" class="input input-bordered flex-grow" />
+      <input type="text" id="historySearchLineId" placeholder="ค้นหาด้วย Line ID"
+        class="input input-bordered flex-grow" />
       <select id="historyFilterType" class="select select-bordered w-full md:w-auto">
         <option value="">-- ประเภททั้งหมด --</option>
         <option value="checkin">เช็คอิน</option>
@@ -426,7 +431,7 @@
     <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
-          <tr class="bg-base-200">
+          <tr class="bg-gray-50">
             <th>Line ID</th>
             <th>ประเภท</th>
             <th>รายละเอียด</th>
@@ -450,10 +455,11 @@
   <template id="view-settings">
     <h2 class="text-2xl font-bold mb-4">ตั้งค่าระบบ</h2>
 
-    <div class="card bg-base-200 shadow-md mb-6">
+    <div class="card bg-gray-50 shadow-md mb-6">
       <div class="card-body">
         <h3 class="card-title text-xl mb-4">การตั้งค่าระดับผู้ใช้ (User Levels)</h3>
-        <p class="text-sm text-base-content text-opacity-70 mb-4">กำหนดจำนวนพ้อยต์ขั้นต่ำที่ผู้ใช้ต้องมีเพื่อเลื่อนระดับ</p>
+        <p class="text-sm text-base-content text-opacity-70 mb-4">กำหนดจำนวนพ้อยต์ขั้นต่ำที่ผู้ใช้ต้องมีเพื่อเลื่อนระดับ
+        </p>
         <form id="levelSettingsForm" class="space-y-4">
           <div class="form-control">
             <label class="label"><span class="label-text">แต้มสำหรับระดับ VIP</span></label>
@@ -461,10 +467,12 @@
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">แต้มสำหรับระดับ SUPER</span></label>
-            <input type="number" id="superPoints" placeholder="0" class="input input-bordered w-full" required min="0" />
+            <input type="number" id="superPoints" placeholder="0" class="input input-bordered w-full" required
+              min="0" />
           </div>
           <div class="mt-6">
-            <button type="submit" id="saveLevelSettingsBtn" class="btn btn-neutral w-full">บันทึกการตั้งค่าระดับ</button>
+            <button type="submit" id="saveLevelSettingsBtn"
+              class="btn btn-neutral w-full">บันทึกการตั้งค่าระดับ</button>
           </div>
         </form>
       </div>
@@ -1299,7 +1307,7 @@
         const image = document.getElementById('formEventImage').value.trim();
 
         const allowedLevels = Array.from(document.querySelectorAll('input[name="allowedLevels"]:checked'))
-                               .map(cb => cb.value);
+          .map(cb => cb.value);
 
         if (!title || isNaN(point) || point < 0) {
           showAlert('ข้อผิดพลาด', 'กรุณากรอกชื่อกิจกรรมและพ้อยต์ให้ถูกต้อง');
@@ -1562,8 +1570,8 @@
         try {
           const message = await postData('setLevelConfig', { VIP_points: vipPoints, SUPER_points: superPoints });
           showAlert('สำเร็จ', message, () => {
-             // Update global levelConfig after successful save
-             levelConfig = { VIP_points: vipPoints, SUPER_points: superPoints };
+            // Update global levelConfig after successful save
+            levelConfig = { VIP_points: vipPoints, SUPER_points: superPoints };
           });
         } catch (error) {
           // Error handled by postData
@@ -1572,8 +1580,6 @@
         }
       };
     }
-
-
     // --- Initialize App ---
     document.addEventListener('DOMContentLoaded', () => {
       window.addEventListener('hashchange', router);
