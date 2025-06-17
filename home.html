@@ -43,7 +43,7 @@
             d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z"
             stroke="currentColor" stroke-width="1.5"></path>
           <path
-            d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.5286 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.5286 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037"
+            d="M9 12H13.2M9 12V9.2963C9 8.82489 9 8.58919 9.14645 8.44274C9.29289 8.2963 9.52860 8.2963 10 8.2963H13.2C14.1941 8.2963 15 9.1254 15 10.1481C15 11.1709 14.1941 12 13.2 12M9 12V14.7037C9 15.1751 9 15.4108 9.14645 15.5572C9.29289 15.7037 9.52860 15.7037 10 15.7037H13.2C14.1941 15.7037 15 14.8746 15 13.8518C15 12.8291 14.1941 12 13.2 12M10.4938 8.2963V7M10.4938 17V15.7037M12.8982 8.2963V7M12.8982 17V15.7037"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
         </svg>
       </div>
@@ -208,7 +208,14 @@
   <template id="view-profile">
     <div class="space-y-4">
       <div class="glass-white p-6 rounded-lg text-center shadow-md">
-        <img id="profileDisplayPicture" class="mask mask-circle w-24 h-24 mx-auto mb-4 rounded-full object-cover border-4 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" alt="รูปโปรไฟล์" />
+        <div class="relative w-24 h-24 mx-auto mb-4">
+            <img id="profileDisplayPicture" class="mask mask-circle w-24 h-24 rounded-full object-cover border-4 border-black" src="https://img.daisyui.com/images/stock/photo-1567653418876-5bb0e566e1c2.webp" alt="รูปโปรไฟล์" />
+            <button id="editProfileBtn" class="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md hover:scale-110 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.389-8.389-2.828-2.828z" />
+                </svg>
+            </button>
+        </div>
         <div class="text-2xl font-bold mb-2" id="profileDisplayName">กำลังโหลด...</div>
         <div class="flex items-center justify-center space-x-2 mb-2"> 
 <!--           <span class="text-lg font-bold" id="profileLevelTextDisplay"></span>  -->
@@ -223,31 +230,36 @@
       <div class="bg-white p-6 rounded-lg shadow-md space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">LINE ID</label>
-          <input id="profileLineId" readonly class="input input-bordered input-neutral w-full cursor-not-allowed text-gray-500" />
+          <input id="profileLineId" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อ</label>
-          <input id="profileName" class="input input-bordered input-neutral w-full" />
+          <input id="profileName" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์</label>
-          <input id="profilePhone" class="input input-bordered input-neutral w-full" />
+          <input id="profilePhone" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-          <input id="profileEmail" class="input input-bordered input-neutral w-full" />
+          <input id="profileEmail" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">ที่อยู่</label>
-          <input id="profileAddress" class="input input-bordered input-neutral w-full" />
+          <input id="profileAddress" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
-          <input id="profileNote" class="input input-bordered input-neutral w-full" />
+          <input id="profileNote" readonly class="input input-bordered w-full cursor-not-allowed text-gray-500" />
         </div>
-        <button id="updateProfileBtn" class="btn btn-neutral w-full">
-          อัปเดตข้อมูล
-        </button>
+        <div id="profileEditButtons" class="flex space-x-2 hidden">
+            <button id="saveProfileBtn" class="btn btn-neutral flex-1">
+                บันทึกข้อมูล
+            </button>
+            <button id="cancelEditBtn" class="btn btn-outline btn-neutral flex-1">
+                ยกเลิก
+            </button>
+        </div>
       </div>
     </div>
   </template>
@@ -888,7 +900,22 @@
       const profileEmailEl = document.getElementById('profileEmail');
       const profileAddressEl = document.getElementById('profileAddress');
       const profileNoteEl = document.getElementById('profileNote');
-      const updateBtn = document.getElementById('updateProfileBtn');
+      
+      const editProfileBtn = document.getElementById('editProfileBtn'); // New
+      const profileEditButtonsDiv = document.getElementById('profileEditButtons'); // New parent div for Save/Cancel
+      const saveProfileBtn = document.getElementById('saveProfileBtn'); // Renamed from updateProfileBtn
+      const cancelEditBtn = document.getElementById('cancelEditBtn'); // New
+
+      // Array of editable input elements
+      const editableInputs = [
+        profileNameEl,
+        profilePhoneEl,
+        profileEmailEl,
+        profileAddressEl,
+        profileNoteEl
+      ];
+
+      let initialProfileData = {}; // To store values for revert on cancel
 
       if (profileDisplayPictureEl && userState.profile) {
         profileDisplayPictureEl.src = userState.profile.pictureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Line-icon.svg/1200px-Line-icon.svg.png';
@@ -896,9 +923,8 @@
       if (profileDisplayNameEl && userState.profile) {
         profileDisplayNameEl.textContent = userState.profile.displayName || 'ผู้ใช้ LINE';
       }
-      if (profileLineIdEl && userState.lineId) {
-        profileLineIdEl.value = userState.lineId;
-      }
+      // profileLineIdEl is always readonly, populated later
+
       if (profileTotalPointsEl) {
         profileTotalPointsEl.textContent = userState.points.toLocaleString();
       }
@@ -939,6 +965,9 @@
         try {
           const uRes = await fetch(`${CONFIG.GAS_URL}?action=getUserInfo&lineId=${userState.lineId}`);
           uData = await uRes.json();
+          if (uData.error) {
+              throw new Error(uData.error); // Propagate error if user data fetch failed
+          }
           dataCache.userProfileFull = uData;
           // After fetching new profile data, update customTag in userState
           userState.customTag = uData.customTag || '';
@@ -957,21 +986,65 @@
           console.error("Error in initProfile:", error);
           showAlert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้');
           if (profileLineIdEl) profileLineIdEl.value = 'โหลดข้อมูลล้มเหลว';
-          if (updateBtn) { updateBtn.disabled = true; }
+          if (editProfileBtn) editProfileBtn.classList.add('hidden'); // Hide edit button if data load fails
           return;
         }
       }
       
-      // อัปเดตฟิลด์ข้อมูลที่สามารถแก้ไขได้
-      if (profileNameEl) profileNameEl.value = uData.name || '';
-      if (profilePhoneEl) profilePhoneEl.value = uData.phone || '';
-      if (profileEmailEl) profileEmailEl.value = uData.email || '';
-      if (profileAddressEl) profileAddressEl.value = uData.address || '';
-      if (profileNoteEl) profileNoteEl.value = uData.note || '';
+      // Store initial data for revert on cancel
+      initialProfileData = {
+        name: uData.name || '',
+        phone: uData.phone || '',
+        email: uData.email || '',
+        address: uData.address || '',
+        note: uData.note || ''
+      };
 
-      if (updateBtn) {
-        updateBtn.onclick = async () => {
-          updateBtn.disabled = true;
+      // Populate input fields
+      if (profileLineIdEl) profileLineIdEl.value = userState.lineId; // Always readonly
+      if (profileNameEl) profileNameEl.value = initialProfileData.name;
+      if (profilePhoneEl) profilePhoneEl.value = initialProfileData.phone;
+      if (profileEmailEl) profileEmailEl.value = initialProfileData.email;
+      if (profileAddressEl) profileAddressEl.value = initialProfileData.address;
+      if (profileNoteEl) profileNoteEl.value = initialProfileData.note;
+
+      // Set initial state (view mode)
+      toggleEditMode(false);
+
+      // --- Helper function to toggle edit mode ---
+      function toggleEditMode(enable) {
+        editableInputs.forEach(input => {
+          if (input) {
+            input.readOnly = !enable;
+            input.classList.toggle('input-neutral', enable);
+            input.classList.toggle('cursor-not-allowed', !enable);
+            input.classList.toggle('text-gray-500', !enable);
+          }
+        });
+
+        if (editProfileBtn) {
+          editProfileBtn.classList.toggle('hidden', enable);
+        }
+        if (profileEditButtonsDiv) {
+          profileEditButtonsDiv.classList.toggle('hidden', !enable);
+        }
+      }
+
+      // --- Event Listeners for buttons ---
+
+      // Edit Button (Pencil Icon)
+      if (editProfileBtn) {
+        editProfileBtn.onclick = () => {
+          toggleEditMode(true);
+        };
+      }
+
+      // Save Button
+      if (saveProfileBtn) { 
+        saveProfileBtn.onclick = async () => {
+          saveProfileBtn.disabled = true; // Disable during API call
+          if(cancelEditBtn) cancelEditBtn.disabled = true; // Also disable cancel during save
+
           try {
             const body = {
               action: 'updateProfile',
@@ -989,6 +1062,7 @@
             const responseText = await res.text();
             showAlert("สถานะ", responseText, () => {
                 if (responseText.includes("สำเร็จ")) {
+                    // Update cached full profile data
                     dataCache.userProfileFull = { 
                         ...dataCache.userProfileFull, 
                         name: profileNameEl.value,
@@ -997,14 +1071,35 @@
                         address: profileAddressEl.value,
                         note: profileNoteEl.value
                     };
+                    // Update initialProfileData for subsequent edits
+                    initialProfileData = { ...initialProfileData, ...body }; // Update initial data
+                    toggleEditMode(false); // Revert to view mode
+                } else {
+                    // If update failed, stay in edit mode or re-enable buttons
+                    saveProfileBtn.disabled = false;
+                    if(cancelEditBtn) cancelEditBtn.disabled = false;
                 }
             });
           } catch (e) {
             console.error("Update profile failed:", e);
             showAlert('ข้อผิดพลาด', 'ไม่สามารถอัปเดตข้อมูลได้ กรุณาลองใหม่');
-          } finally {
-            updateBtn.disabled = false;
+            saveProfileBtn.disabled = false; // Re-enable buttons on error
+            if(cancelEditBtn) cancelEditBtn.disabled = false;
           }
+        };
+      }
+
+      // Cancel Button
+      if (cancelEditBtn) {
+        cancelEditBtn.onclick = () => {
+          // Revert values to initial state
+          if (profileNameEl) profileNameEl.value = initialProfileData.name;
+          if (profilePhoneEl) profilePhoneEl.value = initialProfileData.phone;
+          if (profileEmailEl) profileEmailEl.value = initialProfileData.email;
+          if (profileAddressEl) profileAddressEl.value = initialProfileData.address;
+          if (profileNoteEl) profileNoteEl.value = initialProfileData.note;
+
+          toggleEditMode(false); // Revert to view mode
         };
       }
     }
