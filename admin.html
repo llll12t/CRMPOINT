@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CRM-3RN Admin</title>
   <!-- Load config before main script -->
-  <script src="config-admin.js"></script>
+  <script src="config.js"></script>
   <!-- DaisyUI CDN (includes Tailwind CSS) -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -165,7 +165,10 @@
     <p class="text-center text-base-content text-opacity-70 mb-8">
       ใช้เมนูด้านบน หรือเมนูด้านข้าง (สำหรับมือถือ) เพื่อจัดการข้อมูลผู้ใช้, ของรางวัล, กิจกรรม, โค้ด และดูประวัติการทำรายการต่างๆ
     </p>
-    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300">
+
+    <!-- Overall Program Health -->
+    <h3 class="text-xl font-bold mb-4 mt-8">ภาพรวมโปรแกรม CRM</h3>
+    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300 mb-6">
       <div class="stat place-items-center">
         <div class="stat-figure text-primary">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
@@ -175,220 +178,132 @@
         </div>
         <div class="stat-title">ผู้ใช้งานทั้งหมด</div>
         <div id="statTotalUsers" class="stat-value text-primary">0</div>
+        <div class="stat-desc">ผู้ใช้ที่ลงทะเบียน</div>
       </div>
 
       <div class="stat place-items-center">
         <div class="stat-figure text-secondary">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
         </div>
-        <div class="stat-title">ของรางวัล</div>
-        <div id="statTotalItems" class="stat-value text-secondary">0</div>
+        <div class="stat-title">ผู้ใช้ใหม่ (30 วัน)</div>
+        <div id="statNewUsersLast30Days" class="stat-value text-secondary">0</div>
+        <div class="stat-desc">ผู้ใช้ที่เพิ่งลงทะเบียน</div>
       </div>
 
       <div class="stat place-items-center">
         <div class="stat-figure text-accent">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">ผู้ใช้มีส่วนร่วม (30 วัน)</div>
+        <div id="statActiveUsersLast30Days" class="stat-value text-accent">0</div>
+        <div class="stat-desc">ผู้ใช้ที่มีกิจกรรมในระบบ</div>
+      </div>
+    </div>
+
+    <!-- Point Economics -->
+    <h3 class="text-xl font-bold mb-4 mt-8">เศรษฐศาสตร์พ้อยต์</h3>
+    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300 mb-6">
+      <div class="stat place-items-center">
+        <div class="stat-figure text-success">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.592 1M12 8V6m0 6v2m0 6v2"></path>
+          </svg>
+        </div>
+        <div class="stat-title">พ้อยต์ที่ออกทั้งหมด</div>
+        <div id="statTotalPointsIssued" class="stat-value text-success">0</div>
+        <div class="stat-desc">พ้อยต์ที่สร้างขึ้นในระบบ</div>
+      </div>
+
+      <div class="stat place-items-center">
+        <div class="stat-figure text-error">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.592 1M12 8V6m0 6v2m0 6v2"></path>
+          </svg>
+        </div>
+        <div class="stat-title">พ้อยต์ที่ถูกแลกทั้งหมด</div>
+        <div id="statTotalPointsRedeemed" class="stat-value text-error">0</div>
+        <div class="stat-desc">พ้อยต์ที่ถูกใช้ไป</div>
+      </div>
+
+      <div class="stat place-items-center">
+        <div class="stat-figure text-info">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.592 1M12 8V6m0 6v2m0 6v2"></path>
+          </svg>
+        </div>
+        <div class="stat-title">พ้อยต์คงเหลือในระบบ</div>
+        <div id="statTotalCurrentPointsInSystem" class="stat-value text-info">0</div>
+        <div class="stat-desc">พ้อยต์ทั้งหมดของผู้ใช้</div>
+      </div>
+    </div>
+
+
+    <!-- User Segmentation -->
+    <h3 class="text-xl font-bold mb-4 mt-8">การแบ่งกลุ่มผู้ใช้ตามระดับ</h3>
+    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300 mb-6">
+      <div class="stat place-items-center">
+        <div class="stat-title">MEMBER</div>
+        <div id="statMemberCount" class="stat-value">0</div>
+        <div id="statMemberPercent" class="stat-desc">0%</div>
+      </div>
+      <div class="stat place-items-center">
+        <div class="stat-title">VIP</div>
+        <div id="statVIPCount" class="stat-value text-secondary">0</div>
+        <div id="statVIPPercent" class="stat-desc text-secondary">0%</div>
+      </div>
+      <div class="stat place-items-center">
+        <div class="stat-title">SUPER</div>
+        <div id="statSuperCount" class="stat-value text-primary">0</div>
+        <div id="statSuperPercent" class="stat-desc text-primary">0%</div>
+      </div>
+    </div>
+
+    <!-- Engagement Activities -->
+    <h3 class="text-xl font-bold mb-4 mt-8">ภาพรวมกิจกรรมและการแลกพ้อยต์</h3>
+    <div class="stats stats-vertical lg:stats-horizontal shadow-md w-full border border-base-300 mb-6">
+      <div class="stat place-items-center">
+        <div class="stat-figure text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+          </svg>
+        </div>
+        <div class="stat-title">จำนวนการแลกของรางวัล</div>
+        <div id="statTotalItemsRedeemed" class="stat-value text-primary">0</div>
+      </div>
+
+      <div class="stat place-items-center">
+        <div class="stat-figure text-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
           </svg>
         </div>
-        <div class="stat-title">กิจกรรม</div>
-        <div id="statTotalEvents" class="stat-value text-accent">0</div>
+        <div class="stat-title">จำนวนการเข้าร่วมกิจกรรม</div>
+        <div id="statTotalEventParticipations" class="stat-value text-secondary">0</div>
+      </div>
+
+      <div class="stat place-items-center">
+        <div class="stat-figure text-accent">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+          </svg>
+        </div>
+        <div class="stat-title">จำนวนการใช้โค้ด</div>
+        <div id="statTotalCodeRedemptions" class="stat-value text-accent">0</div>
       </div>
     </div>
-  </template>
 
-  <!-- Template: Users Management -->
-  <template id="view-users">
-    <h2 class="text-2xl font-bold mb-4">จัดการผู้ใช้</h2>
-    <div class="flex flex-col md:flex-row gap-4 mb-4">
-      <input type="text" id="userSearchInput" placeholder="ค้นหา (LINE ID / ชื่อ / เบอร์โทร)" class="input input-bordered flex-grow" />
-      <button id="userSearchBtn" class="btn btn-primary">ค้นหา</button>
-      <button id="addUserBtn" class="btn btn-secondary">เพิ่มผู้ใช้ใหม่</button>
-    </div>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
-      <table class="table w-full table-zebra">
-        <thead>
-          <tr class="bg-base-200">
-            <th>LINE ID</th>
-            <th>ชื่อ</th>
-            <th>เบอร์โทร</th>
-            <th>พ้อยต์</th>
-            <th>ระดับ</th>
-            <th>Tags</th>
-            <th>วันที่สมัคร</th>
-            <th>จัดการ</th>
-          </tr>
-        </thead>
-        <tbody id="userTableBody">
-          <tr>
-            <td colspan="8" class="text-center py-4">
-              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </template>
-
-  <!-- Template: Items Management -->
-  <template id="view-items">
-    <h2 class="text-2xl font-bold mb-4">จัดการของรางวัล</h2>
-    <button id="addItemBtn" class="btn btn-secondary mb-4">เพิ่มของรางวัลใหม่</button>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
-      <table class="table w-full table-zebra">
-        <thead>
-          <tr class="bg-base-200">
-            <th>ID</th>
-            <th>ชื่อ</th>
-            <th>พ้อยต์</th>
-            <th>รูปภาพ</th>
-            <th>จัดการ</th>
-          </tr>
-        </thead>
-        <tbody id="itemTableBody">
-          <tr>
-            <td colspan="5" class="text-center py-4">
-              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </template>
-
-  <!-- Template: Events Management -->
-  <template id="view-events">
-    <h2 class="text-2xl font-bold mb-4">จัดการกิจกรรม</h2>
-    <button id="addEventBtn" class="btn btn-secondary mb-4">เพิ่มกิจกรรมใหม่</button>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
-      <table class="table w-full table-zebra">
-        <thead>
-          <tr class="bg-base-200">
-            <th>ID</th>
-            <th>ชื่อกิจกรรม</th>
-            <th>พ้อยต์</th>
-            <th>ระดับที่เข้าร่วมได้</th>
-            <th>รายละเอียด</th>
-            <th>รูปภาพ</th>
-            <th>จัดการ</th>
-          </tr>
-        </thead>
-        <tbody id="eventTableBody">
-          <tr>
-            <td colspan="7" class="text-center py-4">
-              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </template>
-
-  <!-- Template: Codes Management -->
-  <template id="view-codes">
-    <h2 class="text-2xl font-bold mb-4">จัดการโค้ด</h2>
-    <button id="addCodeBtn" class="btn btn-secondary mb-4">เพิ่มโค้ดใหม่</button>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
-      <table class="table w-full table-zebra">
-        <thead>
-          <tr class="bg-base-200">
-            <th>ID (QR Code Value)</th>
-            <th>ชื่อโค้ด</th>
-            <th>พ้อยต์</th>
-            <th>รายละเอียด</th>
-            <th>จัดการ</th>
-          </tr>
-        </thead>
-        <tbody id="codeTableBody">
-          <tr>
-            <td colspan="5" class="text-center py-4">
-              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </template>
-
-  <!-- Template: History View -->
-  <template id="view-history">
-    <h2 class="text-2xl font-bold mb-4">ประวัติการทำรายการ</h2>
-    <div class="flex flex-col md:flex-row gap-4 mb-4 items-end">
-        <input type="text" id="historySearchLineId" placeholder="ค้นหาด้วย Line ID" class="input input-bordered flex-grow" />
-        <select id="historyFilterType" class="select select-bordered w-full md:w-auto">
-            <option value="">-- ประเภททั้งหมด --</option>
-            <option value="checkin">เช็คอิน</option>
-            <option value="event">กิจกรรม</option>
-            <option value="code">โค้ด</option>
-            <option value="redeem">แลกของรางวัล</option>
-            <option value="transfer_in">รับโอน</option>
-            <option value="transfer_out">โอนออก</option>
-        </select>
-        <div class="form-control flex-grow">
-            <label class="label">
-                <span class="label-text">จากวันที่:</span>
-            </label>
-            <input type="date" id="historyStartDate" class="input input-bordered w-full">
-        </div>
-        <div class="form-control flex-grow">
-            <label class="label">
-                <span class="label-text">ถึงวันที่:</span>
-            </label>
-            <input type="date" id="historyEndDate" class="input input-bordered w-full">
-        </div>
-        <button id="historyFilterBtn" class="btn btn-primary w-full md:w-auto">กรอง</button>
-        <button id="historyResetBtn" class="btn btn-outline w-full md:w-auto">รีเซ็ต</button>
-    </div>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
-      <table class="table w-full table-zebra">
-        <thead>
-          <tr class="bg-base-200">
-            <th>Line ID</th>
-            <th>ประเภท</th>
-            <th>รายละเอียด</th>
-            <th>จำนวน</th>
-            <th>วันที่</th>
-            <th>ID อ้างอิง</th>
-          </tr>
-        </thead>
-        <tbody id="historyTableBody">
-          <tr>
-            <td colspan="6" class="text-center py-4">
-              <div class="loading-spinner mx-auto"></div> กำลังโหลดข้อมูล...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </template>
-
-  <!-- Template: Settings View -->
-  <template id="view-settings">
-    <h2 class="text-2xl font-bold mb-4">ตั้งค่าระบบ</h2>
-
-    <div class="card bg-base-200 shadow-md mb-6">
-      <div class="card-body">
-        <h3 class="card-title text-xl mb-4">การตั้งค่าระดับผู้ใช้ (User Levels)</h3>
-        <p class="text-sm text-base-content text-opacity-70 mb-4">กำหนดจำนวนพ้อยต์ขั้นต่ำที่ผู้ใช้ต้องมีเพื่อเลื่อนระดับ</p>
-        <form id="levelSettingsForm" class="space-y-4">
-          <div class="form-control">
-            <label class="label"><span class="label-text">แต้มสำหรับระดับ VIP</span></label>
-            <input type="number" id="vipPoints" placeholder="0" class="input input-bordered w-full" required min="0" />
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text">แต้มสำหรับระดับ SUPER</span></label>
-            <input type="number" id="superPoints" placeholder="0" class="input input-bordered w-full" required min="0" />
-          </div>
-          <div class="mt-6">
-            <button type="submit" id="saveLevelSettingsBtn" class="btn btn-primary w-full">บันทึกการตั้งค่าระดับ</button>
-          </div>
-        </form>
-      </div>
-    </div>
   </template>
 
   <script>
@@ -573,18 +488,54 @@
     // --- Dashboard ---
     async function initDashboard() {
       try {
-        const users = await fetchData('getUsers');
-        const items = await fetchData('getItems');
-        const events = await fetchData('getEvents');
+        // Fetch new dashboard stats
+        const stats = await fetchData('getDashboardStats');
+        
+        // Populate Overall Program Health
+        document.getElementById('statTotalUsers').textContent = stats.totalUsers;
+        document.getElementById('statNewUsersLast30Days').textContent = stats.newUsersLast30Days;
+        document.getElementById('statActiveUsersLast30Days').textContent = stats.activeUsersLast30Days;
 
-        document.getElementById('statTotalUsers').textContent = users.length;
-        document.getElementById('statTotalItems').textContent = items.length;
-        document.getElementById('statTotalEvents').textContent = events.length;
+        // Populate Point Economics
+        document.getElementById('statTotalPointsIssued').textContent = stats.totalPointsIssued;
+        document.getElementById('statTotalPointsRedeemed').textContent = stats.totalPointsRedeemed;
+        document.getElementById('statTotalCurrentPointsInSystem').textContent = stats.totalCurrentPointsInSystem;
+
+        // Populate User Segmentation
+        document.getElementById('statMemberCount').textContent = stats.usersByLevel.MEMBER || 0;
+        document.getElementById('statMemberPercent').textContent = (stats.levelPercentages.MEMBER || 0) + '%';
+        document.getElementById('statVIPCount').textContent = stats.usersByLevel.VIP || 0;
+        document.getElementById('statVIPPercent').textContent = (stats.levelPercentages.VIP || 0) + '%';
+        document.getElementById('statSuperCount').textContent = stats.usersByLevel.SUPER || 0;
+        document.getElementById('statSuperPercent').textContent = (stats.levelPercentages.SUPER || 0) + '%';
+
+        // Populate Engagement Activities
+        document.getElementById('statTotalItemsRedeemed').textContent = stats.totalItemsRedeemed;
+        document.getElementById('statTotalEventParticipations').textContent = stats.totalEventParticipations;
+        document.getElementById('statTotalCodeRedemptions').textContent = stats.totalCodeRedemptions;
+
+
       } catch (error) {
         console.error("Failed to load dashboard stats:", error);
+        // Fallback to initial stats (if any) or N/A
         document.getElementById('statTotalUsers').textContent = 'N/A';
-        document.getElementById('statTotalItems').textContent = 'N/A';
-        document.getElementById('statTotalEvents').textContent = 'N/A';
+        document.getElementById('statNewUsersLast30Days').textContent = 'N/A';
+        document.getElementById('statActiveUsersLast30Days').textContent = 'N/A';
+
+        document.getElementById('statTotalPointsIssued').textContent = 'N/A';
+        document.getElementById('statTotalPointsRedeemed').textContent = 'N/A';
+        document.getElementById('statTotalCurrentPointsInSystem').textContent = 'N/A';
+
+        document.getElementById('statMemberCount').textContent = 'N/A';
+        document.getElementById('statMemberPercent').textContent = 'N/A';
+        document.getElementById('statVIPCount').textContent = 'N/A';
+        document.getElementById('statVIPPercent').textContent = 'N/A';
+        document.getElementById('statSuperCount').textContent = 'N/A';
+        document.getElementById('statSuperPercent').textContent = 'N/A';
+        
+        document.getElementById('statTotalItemsRedeemed').textContent = 'N/A';
+        document.getElementById('statTotalEventParticipations').textContent = 'N/A';
+        document.getElementById('statTotalCodeRedemptions').textContent = 'N/A';
       }
     }
 
