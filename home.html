@@ -465,7 +465,8 @@
         userState.customTag = userData.customTag || ''; // NEW: Get custom tag
 
         updatePointsInHeader(userState.points); // อัปเดต UI ด้วยคะแนน, ระดับ, และ Tag
-        dataCache.history = historyData;
+        dataCache.history = historyData; // Store history in cache immediately
+        userState.pointsChanged = false; // Reset flag as history is now fresh
 
       } catch (error) {
         console.error("Failed to fetch initial user points or history:", error);
@@ -603,7 +604,7 @@
     function updatePointsInHeader(newPoints) {
       userState.points = newPoints;
       pointValEl.textContent = userState.points;
-      userState.pointsChanged = true;
+      userState.pointsChanged = true; // This flag is used to trigger fresh history fetch AFTER points change
 
       const { level, progressValue, pointsToNext, nextLevelName } = calculateLevelAndProgress(newPoints);
       userState.level = level; // อัปเดต userState.level ด้วย
@@ -663,20 +664,22 @@
       }
     }
     async function getFreshOrCachedHistory() {
-      if (userState.pointsChanged || dataCache.history === null) {
-        console.log("Fetching fresh history (points changed or initial load / cache empty).");
+      // Logic changed: Initial history is loaded in ensureLIFFAndFetchInitialData
+      // This function only fetches fresh history if userState.pointsChanged is true
+      if (userState.pointsChanged) {
+        console.log("Fetching fresh history (points changed).");
         try {
           const hRes = await fetch(`${CONFIG.GAS_URL}?action=getHistory&lineId=${userState.lineId}`);
           dataCache.history = await hRes.json();
-          userState.pointsChanged = false;
+          userState.pointsChanged = false; // Reset flag after fetching fresh history
         } catch (e) {
           console.error("Error fetching history:", e);
           showAlert('ข้อผิดพลาด', 'ไม่สามารถโหลดประวัติได้');
-          dataCache.history = [];
-          userState.pointsChanged = false;
+          dataCache.history = []; // Clear history on error to prevent displaying stale data
+          userState.pointsChanged = false; // Reset flag even on error
         }
       } else {
-        console.log("Using cached history.");
+        console.log("Using cached history for non-point-changing actions.");
       }
       return dataCache.history;
     }
@@ -690,17 +693,17 @@
       const todayDateEl = document.getElementById('todayDate');
       const checkinBtn = document.getElementById('checkinBtn');
 
-      if (dataCache.history && !userState.pointsChanged) {
-        renderHistoryList(dataCache.history);
-      } else {
-        if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5);
-      }
+      // Always show skeleton while checkin status and history are confirmed
+      if (historyListEl) historyListEl.innerHTML = generateListSkeleton(5);
 
       try {
-        const checkRes = await fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`);
+        const [checkRes, history] = await Promise.all([
+            fetch(`${CONFIG.GAS_URL}?action=checkinStatus&lineId=${userState.lineId}`),
+            getFreshOrCachedHistory() // Ensures history is up-to-date or from cache
+        ]);
         const checkData = await checkRes.json();
-        const history = await getFreshOrCachedHistory(); 
-        renderHistoryList(history);
+        
+        renderHistoryList(history); // Render history immediately after it's ready
 
         if (checkinBox && todayDateEl && checkinBtn) {
           if (!checkData.checkedInToday) {
@@ -721,8 +724,8 @@
                     if (userData && !userData.error) {
                         updatePointsInHeader(parseInt(userData.point || 0, 10));
                     }
-                    userState.pointsChanged = true;
-                    initDashboard(); 
+                    userState.pointsChanged = true; // Mark points as changed to force history reload on next dashboard view
+                    initDashboard(); // Re-initialize dashboard to update UI
                   }
                 });
               } catch (e) {
