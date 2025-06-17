@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CRM-3RN Admin</title>
   <!-- Load config before main script -->
-  <script src="config-admin.js"></script>
+  <script src="config.js"></script>
   <!-- DaisyUI CDN (includes Tailwind CSS) -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.css" rel="stylesheet" type="text/css" />
   <script src="https://cdn.tailwindcss.com"></script>
@@ -236,7 +236,7 @@
       <div class="card bg-base-200 shadow-md">
         <div class="card-body">
           <h3 class="card-title mb-4">ตารางการแลกรางวัลล่าสุด <span class="badge badge-lg badge-success-outline">TOP 10</span></h3>
-          <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+          <div class="table-responsive rounded-lg border border-base-300 ">
             <table class="table w-full table-zebra table-sm">
               <thead>
                 <tr class="bg-base-300">
@@ -261,7 +261,7 @@
       <div class="card bg-base-200 shadow-md">
         <div class="card-body">
           <h3 class="card-title mb-4">ตารางการรับ/ใช้พ้อยต์ล่าสุด <span class="badge badge-lg badge-info-outline">TOP 10</span></h3>
-          <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+          <div class="table-responsive rounded-lg border border-base-300 ">
             <table class="table w-full table-zebra table-sm">
               <thead>
                 <tr class="bg-base-300">
@@ -293,7 +293,7 @@
       <button id="userSearchBtn" class="btn btn-primary">ค้นหา</button>
       <button id="addUserBtn" class="btn btn-secondary">เพิ่มผู้ใช้ใหม่</button>
     </div>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+    <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
           <tr class="bg-base-200">
@@ -322,7 +322,7 @@
   <template id="view-items">
     <h2 class="text-2xl font-bold mb-4">จัดการของรางวัล</h2>
     <button id="addItemBtn" class="btn btn-secondary mb-4">เพิ่มของรางวัลใหม่</button>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+    <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
           <tr class="bg-base-200">
@@ -348,7 +348,7 @@
   <template id="view-events">
     <h2 class="text-2xl font-bold mb-4">จัดการกิจกรรม</h2>
     <button id="addEventBtn" class="btn btn-secondary mb-4">เพิ่มกิจกรรมใหม่</button>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+    <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
           <tr class="bg-base-200">
@@ -376,7 +376,7 @@
   <template id="view-codes">
     <h2 class="text-2xl font-bold mb-4">จัดการโค้ด</h2>
     <button id="addCodeBtn" class="btn btn-secondary mb-4">เพิ่มโค้ดใหม่</button>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+    <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
           <tr class="bg-base-200">
@@ -427,7 +427,7 @@
       <button id="historyFilterBtn" class="btn btn-primary w-full md:w-auto">กรอง</button>
       <button id="historyResetBtn" class="btn btn-outline w-full md:w-auto">รีเซ็ต</button>
     </div>
-    <div class="table-responsive rounded-lg border border-base-300 overflow-hidden">
+    <div class="table-responsive rounded-lg border border-base-300 ">
       <table class="table w-full table-zebra">
         <thead>
           <tr class="bg-base-200">
@@ -1219,7 +1219,7 @@
             <td>
               ${(event.allowedLevels && event.allowedLevels.length > 0) ? event.allowedLevels.map(level => `<span class="badge ${level === 'SUPER' ? 'badge-primary' : level === 'VIP' ? 'badge-secondary' : 'badge-ghost'} badge-outline mr-1">${level}</span>`).join('') : '<span class="text-base-content text-opacity-50">ทุกคน</span>'}
             </td>
-            <td class="max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">${event.desc || '-'}</td>
+            <td class="max-w-xs  text-ellipsis whitespace-nowrap">${event.desc || '-'}</td>
             <td>
               ${event.image ? `<img src="${event.image}" alt="${event.title}" class="w-16 h-16 object-cover rounded-md border border-base-300">` : '-'}
             </td>
@@ -1370,7 +1370,7 @@
             <td class="font-mono text-xs">${code.id}</td>
             <td>${code.title}</td>
             <td>${code.point}</td>
-            <td class="max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">${code.desc || '-'}</td>
+            <td class="max-w-xs  text-ellipsis whitespace-nowrap">${code.desc || '-'}</td>
             <td class="whitespace-nowrap">
               <button class="btn btn-sm btn-info btn-square text-white mr-2 edit-code-btn" data-id="${code.id}" aria-label="แก้ไข">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
