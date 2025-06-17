@@ -486,9 +486,6 @@
       try {
         const response = await fetch(CONFIG.CLOUD_FUNCTION_POST_URL, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
           body: JSON.stringify({ action, ...data })
         });
         if (!response.ok) {
