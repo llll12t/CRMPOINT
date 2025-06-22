@@ -360,30 +360,7 @@
       </div>
     </div>
   </template>
-<!-- Shipping Form Dialog (for Physical Items) -->
-<dialog id="shippingFormDialog" class="modal">
-  <div class="modal-box">
-    <h3 id="shippingFormTitle" class="font-bold text-lg mb-4">ข้อมูลสำหรับจัดส่ง</h3>
-    <div class="space-y-4">
-      <div>
-        <label class="label"><span class="label-text">ชื่อ-นามสกุล ผู้รับ</span></label>
-        <input id="shippingName" type="text" placeholder="กรอกชื่อ-นามสกุล" class="input input-bordered w-full" />
-      </div>
-      <div>
-        <label class="label"><span class="label-text">เบอร์โทรศัพท์ติดต่อ</span></label>
-        <input id="shippingPhone" type="tel" placeholder="กรอกเบอร์โทรศัพท์" class="input input-bordered w-full" />
-      </div>
-      <div>
-        <label class="label"><span class="label-text">ที่อยู่สำหรับจัดส่ง</span></label>
-        <textarea id="shippingAddress" class="textarea textarea-bordered w-full" rows="4" placeholder="บ้านเลขที่, ถนน, ตำบล, อำเภอ, จังหวัด, รหัสไปรษณีย์"></textarea>
-      </div>
-    </div>
-    <div class="modal-action justify-between mt-6">
-      <button id="shippingFormCancelBtn" class="btn btn-outline">ยกเลิก</button>
-      <button id="shippingFormConfirmBtn" class="btn btn-neutral">ยืนยันและแลกของ</button>
-    </div>
-  </div>
-</dialog>
+
 
   <script>
     // Global LIFF status and user info
@@ -1250,169 +1227,85 @@
       }
     }
 
-// ในไฟล์ index.html (แทนที่ฟังก์ชัน initRedeem เดิมทั้งหมด)
-async function initRedeem() {
-    const redeemListEl = document.getElementById('redeemList');
-    if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4);
-    
-    let items = dataCache.redeemItems || [];
-    if (!dataCache.redeemItems || dataCache.redeemItems.length === 0) {
+    async function initRedeem() {
+      const redeemListEl = document.getElementById('redeemList');
+      if (redeemListEl) redeemListEl.innerHTML = generateCardSkeleton(4); // Show skeleton
+
+      let items;
+      // Check frontend cache first for redeem items (preloaded in ensureLIFFAndFetchInitialData)
+      if (dataCache.redeemItems) {
+        items = dataCache.redeemItems;
+        console.log("Loading redeem items from frontend cache.");
+      } else {
         try {
-            const res = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
-            items = await res.json();
-            if (items.error) throw new Error(items.error);
-            dataCache.redeemItems = items;
-        } catch (e) {
-            console.error("Error fetching items:", e);
-            if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
-            return;
+          console.log("Fetching redeem items from API (GAS cache or Sheet) - cache miss.");
+          const itemsRes = await fetch(`${CONFIG.GAS_URL}?action=getItems`);
+          items = await itemsRes.json();
+          dataCache.redeemItems = items; // Store in frontend cache
+        } catch (error) {
+          console.error("Error fetching redeem items:", error);
+          if (redeemListEl) redeemListEl.innerHTML = `<li class="col-span-2 text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดของรางวัล</li>`;
+          return;
         }
-    }
-    
-    if (!items || items.length === 0) {
-        redeemListEl.innerHTML = `<li class="col-span-2 text-center text-gray-400 py-4">ไม่มีของรางวัลให้แลก</li>`;
-        return;
-    }
+      }
 
-    redeemListEl.innerHTML = items.map(item => `
-        <li class="bg-white p-4 rounded shadow-sm text-center flex flex-col justify-between">
-            <div>
-              <img src="${item.image}" alt="${item.name}" class="h-24 w-full object-cover mx-auto mb-2 rounded-md">
-              <div class="font-bold mb-1">${item.name}</div>
-              <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
-            </div>
-            <button 
-                data-item-id="${item.id}" 
-                data-item-name="${item.name}" 
-                data-item-point="${item.point}"
-                data-item-type="${item.type}"  // <-- เพิ่มประเภทของสินค้า
-                class="redeem-btn btn btn-neutral btn-sm mt-2">
-                แลกเลย
+      if (redeemListEl) {
+        if (!items || items.length === 0) {
+          redeemListEl.innerHTML = `<li class="col-span-2 text-center text-gray-400 py-4">ไม่มีของรางวัลให้แลก</li>`;
+          return;
+        }
+        redeemListEl.innerHTML = items.map(item => `
+          <li class="bg-white p-4 rounded shadow-sm text-center">
+            <img src="${item.image}" alt="${item.name}" class="h-24 mx-auto mb-2 rounded-md object-cover">
+            <div class="font-bold mb-1">${item.name}</div>
+            <div class="text-sm text-gray-600 mb-2">${item.point} พ้อยต์</div>
+            <button data-item-id="${item.id}" data-item-name="${item.name}" data-item-point="${item.point}"
+                    class="redeem-btn btn btn-neutral btn-sm">
+              แลกเลย
             </button>
-        </li>
-    `).join('');
+          </li>
+        `).join('');
 
-    // === เพิ่ม Event Listener ที่จะจัดการทั้งสองกรณี ===
-    document.querySelectorAll('.redeem-btn').forEach(btn => {
-        btn.addEventListener('click', handleRedeemClick);
-    });
-}
+        // Attach event listeners after rendering
+        document.querySelectorAll('.redeem-btn').forEach(button => {
+          button.addEventListener('click', async (event) => {
+            const btn = event.target;
+            const id = btn.dataset.itemId;
+            const name = btn.dataset.itemName;
+            const point = parseInt(btn.dataset.itemPoint, 10);
 
-// === สร้างฟังก์ชันใหม่สำหรับจัดการการคลิกปุ่มแลกของ ===
-async function handleRedeemClick(event) {
-    const btn = event.currentTarget;
-    const { itemId, itemName, itemPoint, itemType } = btn.dataset;
-    const point = parseInt(itemPoint, 10);
-
-    if (userState.points < point) {
-        showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับแลก "${itemName}" ซึ่งใช้ ${point} พ้อยต์`);
-        return;
-    }
-
-    // ตรวจสอบประเภทของสินค้า
-    if (itemType === 'physical') {
-        // ถ้าเป็นสินค้าที่ต้องจัดส่ง ให้แสดงฟอร์ม
-        showShippingForm({ itemId, itemName, point });
-    } else {
-        // ถ้าเป็น digital ให้ใช้ขั้นตอนยืนยันแบบเดิม
-        const confirmed = await showConfirm(`ยืนยันการแลก`, `แลก "${itemName}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
-        if (!confirmed) return;
-
-        // เรียกฟังก์ชันที่ใช้แลกของ (ไม่มีข้อมูลที่อยู่)
-        await executeRedemption(btn, { itemId, point });
-    }
-}
-
-// === สร้างฟังก์ชันใหม่สำหรับแสดงฟอร์มที่อยู่ ===
-function showShippingForm(item) {
-    const dialog = document.getElementById('shippingFormDialog');
-    const titleEl = document.getElementById('shippingFormTitle');
-    const nameInput = document.getElementById('shippingName');
-    const phoneInput = document.getElementById('shippingPhone');
-    const addressInput = document.getElementById('shippingAddress');
-    const confirmBtn = document.getElementById('shippingFormConfirmBtn');
-    const cancelBtn = document.getElementById('shippingFormCancelBtn');
-
-    titleEl.textContent = `ข้อมูลจัดส่งสำหรับ: ${item.itemName}`;
-
-    // พยายามดึงข้อมูลโปรไฟล์ผู้ใช้มาใส่ในฟอร์มอัตโนมัติ
-    const profile = dataCache.userProfileFull || {};
-    nameInput.value = profile.name || '';
-    phoneInput.value = profile.phone || '';
-    addressInput.value = profile.address || '';
-
-    dialog.showModal();
-
-    const handleConfirm = async () => {
-        const shippingName = nameInput.value.trim();
-        const shippingPhone = phoneInput.value.trim();
-        const shippingAddress = addressInput.value.trim();
-
-        // ตรวจสอบข้อมูลเบื้องต้น
-        if (!shippingName || !shippingPhone || !shippingAddress) {
-            showAlert("ข้อมูลไม่ครบ", "กรุณากรอกชื่อ, เบอร์โทร, และที่อยู่ให้ครบถ้วน");
-            return;
-        }
-
-        dialog.close(); // ปิดฟอร์มก่อน
-
-        // ค้นหาปุ่มที่ถูกคลิกเพื่อส่งไป disable
-        const originalButton = document.querySelector(`.redeem-btn[data-item-id="${item.itemId}"]`);
-
-        // เรียกฟังก์ชันแลกของ โดยส่งข้อมูลที่อยู่ไปด้วย
-        await executeRedemption(originalButton, {
-            itemId: item.itemId,
-            point: item.point,
-            shippingInfo: {
-                name: shippingName,
-                phone: shippingPhone,
-                address: shippingAddress
+            if (userState.points < point) {
+              showAlert("ไม่เพียงพอ", `แต้มของคุณ (${userState.points}) ไม่พอสำหรับแลก "${name}" ซึ่งใช้ ${point} พ้อยต์`);
+              return;
             }
-        });
-    };
 
-    confirmBtn.onclick = handleConfirm;
-    cancelBtn.onclick = () => dialog.close();
-}
+            const confirmed = await showConfirm(`ยืนยันการแลก`, `แลก "${name}" ด้วย ${point} พ้อยต์ ใช่หรือไม่?`);
+            if (!confirmed) return;
 
-// === สร้างฟังก์ชันกลางสำหรับส่งข้อมูลการแลกไปที่ Backend ===
-async function executeRedemption(buttonElement, payload) {
-    buttonElement.disabled = true;
-    buttonElement.textContent = "กำลังแลก...";
-
-    try {
-        const body = {
-            action: 'redeemItem',
-            lineId: userState.lineId,
-            itemId: payload.itemId,
-            point: payload.point,
-            // เพิ่ม shippingInfo ถ้ามี
-            ...(payload.shippingInfo && { shippingInfo: payload.shippingInfo })
-        };
-
-        const res = await fetch(CONFIG.GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify(body)
-        });
-        const text = await res.text();
-
-        showAlert("สถานะการแลก", text, async () => {
-            if (text.includes("สำเร็จ")) {
-                await fetchAndUpdateUserState(); // อัปเดตคะแนน
-                buttonElement.textContent = "แลกแล้ว";
-                // ไม่ต้อง enable ปุ่มอีกถ้าสำเร็จ
-            } else {
-                buttonElement.disabled = false; // เปิดปุ่มถ้าไม่สำเร็จ
-                buttonElement.textContent = "แลกเลย";
+            btn.disabled = true;
+            try {
+              const res = await fetch(CONFIG.GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'redeemItem', lineId: userState.lineId, itemId: id, point: point })
+              });
+              const text = await res.text();
+              showAlert("สถานะ", text, async () => {
+                if (text.includes("สำเร็จ")) {
+                  await fetchAndUpdateUserState(); // Fetch latest points, level, and tag
+                  btn.textContent = "แลกแล้ว";
+                }
+              });
+            } catch (e) {
+              console.error("Redeem failed:", e);
+              showAlert('ข้อผิดพลาด', 'ไม่สามารถแลกของรางวัลได้ กรุณาลองใหม่');
+            } finally {
+              btn.disabled = false;
             }
+          });
         });
-    } catch (e) {
-        console.error("Redemption failed:", e);
-        showAlert('ข้อผิดพลาด', 'ไม่สามารถทำรายการแลกของได้ กรุณาลองใหม่');
-        buttonElement.disabled = false;
-        buttonElement.textContent = "แลกเลย";
+      }
     }
-}
+
     async function initTransfer() {
       const transferToEl = document.getElementById('transferTo');
       const transferAmountEl = document.getElementById('transferAmount');
